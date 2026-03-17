@@ -1,9 +1,12 @@
 package com.paymentapp.api.auth;
 
 import com.paymentapp.api.auth.dto.*;
+import com.paymentapp.api.member.Member;
 import com.paymentapp.api.member.MemberService;
+import com.paymentapp.core.annotation.LoginUser;
 import com.paymentapp.core.constant.AuthConstants;
 import com.paymentapp.core.dto.ApiResponse;
+import com.paymentapp.core.dto.LoginUserInfoDto;
 import com.paymentapp.core.exception.MemberErrorCode;
 import com.paymentapp.core.exception.MemberException;
 import com.paymentapp.core.security.jwt.JwtTokenProvider;
@@ -38,29 +41,33 @@ public class AuthController {
      * 회원가입 — 인증 도메인(AuthService)이 오케스트레이션
      */
     @PostMapping("/signup")
-    public ResponseEntity<ApiResponse<SignUpResponse>> signUp(@RequestBody @Valid SignUpRequest signUpRequest) {
+    public ResponseEntity<SignUpResponse> signUp(@RequestBody @Valid SignUpRequest signUpRequest) {
         SignUpResponse response = authService.signUp(signUpRequest);
         return ResponseEntity
                 .status(HttpStatus.CREATED)
-                .body(ApiResponse.success(response));
+                .body(response);
     }
 
-    /**
-     * 중복 확인 — member 도메인 기능이므로 MemberService 직접 호출
-     */
-    @GetMapping("/check-duplicate")
-    public ResponseEntity<ApiResponse<DuplicateCheckResponse>> checkDuplicate(
-            @RequestParam String type, @RequestParam String value) {
-        boolean isAvailable = memberService.checkDuplicate(type, value);
-        String message = isAvailable ? "사용 가능한 " + type + "입니다." : "이미 사용 중인 " + type + "입니다.";
-        DuplicateCheckResponse response = isAvailable
-                ? DuplicateCheckResponse.available(message)
-                : DuplicateCheckResponse.unavailable(message);
-        return ResponseEntity.ok(ApiResponse.success(response));
-    }
+
 
     /**
-     * 로그인
+     * 로그인 API
+     * POST /api/auth/login
+     *
+     * 요청 본문:
+     * {
+     *   "email": "user@example.com",
+     *   "password": "password123"
+     * }
+     *
+     * 응답 헤더:
+     * Authorization: Bearer eyJhbGc...
+     *
+     * 응답 본문:
+     * {
+     *   "success": true,
+     *   "email": "user@example.com"
+     * }
      */
     @PostMapping("/login")
     public ResponseEntity<LoginResponse> login(
@@ -93,9 +100,8 @@ public class AuthController {
      * 중요: customerUid는 PortOne 빌링키 발급 시 활용!
      */
     @GetMapping("/me")
-    public ResponseEntity<Map<String, Object>> getCurrentUser(Principal principal) {
-
-        String email = principal.getName();
+    public ResponseEntity<Map<String, Object>> getCurrentUser(@LoginUser LoginUserInfoDto loginUser) {
+        Member member = memberService.findById(loginUser.id());
 
         // TODO: 구현
         // 데이터베이스에서 사용자 정보 조회
@@ -103,11 +109,11 @@ public class AuthController {
         // 임시 구현
         Map<String, Object> response = new HashMap<>();
         response.put("success", true);
-        response.put("email", email);
-        response.put("customerUid", "CUST_" + Math.abs(email.hashCode()));  // PortOne 고객 UID
-        response.put("name", email.split("@")[0]);  // 이메일에서 이름 추출
+        response.put("email", member.getEmail());
+        response.put("customerUid", "CUST_" + Math.abs(member.getEmail().hashCode()));  // PortOne 고객 UID
+        response.put("name", member.getEmail().split("@")[0]);  // 이메일에서 이름 추출
         response.put("phone", "010-0000-0000");  // Kg 이니시스 전화번호 필수
-        response.put("pointBalance", 1000L);  // 포인트 잔액
+        response.put("pointBalance", member.getPointBalance());  // 포인트 잔액
 
         return ResponseEntity.ok(response);
     }
