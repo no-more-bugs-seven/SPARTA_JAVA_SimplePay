@@ -158,7 +158,7 @@ public class PaymentService {
 
         try {
             // 5. PortOne 환불 API 호출
-            portOneClient.cancelPayment(paymentId);
+            portOneClient.cancelPayment(paymentId, request.reason());
 
             // 6. 상태 변경
             payment.updateStatus(PaymentStatus.REFUNDED);
