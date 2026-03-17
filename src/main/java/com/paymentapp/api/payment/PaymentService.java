@@ -5,11 +5,10 @@ import com.paymentapp.api.order.Order;
 import com.paymentapp.api.order.OrderItem;
 import com.paymentapp.api.order.OrderItemRepository;
 import com.paymentapp.api.order.OrderRepository;
-import com.paymentapp.api.payment.dto.ConfirmPaymentResponse;
-import com.paymentapp.api.payment.dto.CreatePaymentRequest;
-import com.paymentapp.api.payment.dto.CreatePaymentResponse;
+import com.paymentapp.api.payment.dto.*;
 import com.paymentapp.api.product.Product;
 import com.paymentapp.api.product.ProductRepository;
+import com.paymentapp.core.constant.OrderStatus;
 import com.paymentapp.core.exception.CommonErrorCode;
 import com.paymentapp.core.exception.MemberException;
 import com.paymentapp.core.portone.PortOneClient;
@@ -19,7 +18,9 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
+import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Optional;
 
 @Service
 @RequiredArgsConstructor
@@ -29,6 +30,7 @@ public class PaymentService {
     private final ProductRepository productRepository;
     private final OrderRepository orderRepository;
     private final OrderItemRepository orderItemRepository;
+    private final RefundRepository refundRepository;
     private final PortOneClient portOneClient;
 
     @Transactional
@@ -113,6 +115,82 @@ public class PaymentService {
                 true,
                 payment.getOrder().getId().toString(),
                 payment.getStatus().toString()
+        );
+    }
+
+    @Transactional
+    public CancelPaymentResponse cancelPayment(String paymentId, CancelPaymentRequest request) {
+        // 1. 결제 조회
+        Payment payment = paymentRepository.findByPaymentKey(paymentId)
+                .orElseThrow(() -> new MemberException(CommonErrorCode.NOT_FOUND));
+
+        // 2. 주문 조회
+        Order order = orderRepository.findById(payment.getOrder().getId())
+                .orElseThrow(() -> new MemberException(CommonErrorCode.NOT_FOUND));
+
+        // 3. 멱등성 체크 (이미 환불된 경우)
+        Optional<Refund> existingRefund = refundRepository.findByPaymentId(payment.getId());
+        if (existingRefund.isPresent()) {
+            return CancelPaymentResponse.of(
+                    false,
+                    payment.getPaymentKey(),
+                    payment.getStatus().toString()
+            );
+        }
+
+        // 4. 상태 검증
+        if (payment.getStatus() != PaymentStatus.PAID) {
+            throw new IllegalStateException("환불 가능한 상태가 아닙니다.");
+        }
+        if (order.getStatus() != OrderStatus.PAID) {
+            throw new IllegalStateException("환불 가능한 상태가 아닙니다.");
+        }
+
+        // 4. 환불 이력 생성 (REQUESTED)
+        Refund refund = Refund.builder()
+                .payment(payment)
+                .amount(payment.getAmount())
+                .reason(request.reason())
+                .status(RefundStatus.REQUESTED)
+                .build();
+
+        Refund savedRefund = refundRepository.save(refund);
+
+        try {
+            // 5. PortOne 환불 API 호출
+            portOneClient.cancelPayment(paymentId);
+
+            // 6. 상태 변경
+            payment.updateStatus(PaymentStatus.REFUNDED);
+            payment.getOrder().updateStatus(OrderStatus.REFUNDED);
+
+            refund = Refund.builder()
+                    .payment(refund.getPayment())
+                    .amount(refund.getAmount())
+                    .reason(refund.getReason())
+                    .status(RefundStatus.COMPLETED)
+                    .refundedAt(LocalDateTime.now())
+                    .build();
+
+            refundRepository.save(refund);
+
+        } catch (Exception e) {
+            refund = Refund.builder()
+                    .payment(refund.getPayment())
+                    .amount(refund.getAmount())
+                    .reason(refund.getReason())
+                    .status(RefundStatus.FAILED)
+                    .build();
+
+            refundRepository.save(refund);
+
+            throw e;
+        }
+
+        return CancelPaymentResponse.of(
+                true,
+                payment.getPaymentKey(),
+                refund.getStatus().toString()
         );
     }
 }

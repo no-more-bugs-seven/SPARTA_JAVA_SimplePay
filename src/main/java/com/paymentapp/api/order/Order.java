@@ -79,4 +79,8 @@ public class Order extends BaseEntity {
     public void updateTotalAmount(BigDecimal totalAmount) {
         this.totalAmount = totalAmount;
     }
+
+    public void updateStatus(OrderStatus status) {
+        this.status = status;
+    }
 }

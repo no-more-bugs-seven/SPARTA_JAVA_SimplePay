@@ -1,5 +1,7 @@
 package com.paymentapp.core.portone;
 
+import com.paymentapp.core.portone.dto.PortOneCancelRequest;
+import com.paymentapp.core.portone.dto.PortOneCancelResponse;
 import com.paymentapp.core.portone.dto.PortOnePaymentResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -25,7 +27,7 @@ public class PortOneClient {
 
             PortOnePaymentResponse response = restClient.get()
                     .uri("/payments/{paymentId}", paymentId)
-                    .header("Authorization", "Bearer " + secretKey)
+                    .header("Authorization", "PortOne " + secretKey)
                     .retrieve()
                     .body(PortOnePaymentResponse.class);
 
@@ -36,6 +38,32 @@ public class PortOneClient {
         } catch (Exception e) {
             log.error("PortOne API 호출 실패", e);
             throw new RuntimeException("PortOne 결제 조회 실패", e);
+        }
+    }
+
+    public PortOneCancelResponse cancelPayment(String paymentId, String reason) {
+        try {
+            log.info("PortOne 환불 요청 paymentId={}", paymentId);
+
+            PortOneCancelRequest request = PortOneCancelRequest.builder()
+                    .reason(reason)
+                    .build();
+
+            PortOneCancelResponse response = restClient.post()
+                    .uri("/payments/{paymentId}/cancel", paymentId)
+                    .header("Authorization", "PortOne " + secretKey)
+                    .body(request)
+                    .retrieve()
+                    .body(PortOneCancelResponse.class);
+
+            log.info("PortOne 환불 성공 paymentId={}, status={}",
+                    response.getPaymentId(), response.getStatus());
+
+            return response;
+
+        } catch (Exception e) {
+            log.error("PortOne 환불 실패 paymentId={}", paymentId, e);
+            throw new RuntimeException("PortOne 환불 API 호출 실패", e);
         }
     }
 }
