@@ -36,4 +36,15 @@ public class Payment extends BaseEntity {
         this.amount = amount;
         this.status = status;
     }
+
+    // 결제 성공시 update
+    public void complete() {
+        this.status = PaymentStatus.PAID.toString();
+        this.paidAt = LocalDateTime.now();
+    }
+
+    // 결제 실패시 upate
+    public void fail() {
+        this.status = PaymentStatus.FAILED.toString();
+    }
 }

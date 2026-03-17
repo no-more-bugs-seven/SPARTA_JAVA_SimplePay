@@ -4,11 +4,15 @@ import lombok.Builder;
 
 @Builder
 public record CreatePaymentResponse (
-        String paymentId
+        boolean success,
+        String paymentId,
+        String status
 ) {
-    public static CreatePaymentResponse of(String paymentId) {
+    public static CreatePaymentResponse of(boolean success, String paymentId, String status) {
         return CreatePaymentResponse.builder()
+                .success(success)
                 .paymentId(paymentId)
+                .status(status)
                 .build();
     }
 }
