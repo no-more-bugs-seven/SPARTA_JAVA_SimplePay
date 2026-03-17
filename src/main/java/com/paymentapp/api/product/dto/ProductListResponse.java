@@ -1,4 +1,4 @@
-package com.paymentapp.core.dto;
+package com.paymentapp.api.product.dto;
 
 /**
 * 상품 목록 DTO
@@ -13,7 +13,7 @@ import java.math.BigDecimal;
 @Builder
 public class ProductListResponse {
 
-    private Long id;
+    private String id;
     private String name;
     private BigDecimal price;
     private Integer stock;
