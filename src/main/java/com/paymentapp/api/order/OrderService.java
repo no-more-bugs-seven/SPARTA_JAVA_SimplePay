@@ -61,7 +61,7 @@ public class OrderService {
         Order savedOrder = orderRepository.save(order);
 
         return OrderCreateResponse.builder()
-                .orderId(savedOrder.getId())
+                .orderId(savedOrder.getId().toString())
                 .totalAmount(savedOrder.getTotalAmount())
                 .orderNumber(savedOrder.getOrderNumber())
                 .build();
@@ -77,12 +77,15 @@ public class OrderService {
         return orderRepository.findByMemberOrderByCreatedAtDesc(member)
                 .stream()
                 .map(order -> OrderListResponse.builder()
-                        .orderId(order.getId())
+                        .orderId(order.getId().toString())
                         .orderNumber(order.getOrderNumber())
                         .totalAmount(order.getTotalAmount())
                         .usedPoints(order.getUsedPoints())
+                        .finalAmount(order.getTotalAmount())
+                        .earnedPoints(order.getUsedPoints())
+                        .currency("")
                         .status(order.getStatus().name())
-                        .createdAt(order.getCreatedAt())
+                        .createdAt(order.getCreatedAt().toString())
                         .build())
                 .toList();
     }
