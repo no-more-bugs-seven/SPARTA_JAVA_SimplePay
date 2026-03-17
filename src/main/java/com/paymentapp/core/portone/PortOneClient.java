@@ -11,7 +11,7 @@ public class PortOneClient {
 
     private final RestClient restClient;
 
-    @Value("${portone.api.secret-key}")
+    @Value("${portone.api.secret}")
     private String secretKey;
 
     public PortOnePaymentResponse getPayment(String paymentId) {
