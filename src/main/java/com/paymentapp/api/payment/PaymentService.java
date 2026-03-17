@@ -3,6 +3,7 @@ package com.paymentapp.api.payment;
 import com.github.f4b6a3.tsid.TsidCreator;
 import com.paymentapp.api.order.Order;
 import com.paymentapp.api.order.OrderRepository;
+import com.paymentapp.api.payment.dto.ConfirmPaymentResponse;
 import com.paymentapp.api.payment.dto.CreatePaymentRequest;
 import com.paymentapp.api.payment.dto.CreatePaymentResponse;
 import com.paymentapp.core.exception.CommonErrorCode;
@@ -37,6 +38,31 @@ public class PaymentService {
         // 결제 저장
         Payment savedPayment = paymentRepository.save(payment);
 
-        return CreatePaymentResponse.of(savedPayment.getPaymentKey());
+        return CreatePaymentResponse.of(
+                true,
+                savedPayment.getPaymentKey(),
+                savedPayment.getStatus()
+        );
+    }
+
+    @Transactional
+    public ConfirmPaymentResponse confirmPayment(String paymentId) {
+        // 1. 결제 조회
+        Payment payment = paymentRepository.findByPaymentKey(paymentId)
+                .orElseThrow(() -> new MemberException(CommonErrorCode.NOT_FOUND));
+
+        // 2. 멱등성 체크 (이미 처리된 경우)
+        if (PaymentStatus.PENDING.toString().equals(payment.getStatus())) {
+            return ConfirmPaymentResponse.of(
+                    false,
+                    payment.getOrder().getId().toString(),
+                    payment.getStatus()
+            );
+        }
+
+        // 3. PortOne 결제 조회
+        //PortOnePaymentResponse response = portOneClient.getPayment(paymentId);
+
+        return null;
     }
 }
