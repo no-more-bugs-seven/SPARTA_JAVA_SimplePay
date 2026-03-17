@@ -1,17 +1,7 @@
 package com.paymentapp.api.auth.dto;
 
 public record LoginResponse(
-        AuthTokens tokens,
-        UserInfoDto user
+        boolean success,
+        String email
 ) {
-
-
-    public record UserInfoDto(
-            Long id,
-            String username,
-            String name,
-            String profileImageUrl
-    ) {
-
-    }
 }
