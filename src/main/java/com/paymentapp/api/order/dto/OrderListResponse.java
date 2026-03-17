@@ -15,9 +15,12 @@ import java.time.LocalDateTime;
 public class OrderListResponse {
 
     private String orderNumber;
-    private Long orderId;
+    private String orderId;
     private BigDecimal totalAmount;
     private BigDecimal usedPoints;
+    private BigDecimal finalAmount;
+    private BigDecimal earnedPoints;
+    private String currency;
     private String status;
-    private LocalDateTime createdAt;
+    private String createdAt;
 }
