@@ -75,4 +75,8 @@ public class Order extends BaseEntity {
     public void applyUsedPoints(BigDecimal usedPoints) {
         this.usedPoints = usedPoints;
     }
+
+    public void updateTotalAmount(BigDecimal totalAmount) {
+        this.totalAmount = totalAmount;
+    }
 }
