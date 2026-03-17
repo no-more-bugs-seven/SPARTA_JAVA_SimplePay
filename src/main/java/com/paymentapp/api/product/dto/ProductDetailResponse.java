@@ -1,4 +1,4 @@
-package com.paymentapp.core.dto;
+package com.paymentapp.api.product.dto;
 
 /**
  * 상품 단건 DTO

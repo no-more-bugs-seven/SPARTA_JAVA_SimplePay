@@ -1,7 +1,7 @@
 package com.paymentapp.api.product;
 
-import com.paymentapp.core.dto.ProductDetailResponse;
-import com.paymentapp.core.dto.ProductListResponse;
+import com.paymentapp.api.product.dto.ProductDetailResponse;
+import com.paymentapp.api.product.dto.ProductListResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 
