@@ -1,12 +1,14 @@
 package com.paymentapp.api.order;
 
 import com.paymentapp.api.member.Member;
+import com.paymentapp.api.member.MemberRepository;
 import com.paymentapp.api.product.Product;
 import com.paymentapp.api.product.ProductRepository;
 import com.paymentapp.api.order.dto.CreateOrderRequest;
 import com.paymentapp.api.order.dto.OrderCreateResponse;
 import com.paymentapp.api.order.dto.OrderDetailResponse;
 import com.paymentapp.api.order.dto.OrderListResponse;
+import com.paymentapp.core.dto.LoginUserInfoDto;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -21,9 +23,13 @@ public class OrderService {
 
     private final OrderRepository orderRepository;
     private final ProductRepository productRepository;
+    private final MemberRepository memberRepository;
 
     // 주문 생성
-    public OrderCreateResponse createOrder(Member member, CreateOrderRequest request) {
+    public OrderCreateResponse createOrder(LoginUserInfoDto loginUser, CreateOrderRequest request) {
+
+        Member member = memberRepository.findById(loginUser.id())
+                .orElseThrow(() -> new IllegalArgumentException("회원을 찾을 수 없습니다."));
 
         if (request.getItems() == null || request.getItems().isEmpty()) {
             throw new IllegalArgumentException("주문 상품은 최소 1개 이상이어야 합니다.");
@@ -63,7 +69,11 @@ public class OrderService {
 
     // 주문 목록 조회
     @Transactional(readOnly = true)
-    public List<OrderListResponse> getOrders(Member member) {
+    public List<OrderListResponse> getOrders(LoginUserInfoDto loginUser) {
+
+        Member member = memberRepository.findById(loginUser.id())
+                .orElseThrow(() -> new IllegalArgumentException("회원을 찾을 수 없습니다."));
+
         return orderRepository.findByMemberOrderByCreatedAtDesc(member)
                 .stream()
                 .map(order -> OrderListResponse.builder()
@@ -79,7 +89,11 @@ public class OrderService {
 
     // 주문 단건 조회
     @Transactional(readOnly = true)
-    public OrderDetailResponse getOrder(Member member, Long orderId) {
+    public OrderDetailResponse getOrder(LoginUserInfoDto loginUser, Long orderId) {
+
+        Member member = memberRepository.findById(loginUser.id())
+                .orElseThrow(() -> new IllegalArgumentException("회원을 찾을 수 없습니다."));
+
         Order order = orderRepository.findByIdAndMember(orderId, member)
                 .orElseThrow(() -> new IllegalArgumentException("주문을 찾을 수 없습니다."));
 
