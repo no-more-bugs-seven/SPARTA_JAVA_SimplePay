@@ -1,7 +1,7 @@
 package com.paymentapp.api.order;
 
-import com.paymentapp.api.member.Member;
-
+import com.paymentapp.core.annotation.LoginUser;
+import com.paymentapp.core.dto.LoginUserInfoDto;
 import com.paymentapp.api.order.dto.CreateOrderRequest;
 import com.paymentapp.api.order.dto.OrderCreateResponse;
 import com.paymentapp.api.order.dto.OrderDetailResponse;
@@ -21,24 +21,26 @@ public class OrderController {
     // 주문 생성
     @PostMapping
     public OrderCreateResponse createOrder(
-            @RequestAttribute Member member,
+            @LoginUser LoginUserInfoDto loginUser,
             @RequestBody CreateOrderRequest request
     ) {
-        return orderService.createOrder(member, request);
+        return orderService.createOrder(loginUser, request);
     }
 
     // 주문 목록 조회
     @GetMapping
-    public List<OrderListResponse> getOrders(@RequestAttribute Member member) {
-        return orderService.getOrders(member);
+    public List<OrderListResponse> getOrders(
+            @LoginUser LoginUserInfoDto loginUser
+    ) {
+        return orderService.getOrders(loginUser);
     }
 
     // 주문 단건 조회
     @GetMapping("/{orderId}")
     public OrderDetailResponse getOrder(
-            @RequestAttribute Member member,
+            @LoginUser LoginUserInfoDto loginUser,
             @PathVariable Long orderId
     ) {
-        return orderService.getOrder(member, orderId);
+        return orderService.getOrder(loginUser, orderId);
     }
 }
