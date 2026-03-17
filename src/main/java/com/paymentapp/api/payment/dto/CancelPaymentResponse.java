@@ -5,13 +5,13 @@ import lombok.Builder;
 @Builder
 public record CancelPaymentResponse (
         boolean success,
-        String paymentId,
+        String orderId,
         String status
 ) {
-    public static CancelPaymentResponse of(boolean success, String paymentId, String status) {
+    public static CancelPaymentResponse of(boolean success, String orderId, String status) {
         return CancelPaymentResponse.builder()
                 .success(success)
-                .paymentId(paymentId)
+                .orderId(orderId)
                 .status(status)
                 .build();
     }

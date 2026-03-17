@@ -189,8 +189,8 @@ public class PaymentService {
 
         return CancelPaymentResponse.of(
                 true,
-                payment.getPaymentKey(),
-                refund.getStatus().toString()
+                order.getId().toString(),
+                order.getStatus().toString()
         );
     }
 }
