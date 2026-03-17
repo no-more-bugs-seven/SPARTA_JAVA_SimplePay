@@ -1,7 +1,7 @@
 package com.paymentapp.api.product;
 
-import com.paymentapp.core.dto.ProductDetailResponse;
-import com.paymentapp.core.dto.ProductListResponse;
+import com.paymentapp.api.product.dto.ProductDetailResponse;
+import com.paymentapp.api.product.dto.ProductListResponse;
 import com.paymentapp.core.constant.ProductStatus;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -21,7 +21,7 @@ public class ProductService {
         return productRepository.findAllByStatus(ProductStatus.ON_SALE)
                 .stream()
                 .map(product -> ProductListResponse.builder()
-                        .id(product.getId())
+                        .id(product.getId().toString())
                         .name(product.getName())
                         .price(product.getPrice())
                         .stock(product.getStock())
