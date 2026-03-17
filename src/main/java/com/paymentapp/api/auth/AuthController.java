@@ -20,10 +20,6 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import java.security.Principal;
-import java.util.HashMap;
-import java.util.Map;
-
 @RestController
 @RequestMapping("/api/auth")
 @Slf4j
@@ -47,8 +43,6 @@ public class AuthController {
                 .status(HttpStatus.CREATED)
                 .body(response);
     }
-
-
 
     /**
      * 로그인 API
@@ -100,22 +94,10 @@ public class AuthController {
      * 중요: customerUid는 PortOne 빌링키 발급 시 활용!
      */
     @GetMapping("/me")
-    public ResponseEntity<Map<String, Object>> getCurrentUser(@LoginUser LoginUserInfoDto loginUser) {
-        Member member = memberService.findById(loginUser.id());
-
+    public ResponseEntity<MeResponse> getCurrentUser(@LoginUser LoginUserInfoDto loginUser) {
         // TODO: 구현
-        // 데이터베이스에서 사용자 정보 조회
         // customerUid 생성은 조회 한 사용자 정보로 조합하여 생성, 추천 조합 : CUST_{userId}_{rand6:난수}
-        // 임시 구현
-        Map<String, Object> response = new HashMap<>();
-        response.put("success", true);
-        response.put("email", member.getEmail());
-        response.put("customerUid", "CUST_" + Math.abs(member.getEmail().hashCode()));  // PortOne 고객 UID
-        response.put("name", member.getEmail().split("@")[0]);  // 이메일에서 이름 추출
-        response.put("phone", "010-0000-0000");  // Kg 이니시스 전화번호 필수
-        response.put("pointBalance", member.getPointBalance());  // 포인트 잔액
-
-        return ResponseEntity.ok(response);
+        return ResponseEntity.ok().body(memberService.getInfo(loginUser.id()));
     }
 
     /**

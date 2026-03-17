@@ -36,6 +36,9 @@ public class Member extends BaseEntity {
     @Column()
     private Long pointBalance;
 
+    @Column()
+    private Long membershipTierId;
+
     @Builder
     private Member(String password, String email, String phone, String name, Long pointBalance) {
         this.password = password;
