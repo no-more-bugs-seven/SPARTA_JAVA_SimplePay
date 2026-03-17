@@ -8,13 +8,6 @@ spring:
   config:
     import: optional:classpath:client-api-config.yml
 
-  thymeleaf:
-    cache: false
-    prefix: classpath:/templates/
-    suffix: .html
-    mode: HTML
-    encoding: UTF-8
-
   security:
     user:
       name: demo
@@ -22,19 +15,17 @@ spring:
 
 server:
   port: 8080
-  servlet:
-    context-path: /
 
 # PortOne Configuration
 portone:
   api:
     base-url: https://api.portone.io
-    secret: ${PORTONE_API_SECRET:your-api-secret}
+    secret: ${PORTONE_API_SECRET:77uSt2bet8A85E3C3vr1rt9AT1EC4Yg5D1Pm1LvdnxmxYDWF1qZE0zEipped0BpdQIvPll0pA8nz86pi}
   store:
-    id: ${PORTONE_STORE_ID:your-store-id}
+    id: ${PORTONE_STORE_ID:store-2fa52df5-a7b3-4c8e-b9c8-06a71d8d876f}
   channel:
-    kg-inicis: ${PORTONE_CHANNEL_KG:your-kg-inicis-channel-key}
-    toss: ${PORTONE_CHANNEL_TOSS:your-toss-channel-key}
+    kg-inicis: ${PORTONE_CHANNEL_KG:channel-key-df4170fd-637c-4509-b111-6ac8b41b4bcf}
+    toss: ${PORTONE_CHANNEL_TOSS:channel-key-d3e2a0bd-206e-459e-af37-d3b4c54ada9c}
 # JWT Configuration
 jwt:
   secret-key: ${JWT_SECRET_KEY:L6h/xMxGO53HQmR/OB99qR/y0kTr2CAyaI5RqBIX184=}

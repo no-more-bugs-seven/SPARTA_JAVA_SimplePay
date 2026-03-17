@@ -57,8 +57,7 @@ public class MemberService {
             return memberRepository.findByPhone(loginId)
                     .orElseThrow(() -> new MemberException(MemberErrorCode.INVALID_CREDENTIALS));
         } else {
-            return memberRepository.findByUsername(loginId)
-                    .orElseThrow(() -> new MemberException(MemberErrorCode.INVALID_CREDENTIALS));
+            throw new MemberException(MemberErrorCode.INVALID_CREDENTIALS);
         }
     }
 
@@ -75,7 +74,6 @@ public class MemberService {
      */
     public boolean checkDuplicate(String type, String value) {
         return switch (type) {
-            case "username" -> !memberRepository.existsByUsername(value);
             case "email"    -> !memberRepository.existsByEmail(value);
             case "phone"    -> !memberRepository.existsByPhone(value);
             default -> throw new MemberException(CommonErrorCode.INVALID_INPUT_VALUE);

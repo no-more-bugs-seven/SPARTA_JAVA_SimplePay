@@ -18,10 +18,10 @@ function checkAuthentication() {
     }
 
     // 토큰이 없으면 로그인 페이지로 이동
-    // if (!token) {
-    //     window.location.href = '/pages/login';
-    //     return;
-    // }
+    if (!token) {
+        window.location.href = '/pages/login';
+        return;
+    }
 
     // 사용자 정보 표시
     displayUserInfo();
