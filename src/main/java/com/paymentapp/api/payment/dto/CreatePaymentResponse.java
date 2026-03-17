@@ -4,9 +4,9 @@ import lombok.Builder;
 
 @Builder
 public record CreatePaymentResponse (
-        Long paymentId
+        String paymentId
 ) {
-    public static CreatePaymentResponse of(Long paymentId) {
+    public static CreatePaymentResponse of(String paymentId) {
         return CreatePaymentResponse.builder()
                 .paymentId(paymentId)
                 .build();

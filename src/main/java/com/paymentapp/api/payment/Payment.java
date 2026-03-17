@@ -30,8 +30,10 @@ public class Payment extends BaseEntity {
     private LocalDateTime refundedAt;
 
     @Builder
-    public Payment (Order order, Double amount) {
+    public Payment (Order order, String paymentKey, Double amount, String status) {
         this.order = order;
+        this.paymentKey = paymentKey;
         this.amount = amount;
+        this.status = status;
     }
 }
