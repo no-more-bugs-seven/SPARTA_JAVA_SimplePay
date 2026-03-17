@@ -1,6 +1,7 @@
 package com.paymentapp.core.config;
 
 //import com.paymentapp.core.security.jwt.JwtAuthenticationEntryPoint;
+import com.paymentapp.core.security.jwt.JwtAuthenticationEntryPoint;
 import com.paymentapp.core.security.jwt.JwtAuthenticationFilter;
 import com.paymentapp.core.security.jwt.JwtTokenProvider;
 import lombok.RequiredArgsConstructor;
@@ -21,7 +22,7 @@ import org.springframework.boot.autoconfigure.security.servlet.PathRequest;
 public class SecurityConfig {
 
     private final JwtTokenProvider jwtTokenProvider;
-//    private final JwtAuthenticationEntryPoint jwtAuthenticationEntryPoint;
+    private final JwtAuthenticationEntryPoint jwtAuthenticationEntryPoint;
 
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
@@ -29,10 +30,10 @@ public class SecurityConfig {
         http
                 .csrf(csrf -> csrf.disable()) // CSRF 보호 비활성화 (JWT를 사용하므로 불필요)
                 .formLogin(form -> form.disable()) // 기본 폼 로그인 비활성화
-//                .httpBasic(basic -> basic.disable()) // 기본 HTTP Basic 인증 비활성화
-//                .exceptionHandling(exception ->
-//                        exception.authenticationEntryPoint(jwtAuthenticationEntryPoint) // 필터 단 예외 처리EntryPoint 등록
-//                )
+                .httpBasic(basic -> basic.disable()) // 기본 HTTP Basic 인증 비활성화
+                .exceptionHandling(exception ->
+                        exception.authenticationEntryPoint(jwtAuthenticationEntryPoint) // 필터 단 예외 처리EntryPoint 등록
+                )
                 .sessionManagement(session ->
                         session.sessionCreationPolicy(SessionCreationPolicy.STATELESS) // 세션을 사용하지 않음 (Stateless)
                 )

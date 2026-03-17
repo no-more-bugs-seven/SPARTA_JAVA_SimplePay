@@ -39,6 +39,7 @@ public class TestDataInit implements ApplicationRunner {
                     .name(names.get(i))
                     .email(usernames.get(i) + "@test.com")
                     .phone("010-1234-567" + i)
+                    .pointBalance(1000L)
                     .build();
 
             Member savedMember = memberRepository.save(member);
