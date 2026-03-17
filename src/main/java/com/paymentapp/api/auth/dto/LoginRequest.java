@@ -1,7 +1,7 @@
 package com.paymentapp.api.auth.dto;
 
 public record LoginRequest(
-        String username,
+        String email,
 
         String password
 ) {

@@ -25,9 +25,8 @@ public class MemberService {
      */
     @Transactional
     public Member createMember(SignUpRequest signUpRequest) {
-        String emailOrPhone = signUpRequest.emailOrPhone();
-        String email = emailOrPhone.contains("@") ? emailOrPhone : null;
-        String phone = emailOrPhone.contains("@") ? null : emailOrPhone;
+        String email = signUpRequest.email();
+        String phone = signUpRequest.phone();
 
         // 이메일/전화번호 중복체크
         if (email != null && memberRepository.existsByEmail(email)) {
@@ -37,13 +36,7 @@ public class MemberService {
             throw new MemberException(MemberErrorCode.DUPLICATE_PHONE);
         }
 
-        // 사용자 이름 중복체크
-        if (memberRepository.existsByUsername(signUpRequest.username())) {
-            throw new MemberException(MemberErrorCode.DUPLICATE_USERNAME);
-        }
-
         Member member = Member.builder()
-                .username(signUpRequest.username())
                 .password(passwordEncoder.encode(signUpRequest.password()))
                 .email(email)
                 .phone(phone)
@@ -64,8 +57,7 @@ public class MemberService {
             return memberRepository.findByPhone(loginId)
                     .orElseThrow(() -> new MemberException(MemberErrorCode.INVALID_CREDENTIALS));
         } else {
-            return memberRepository.findByUsername(loginId)
-                    .orElseThrow(() -> new MemberException(MemberErrorCode.INVALID_CREDENTIALS));
+            throw new MemberException(MemberErrorCode.INVALID_CREDENTIALS);
         }
     }
 
@@ -82,7 +74,6 @@ public class MemberService {
      */
     public boolean checkDuplicate(String type, String value) {
         return switch (type) {
-            case "username" -> !memberRepository.existsByUsername(value);
             case "email"    -> !memberRepository.existsByEmail(value);
             case "phone"    -> !memberRepository.existsByPhone(value);
             default -> throw new MemberException(CommonErrorCode.INVALID_INPUT_VALUE);

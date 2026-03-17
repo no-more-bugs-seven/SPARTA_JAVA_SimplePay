@@ -15,9 +15,6 @@ public class Member extends BaseEntity {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(nullable = false, unique = true, length = 30)
-    private String username;
-
     @Column(length = 100) // OAuth2 로그인 시 비밀번호가 없을 수 있으므로 nullable = true (기본값)
     private String password;
 
@@ -40,8 +37,7 @@ public class Member extends BaseEntity {
     private String profileImageUrl;
 
     @Builder
-    private Member(String username, String password, String email, String phone, String name, String profileImageUrl) {
-        this.username = username;
+    private Member(String password, String email, String phone, String name, String profileImageUrl) {
         this.password = password;
         this.email = email;
         this.phone = phone;
