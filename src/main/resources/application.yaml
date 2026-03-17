@@ -12,7 +12,15 @@ spring:
     user:
       name: demo
       password: demo123
-
+    oauth2:
+      client:
+        registration:
+          google:
+            client-id: ${GOOGLE_CLIENT_ID}
+            client-secret: ${GOOGLE_CLIENT_SECRET}
+            scope:
+              - profile
+              - email
 server:
   port: 8080
 
@@ -28,7 +36,7 @@ portone:
     toss: ${PORTONE_CHANNEL_TOSS:channel-key-d3e2a0bd-206e-459e-af37-d3b4c54ada9c}
 # JWT Configuration
 jwt:
-  secret-key: ${JWT_SECRET_KEY:L6h/xMxGO53HQmR/OB99qR/y0kTr2CAyaI5RqBIX184=}
+  secret-key: ${JWT_SECRET_KEY}
   access-token-validity-time: 3600000    # 1시간 (ms)
   refresh-token-validity-time: 604800000 # 7일 (ms)
 

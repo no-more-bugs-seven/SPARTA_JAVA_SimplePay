@@ -103,7 +103,7 @@ public class AuthService {
     // --- private ---
 
     private AuthTokens generateTokens(Member member) {
-        String accessToken  = jwtTokenProvider.createAccessToken(member.getId(), null);
+        String accessToken  = jwtTokenProvider.createAccessToken(member.getId(), member.getEmail(), null);
         String refreshToken = jwtTokenProvider.createRefreshToken(member.getId());
         return new AuthTokens(accessToken, refreshToken);
     }

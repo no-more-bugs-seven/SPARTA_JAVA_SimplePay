@@ -50,8 +50,8 @@ public class JwtTokenProvider {
      * @param role 회원의 권한 (ROLE_USER 등)
      * @return 발급된 Access Token 문자열
      */
-    public String createAccessToken(Long memberId, String role) {
-        return buildToken(memberId, role, accessTokenValidityInMilliseconds);
+    public String createAccessToken(Long memberId, String email, String role) {
+        return buildToken(memberId, email, role, accessTokenValidityInMilliseconds);
     }
 
     /**
@@ -61,13 +61,13 @@ public class JwtTokenProvider {
      * @return 발급된 Refresh Token 문자열
      */
     public String createRefreshToken(Long memberId) {
-        return buildToken(memberId, null, refreshTokenValidityInMilliseconds);
+        return buildToken(memberId, null, null, refreshTokenValidityInMilliseconds);
     }
 
     /**
      * 실제 JWT 토큰 생성을 담당하는 내부 헬퍼 메서드
      */
-    private String buildToken(Long memberId, String role, long validityTimeInMs) {
+    private String buildToken(Long memberId, String email, String role, long validityTimeInMs) {
         Date now = new Date();
         Date validity = new Date(now.getTime() + validityTimeInMs);
 
@@ -79,6 +79,9 @@ public class JwtTokenProvider {
                 .id(UUID.randomUUID().toString())  // 표준 Claim: 토큰 고유 ID (jti)
                 .signWith(key);                    // SecretKey → HS256 자동 적용 (모놀리식 대칭키)
 
+        if (email != null) {
+            builder.claim("email", email); // 부가 정보(Custom Claim) 추가
+        }
         if (role != null) {
             builder.claim("role", role); // 부가 정보(Custom Claim) 추가
         }

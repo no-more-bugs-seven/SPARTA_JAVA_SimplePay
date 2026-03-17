@@ -1,5 +1,6 @@
 package com.paymentapp.api.member;
 
+import com.paymentapp.api.auth.dto.MeResponse;
 import com.paymentapp.api.auth.dto.SignUpRequest;
 import com.paymentapp.core.exception.CommonErrorCode;
 import com.paymentapp.core.exception.MemberErrorCode;
@@ -9,6 +10,9 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.util.HashMap;
+import java.util.Map;
 
 @Service
 @Slf4j
@@ -41,6 +45,7 @@ public class MemberService {
                 .email(email)
                 .phone(phone)
                 .name(signUpRequest.name())
+                .pointBalance(0L)
                 .build();
 
         return memberRepository.save(member);
@@ -67,6 +72,18 @@ public class MemberService {
     public Member findById(Long memberId) {
         return memberRepository.findById(memberId)
                 .orElseThrow(() -> new MemberException(MemberErrorCode.MEMBER_NOT_FOUND));
+    }
+
+    public MeResponse getInfo(Long memberId) {
+        Member member = findById(memberId);
+        return MeResponse.builder().
+                success(true).
+                email(member.getEmail()).
+                customerUid("CUST_" + Math.abs(member.getEmail().hashCode())).
+                name(member.getName()).
+                phone(member.getPhone()).
+                pointBalance(member.getPointBalance()).
+                build();
     }
 
     /**
