@@ -1,6 +1,6 @@
 package com.paymentapp.api.subscription.dto;
 
-import com.paymentapp.api.plan.entity.Subscription;
+import com.paymentapp.api.subscription.entity.Subscription;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
