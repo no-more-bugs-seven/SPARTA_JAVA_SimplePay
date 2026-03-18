@@ -3,9 +3,9 @@ name: CI/CD Pipeline
 # main 브랜치 push 또는 PR
 on:
   push:
-    branches: [main, dev, cicd]
+    branches: [main]
   pull_request:
-    branches: [main, dev, cicd]
+    branches: [main]
 
 # OIDC 토큰 요청 권한
 permissions:
@@ -85,7 +85,7 @@ jobs:
 
   deploy:
     needs: build
-    #if: github.ref == 'refs/heads/main'   # main push에서만 배포 (PR에서는 CI만 실행)
+    if: github.ref == 'refs/heads/main'   # main push에서만 배포 (PR에서는 CI만 실행)
     runs-on: ubuntu-latest
 
     steps:
