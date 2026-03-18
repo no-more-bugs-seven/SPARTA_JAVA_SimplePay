@@ -15,6 +15,9 @@ public class PortOneClient {
 
     private final RestClient restClient;
 
+    @Value("${portone.store.id}")
+    private String storeId;
+
     public PortOneClient(
             @Value("${portone.api.base-url}") String baseUrl,
             @Value("${portone.api.secret}") String apiSecret
@@ -31,7 +34,7 @@ public class PortOneClient {
             log.info("PortOne 요청 paymentId={}", paymentId);
 
             return restClient.get()
-                    .uri("/payments/{paymentId}", paymentId)
+                    .uri("/payments/{paymentId}?storeId="+storeId, paymentId)
                     .retrieve()
                     // 401 에러(인증 실패) 발생 시 로그 출력
                     .onStatus(status -> status.value() == 401, (request, response) -> {
@@ -56,6 +59,7 @@ public class PortOneClient {
             log.info("PortOne 환불 요청 paymentId={}", paymentId);
 
             PortOneCancelRequest request = PortOneCancelRequest.builder()
+                    .storeId(storeId)
                     .reason(reason)
                     .build();
 
