@@ -1,14 +1,13 @@
 package com.paymentapp.api.auth;
 
 import com.paymentapp.api.auth.dto.*;
-import com.paymentapp.api.member.Member;
 import com.paymentapp.api.member.MemberService;
 import com.paymentapp.core.annotation.LoginUser;
 import com.paymentapp.core.constant.AuthConstants;
 import com.paymentapp.core.dto.ApiResponse;
 import com.paymentapp.core.dto.LoginUserInfoDto;
-import com.paymentapp.core.exception.MemberErrorCode;
-import com.paymentapp.core.exception.MemberException;
+import com.paymentapp.core.exception.errorcode.MemberErrorCode;
+import com.paymentapp.core.exception.custom.MemberException;
 import com.paymentapp.core.security.jwt.JwtTokenProvider;
 import com.paymentapp.core.util.CookieUtils;
 import jakarta.servlet.http.Cookie;

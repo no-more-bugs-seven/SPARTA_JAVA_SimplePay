@@ -13,8 +13,14 @@ import com.paymentapp.api.payment.entity.RefundStatus;
 import com.paymentapp.api.product.Product;
 import com.paymentapp.api.product.ProductRepository;
 import com.paymentapp.core.constant.OrderStatus;
-import com.paymentapp.core.exception.CommonErrorCode;
-import com.paymentapp.core.exception.MemberException;
+import com.paymentapp.core.exception.custom.MemberException;
+import com.paymentapp.core.exception.custom.OrderException;
+import com.paymentapp.core.exception.custom.PaymentException;
+import com.paymentapp.core.exception.custom.ProductException;
+import com.paymentapp.core.exception.errorcode.CommonErrorCode;
+import com.paymentapp.core.exception.errorcode.OrderErrorCode;
+import com.paymentapp.core.exception.errorcode.PaymentErrorCode;
+import com.paymentapp.core.exception.errorcode.ProductErrorCode;
 import com.paymentapp.core.portone.PortOneClient;
 import com.paymentapp.core.portone.dto.PortOnePaymentResponse;
 import lombok.RequiredArgsConstructor;
@@ -41,7 +47,7 @@ public class PaymentService {
     public CreatePaymentResponse createPayment(CreatePaymentRequest request) {
         // 1. 주문 조회
         Order order = orderRepository.findById(request.orderId())
-                .orElseThrow(() -> new MemberException(CommonErrorCode.NOT_FOUND));
+                .orElseThrow(() -> new OrderException(OrderErrorCode.ORDER_NOT_FOUND));
 
         // 2. 결제 시도 생성
         String paymentKey = "PAY-" + TsidCreator.getTsid();
@@ -68,7 +74,7 @@ public class PaymentService {
     public ConfirmPaymentResponse confirmPayment(String paymentId) {
         // 1. 결제 조회 (Lock)
         Payment payment = paymentRepository.findByPaymentKeyWithLock(paymentId)
-                .orElseThrow(() -> new MemberException(CommonErrorCode.NOT_FOUND));
+                .orElseThrow(() -> new PaymentException(PaymentErrorCode.PAYMENT_NOT_FOUND));
 
         // 2. 멱등성 체크 (이미 처리된 경우)
         if (payment.getStatus() != PaymentStatus.PENDING) {
@@ -93,18 +99,17 @@ public class PaymentService {
         }
 
         // 5. 금액 검증
-        BigDecimal orderAmount = payment.getAmount();
         BigDecimal paidAmount = BigDecimal.valueOf(response.getAmount().getTotal());
-        if (orderAmount.compareTo(paidAmount) != 0) {
+        if (payment.getAmount().compareTo(paidAmount) != 0) {
             // 금액 위변조 감지 시 자동 취소 로직
             portOneClient.cancelPayment(paymentId, "결제 금액 불일치");
             payment.fail();
-            throw new MemberException(CommonErrorCode.NOT_FOUND);
+            throw new PaymentException(PaymentErrorCode.PAYMENT_AMOUNT_MISMATCH);
         }
 
         // 6. 주문 조회
         Order order = orderRepository.findById(payment.getOrder().getId())
-                .orElseThrow(() -> new MemberException(CommonErrorCode.NOT_FOUND));
+                .orElseThrow(() -> new OrderException(OrderErrorCode.ORDER_NOT_FOUND));
 
         // 동시에 같은 상품 재고 차감시 재고가 부족한 경우 예외처리
         try {
@@ -114,7 +119,7 @@ public class PaymentService {
             for (OrderItem item : items) {
                 // Product에도 Lock걸어 동시 재고 차감 방지
                 Product product = productRepository.findByIdWithLock(item.getProduct().getId())
-                        .orElseThrow(() -> new MemberException(CommonErrorCode.NOT_FOUND));
+                        .orElseThrow(() -> new ProductException(ProductErrorCode.PRODUCT_NOT_FOUND));
 
                 product.decreaseStock(item.getQuantity());
             }
@@ -123,7 +128,7 @@ public class PaymentService {
             payment.complete();
             order.complete();
 
-        } catch (IllegalArgumentException e) {
+        } catch (ProductException e) {
             // 재고가 부족하면 포트원에 즉시 결제 취소 요청
             portOneClient.cancelPayment(paymentId, "재고 부족으로 인한 자동 결제 취소");
             payment.fail();
@@ -142,11 +147,11 @@ public class PaymentService {
     public CancelPaymentResponse cancelPayment(String paymentId, CancelPaymentRequest request) {
         // 1. 결제 조회
         Payment payment = paymentRepository.findByPaymentKeyWithLock(paymentId)
-                .orElseThrow(() -> new MemberException(CommonErrorCode.NOT_FOUND));
+                .orElseThrow(() -> new PaymentException(PaymentErrorCode.PAYMENT_NOT_FOUND));
 
         // 2. 주문 조회
         Order order = orderRepository.findById(payment.getOrder().getId())
-                .orElseThrow(() -> new MemberException(CommonErrorCode.NOT_FOUND));
+                .orElseThrow(() -> new OrderException(OrderErrorCode.ORDER_NOT_FOUND));
 
         // 3. 멱등성 체크 (이미 환불된 경우)
         Optional<Refund> existingRefund = refundRepository.findByPaymentId(payment.getId());
@@ -160,10 +165,10 @@ public class PaymentService {
 
         // 4. 상태 검증
         if (payment.getStatus() != PaymentStatus.PAID) {
-            throw new IllegalStateException("환불 가능한 상태가 아닙니다.");
+            throw new PaymentException(PaymentErrorCode.INVALID_REFUND_STATE);
         }
         if (order.getStatus() != OrderStatus.COMPLETED) {
-            throw new IllegalStateException("환불 가능한 상태가 아닙니다.");
+            throw new OrderException(OrderErrorCode.INVALID_REFUND_STATE);
         }
 
         // 4. 환불 이력 생성 (REQUESTED)
