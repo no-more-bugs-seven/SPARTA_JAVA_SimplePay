@@ -112,7 +112,7 @@ public class PaymentService {
 
         // 8. 결제/주문 상태 변경
         payment.complete();
-        //order.complete();
+        order.complete();
 
         // 9. 응답 반환
         return ConfirmPaymentResponse.of(
@@ -158,7 +158,7 @@ public class PaymentService {
                 .status(RefundStatus.REQUESTED)
                 .build();
 
-        Refund savedRefund = refundRepository.save(refund);
+        refundRepository.save(refund);
 
         try {
             // 5. PortOne 환불 API 호출
