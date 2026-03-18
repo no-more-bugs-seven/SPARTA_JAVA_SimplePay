@@ -39,10 +39,11 @@ public class PaymentService {
 
     @Transactional
     public CreatePaymentResponse createPayment(CreatePaymentRequest request) {
-        // 주문 조회
+        // 1. 주문 조회
         Order order = orderRepository.findById(request.orderId())
                 .orElseThrow(() -> new MemberException(CommonErrorCode.NOT_FOUND));
-        // 결제 시도 생성
+
+        // 2. 결제 시도 생성
         String paymentKey = "PAY-" + TsidCreator.getTsid();
 
         Payment payment = Payment.builder()
@@ -51,9 +52,11 @@ public class PaymentService {
                 .amount(request.totalAmount())
                 .status(PaymentStatus.PENDING)
                 .build();
-        // 결제 저장
+
+        // 3. 결제 저장
         Payment savedPayment = paymentRepository.save(payment);
 
+        // 4. 응답 반환
         return CreatePaymentResponse.of(
                 true,
                 savedPayment.getPaymentKey(),
@@ -93,9 +96,9 @@ public class PaymentService {
         BigDecimal orderAmount = payment.getAmount();
         BigDecimal paidAmount = BigDecimal.valueOf(response.getAmount().getTotal());
         if (orderAmount.compareTo(paidAmount) != 0) {
-            // [보안] 금액 위변조 감지 시 자동 취소 로직
-            /*portOneClient.cancelPayment(paymentId, "결제 금액 불일치(위변조 의심)");
-            payment.fail();*/
+            // 금액 위변조 감지 시 자동 취소 로직
+            portOneClient.cancelPayment(paymentId, "결제 금액 불일치");
+            payment.fail();
             throw new MemberException(CommonErrorCode.NOT_FOUND);
         }
 
@@ -103,6 +106,7 @@ public class PaymentService {
         Order order = orderRepository.findById(payment.getOrder().getId())
                 .orElseThrow(() -> new MemberException(CommonErrorCode.NOT_FOUND));
 
+        // 동시에 같은 상품 재고 차감시 재고가 부족한 경우 예외처리
         try {
             // 7. 재고 차감
             List<OrderItem> items = orderItemRepository.findByOrderId(order.getId());
@@ -120,7 +124,7 @@ public class PaymentService {
             order.complete();
 
         } catch (IllegalArgumentException e) {
-            // 재고가 없으면 포트원에 즉시 결제 취소 요청
+            // 재고가 부족하면 포트원에 즉시 결제 취소 요청
             portOneClient.cancelPayment(paymentId, "재고 부족으로 인한 자동 결제 취소");
             payment.fail();
             throw e;
