@@ -40,6 +40,9 @@ portone:
   channel:
     kg-inicis: ${PORTONE_CHANNEL_KG}
     toss: ${PORTONE_CHANNEL_TOSS}
+  webhook:
+    secret: ${PORTONE_WEBHOOK_SECRET}
+
 # JWT Configuration
 jwt:
   secret-key: ${JWT_SECRET_KEY}
