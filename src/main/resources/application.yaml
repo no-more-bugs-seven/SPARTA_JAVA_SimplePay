@@ -21,6 +21,12 @@ spring:
             scope:
               - profile
               - email
+  data:
+    redis:
+      host: ${REDIS_HOST}
+      port: ${REDIS_PORT}
+      username: ${REDIS_USERNAME}
+      password: ${REDIS_PASSWORD}
 server:
   port: 8080
 
@@ -28,17 +34,17 @@ server:
 portone:
   api:
     base-url: https://api.portone.io
-    secret: ${PORTONE_API_SECRET:77uSt2bet8A85E3C3vr1rt9AT1EC4Yg5D1Pm1LvdnxmxYDWF1qZE0zEipped0BpdQIvPll0pA8nz86pi}
+    secret: ${PORTONE_API_SECRET}
   store:
-    id: ${PORTONE_STORE_ID:store-2fa52df5-a7b3-4c8e-b9c8-06a71d8d876f}
+    id: ${PORTONE_STORE_ID}
   channel:
-    kg-inicis: ${PORTONE_CHANNEL_KG:channel-key-df4170fd-637c-4509-b111-6ac8b41b4bcf}
-    toss: ${PORTONE_CHANNEL_TOSS:channel-key-d3e2a0bd-206e-459e-af37-d3b4c54ada9c}
+    kg-inicis: ${PORTONE_CHANNEL_KG}
+    toss: ${PORTONE_CHANNEL_TOSS}
 # JWT Configuration
 jwt:
   secret-key: ${JWT_SECRET_KEY}
-  access-token-validity-time: 3600000    # 1시간 (ms)
-  refresh-token-validity-time: 604800000 # 7일 (ms)
+  access-token-validity-time: 1209600000 # 1시간 (ms) 개발 기간에는 14일로 해놓음
+  refresh-token-validity-time: 1209600000 # 7일 (ms) 개발 기간에는 14일로 해놓음
 
 # UI Branding Configuration
 app:
