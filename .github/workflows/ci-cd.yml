@@ -26,7 +26,7 @@ jobs:
       # Step 2: 커밋 해시 추출
       - name: Set short SHA
         id: vars
-        run: echo "short_sha=$(echo ${{ github.sha }} | cut -c1-7)" >> $GITHUB_OUTP
+        run: echo "short_sha=$(echo ${{ github.sha }} | cut -c1-7)" >> $GITHUB_OUTPUT
 
       # Step 3: Java 17 설치
       - name: Setup Java 17
