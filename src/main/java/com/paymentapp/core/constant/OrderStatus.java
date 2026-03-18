@@ -2,7 +2,7 @@ package com.paymentapp.core.constant;
 
 public enum OrderStatus {
     PENDING,
-    PAID,
+    COMPLETED,
     CANCELLED,
     REFUNDED
 }

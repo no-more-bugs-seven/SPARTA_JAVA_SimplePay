@@ -2,6 +2,8 @@ package com.paymentapp.api.product;
 
 import com.paymentapp.core.constant.ProductStatus;
 import com.paymentapp.core.entity.BaseEntity;
+import com.paymentapp.core.exception.errorcode.ProductErrorCode;
+import com.paymentapp.core.exception.custom.ProductException;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.Getter;
@@ -56,7 +58,7 @@ public class Product extends BaseEntity {
 
     public void decreaseStock(int quantity) {
         if (this.stock < quantity) {
-            throw new IllegalArgumentException("재고가 부족합니다.");
+            throw new ProductException(ProductErrorCode.INSUFFICIENT_STOCK);
         }
         this.stock -= quantity;
     }

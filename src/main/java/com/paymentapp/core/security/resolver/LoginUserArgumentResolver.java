@@ -2,8 +2,8 @@ package com.paymentapp.core.security.resolver;
 
 import com.paymentapp.core.annotation.LoginUser;
 import com.paymentapp.core.dto.LoginUserInfoDto;
-import com.paymentapp.core.exception.MemberErrorCode;
-import com.paymentapp.core.exception.MemberException;
+import com.paymentapp.core.exception.errorcode.MemberErrorCode;
+import com.paymentapp.core.exception.custom.MemberException;
 import org.springframework.core.MethodParameter;
 import org.springframework.lang.NonNull;
 import org.springframework.lang.Nullable;
