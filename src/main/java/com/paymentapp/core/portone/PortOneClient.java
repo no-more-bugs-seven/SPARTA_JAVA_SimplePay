@@ -63,6 +63,9 @@ public class PortOneClient {
                     .uri("/payments/{paymentId}/cancel", paymentId)
                     .body(request)
                     .retrieve()
+                    .onStatus(status -> status.value() == 401, (req, res) -> {
+                        throw new RuntimeException("인증 실패: Secret Key를 확인하세요.");
+                    })
                     .body(PortOneCancelResponse.class);
 
             log.info("PortOne 환불 성공 paymentId={}, status={}",
