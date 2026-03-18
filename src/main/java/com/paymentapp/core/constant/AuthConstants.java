@@ -2,7 +2,7 @@ package com.paymentapp.core.constant;
 
 public class AuthConstants {
 
-    public static final String ACCESS_TOKEN = "accessToken";
+    public static final String ACCESS_TOKEN = "jwt_token";
     public static final String REFRESH_TOKEN = "refresh_token";
     public static final int COOKIE_MAX_AGE_DEFAULT = 60 * 60; // 1 hour
     public static final String LOGIN_SUCCESS_MESSAGE = "로그인에 성공했습니다.";

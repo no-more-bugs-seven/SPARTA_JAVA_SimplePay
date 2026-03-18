@@ -2,7 +2,6 @@ package com.paymentapp.api.auth;
 
 import com.paymentapp.api.auth.dto.*;
 import com.paymentapp.api.member.Member;
-import com.paymentapp.api.member.MemberMapper;
 import com.paymentapp.api.member.MemberService;
 import com.paymentapp.core.exception.MemberErrorCode;
 import com.paymentapp.core.exception.MemberException;
@@ -21,7 +20,7 @@ public class AuthService {
 
     // MemberRepository 직접 의존 제거 → MemberService API를 통해서만 접근
     private final MemberService memberService;
-    private final MemberMapper memberMapper;
+
     private final RefreshTokenRepository refreshTokenRepository;
     private final PasswordEncoder passwordEncoder;
     private final JwtTokenProvider jwtTokenProvider;
@@ -33,7 +32,8 @@ public class AuthService {
      */
     @Transactional
     public SignUpResponse signUp(SignUpRequest request) {
-        return memberMapper.toSignUpResponse(memberService.createMember(request));
+        memberService.createMember(request);
+        return new SignUpResponse(true, "");
     }
 
     /**
@@ -41,9 +41,9 @@ public class AuthService {
      * 회원 조회는 MemberService에 위임, 토큰 발급/저장은 auth 도메인이 담당
      */
     @Transactional
-    public LoginResponse login(LoginRequest request) {
+    public UserInfoDto login(LoginRequest request) {
         // MemberRepository 직접 사용 → MemberService 위임
-        Member member = memberService.findByLoginId(request.username());
+        Member member = memberService.findByLoginId(request.email());
 
         // 비밀번호 검증
         if (!passwordEncoder.matches(request.password(), member.getPassword())) {
@@ -65,7 +65,7 @@ public class AuthService {
                         )
                 );
 
-        return memberMapper.toLoginResponse(member, tokens);
+        return new UserInfoDto(tokens, new LoginResponse(true, member.getEmail()));
     }
 
     /**
@@ -103,7 +103,7 @@ public class AuthService {
     // --- private ---
 
     private AuthTokens generateTokens(Member member) {
-        String accessToken  = jwtTokenProvider.createAccessToken(member.getId(), null);
+        String accessToken  = jwtTokenProvider.createAccessToken(member.getId(), member.getEmail(), null);
         String refreshToken = jwtTokenProvider.createRefreshToken(member.getId());
         return new AuthTokens(accessToken, refreshToken);
     }

@@ -1,8 +1,11 @@
 package com.paymentapp.core.config;
 
+//import com.paymentapp.core.security.jwt.JwtAuthenticationEntryPoint;
 import com.paymentapp.core.security.jwt.JwtAuthenticationEntryPoint;
 import com.paymentapp.core.security.jwt.JwtAuthenticationFilter;
 import com.paymentapp.core.security.jwt.JwtTokenProvider;
+import com.paymentapp.core.security.oauth2.CustomOAuth2UserService;
+import com.paymentapp.core.security.oauth2.OAuth2SuccessHandler;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -13,7 +16,7 @@ import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 
-import static org.springframework.boot.security.autoconfigure.web.servlet.PathRequest.toStaticResources;
+import org.springframework.boot.autoconfigure.security.servlet.PathRequest;
 
 @Configuration
 @EnableWebSecurity
@@ -22,6 +25,8 @@ public class SecurityConfig {
 
     private final JwtTokenProvider jwtTokenProvider;
     private final JwtAuthenticationEntryPoint jwtAuthenticationEntryPoint;
+    private final CustomOAuth2UserService customOAuth2UserService;
+    private final OAuth2SuccessHandler oAuth2SuccessHandler;
 
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
@@ -60,7 +65,7 @@ public class SecurityConfig {
                         ).permitAll()
 
                         // 1) 정적 리소스
-                        .requestMatchers(toStaticResources().atCommonLocations()).permitAll()
+                        .requestMatchers(PathRequest.toStaticResources().atCommonLocations()).permitAll()
 
                         // 2) 템플릿 페이지 렌더링
                         .requestMatchers(HttpMethod.GET, "/").permitAll()
@@ -93,6 +98,12 @@ public class SecurityConfig {
                 .addFilterBefore(
                         new JwtAuthenticationFilter(jwtTokenProvider),
                         UsernamePasswordAuthenticationFilter.class
+                )
+                .oauth2Login(oauth -> oauth
+                        .userInfoEndpoint(userInfo ->
+                                userInfo.userService(customOAuth2UserService)
+                        )
+                        .successHandler(oAuth2SuccessHandler)
                 );
 
         return http.build();

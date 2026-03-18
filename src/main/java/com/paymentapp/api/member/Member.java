@@ -15,9 +15,6 @@ public class Member extends BaseEntity {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(nullable = false, unique = true, length = 30)
-    private String username;
-
     @Column(length = 100) // OAuth2 로그인 시 비밀번호가 없을 수 있으므로 nullable = true (기본값)
     private String password;
 
@@ -36,24 +33,18 @@ public class Member extends BaseEntity {
     @Column(nullable = false, length = 50)
     private String name;
 
-    @Column(length = 255)
-    private String profileImageUrl;
+    @Column()
+    private Long pointBalance;
+
+    @Column()
+    private Long membershipTierId;
 
     @Builder
-    private Member(String username, String password, String email, String phone, String name, String profileImageUrl) {
-        this.username = username;
+    private Member(String password, String email, String phone, String name, Long pointBalance) {
         this.password = password;
         this.email = email;
         this.phone = phone;
         this.name = name;
-        this.profileImageUrl = profileImageUrl;
-    }
-
-    // --- 비즈니스 로직 (도메인 메서드) ---
-    // Setter를 무분별하게 열어두기보다, 목적이 명확한 비즈니스 메서드를 제공하는 것이 좋다. (DDD)
-
-    public void updateProfile(String name, String profileImageUrl) {
-        this.name = name;
-        this.profileImageUrl = profileImageUrl;
+        this.pointBalance = pointBalance;
     }
 }

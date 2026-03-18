@@ -1,5 +1,6 @@
 package com.paymentapp.api.member;
 
+import com.paymentapp.api.auth.dto.MeResponse;
 import com.paymentapp.api.auth.dto.SignUpRequest;
 import com.paymentapp.core.exception.CommonErrorCode;
 import com.paymentapp.core.exception.MemberErrorCode;
@@ -9,6 +10,9 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.util.HashMap;
+import java.util.Map;
 
 @Service
 @Slf4j
@@ -25,9 +29,8 @@ public class MemberService {
      */
     @Transactional
     public Member createMember(SignUpRequest signUpRequest) {
-        String emailOrPhone = signUpRequest.emailOrPhone();
-        String email = emailOrPhone.contains("@") ? emailOrPhone : null;
-        String phone = emailOrPhone.contains("@") ? null : emailOrPhone;
+        String email = signUpRequest.email();
+        String phone = signUpRequest.phone();
 
         // 이메일/전화번호 중복체크
         if (email != null && memberRepository.existsByEmail(email)) {
@@ -37,17 +40,12 @@ public class MemberService {
             throw new MemberException(MemberErrorCode.DUPLICATE_PHONE);
         }
 
-        // 사용자 이름 중복체크
-        if (memberRepository.existsByUsername(signUpRequest.username())) {
-            throw new MemberException(MemberErrorCode.DUPLICATE_USERNAME);
-        }
-
         Member member = Member.builder()
-                .username(signUpRequest.username())
                 .password(passwordEncoder.encode(signUpRequest.password()))
                 .email(email)
                 .phone(phone)
                 .name(signUpRequest.name())
+                .pointBalance(0L)
                 .build();
 
         return memberRepository.save(member);
@@ -64,8 +62,7 @@ public class MemberService {
             return memberRepository.findByPhone(loginId)
                     .orElseThrow(() -> new MemberException(MemberErrorCode.INVALID_CREDENTIALS));
         } else {
-            return memberRepository.findByUsername(loginId)
-                    .orElseThrow(() -> new MemberException(MemberErrorCode.INVALID_CREDENTIALS));
+            throw new MemberException(MemberErrorCode.INVALID_CREDENTIALS);
         }
     }
 
@@ -77,16 +74,16 @@ public class MemberService {
                 .orElseThrow(() -> new MemberException(MemberErrorCode.MEMBER_NOT_FOUND));
     }
 
-    /**
-     * 중복 여부 체크 (회원가입 폼 실시간 검증용)
-     */
-    public boolean checkDuplicate(String type, String value) {
-        return switch (type) {
-            case "username" -> !memberRepository.existsByUsername(value);
-            case "email"    -> !memberRepository.existsByEmail(value);
-            case "phone"    -> !memberRepository.existsByPhone(value);
-            default -> throw new MemberException(CommonErrorCode.INVALID_INPUT_VALUE);
-        };
+    public MeResponse getInfo(Long memberId) {
+        Member member = findById(memberId);
+        return MeResponse.builder().
+                success(true).
+                email(member.getEmail()).
+                customerUid("CUST_" + Math.abs(member.getEmail().hashCode())).
+                name(member.getName()).
+                phone(member.getPhone()).
+                pointBalance(member.getPointBalance()).
+                build();
     }
 
     /**

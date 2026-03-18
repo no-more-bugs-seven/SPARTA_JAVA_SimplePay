@@ -8,38 +8,43 @@ spring:
   config:
     import: optional:classpath:client-api-config.yml
 
-  thymeleaf:
-    cache: false
-    prefix: classpath:/templates/
-    suffix: .html
-    mode: HTML
-    encoding: UTF-8
-
   security:
     user:
       name: demo
       password: demo123
-
+    oauth2:
+      client:
+        registration:
+          google:
+            client-id: ${GOOGLE_CLIENT_ID}
+            client-secret: ${GOOGLE_CLIENT_SECRET}
+            scope:
+              - profile
+              - email
+  data:
+    redis:
+      host: ${REDIS_HOST}
+      port: ${REDIS_PORT}
+      username: ${REDIS_USERNAME}
+      password: ${REDIS_PASSWORD}
 server:
   port: 8080
-  servlet:
-    context-path: /
 
 # PortOne Configuration
 portone:
   api:
     base-url: https://api.portone.io
-    secret: ${PORTONE_API_SECRET:your-api-secret}
+    secret: ${PORTONE_API_SECRET}
   store:
-    id: ${PORTONE_STORE_ID:your-store-id}
+    id: ${PORTONE_STORE_ID}
   channel:
-    kg-inicis: ${PORTONE_CHANNEL_KG:your-kg-inicis-channel-key}
-    toss: ${PORTONE_CHANNEL_TOSS:your-toss-channel-key}
+    kg-inicis: ${PORTONE_CHANNEL_KG}
+    toss: ${PORTONE_CHANNEL_TOSS}
 # JWT Configuration
 jwt:
-  secret-key: ${JWT_SECRET_KEY:L6h/xMxGO53HQmR/OB99qR/y0kTr2CAyaI5RqBIX184=}
-  access-token-validity-time: 3600000    # 1시간 (ms)
-  refresh-token-validity-time: 604800000 # 7일 (ms)
+  secret-key: ${JWT_SECRET_KEY}
+  access-token-validity-time: 1209600000 # 1시간 (ms) 개발 기간에는 14일로 해놓음
+  refresh-token-validity-time: 1209600000 # 7일 (ms) 개발 기간에는 14일로 해놓음
 
 # UI Branding Configuration
 app:

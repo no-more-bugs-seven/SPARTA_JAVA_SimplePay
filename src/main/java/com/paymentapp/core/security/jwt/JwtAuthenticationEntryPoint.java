@@ -1,5 +1,6 @@
 package com.paymentapp.core.security.jwt;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.paymentapp.core.dto.ApiResponse;
 import com.paymentapp.core.exception.ErrorResponse;
 import com.paymentapp.core.exception.MemberErrorCode;
@@ -12,7 +13,7 @@ import org.springframework.http.MediaType;
 import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.web.AuthenticationEntryPoint;
 import org.springframework.stereotype.Component;
-import tools.jackson.databind.ObjectMapper;
+
 
 import java.io.IOException;
 import java.time.LocalDateTime;
