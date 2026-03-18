@@ -1,5 +1,6 @@
 package com.paymentapp.api.order;
 
+import com.github.f4b6a3.tsid.TsidCreator;
 import com.paymentapp.api.member.Member;
 import com.paymentapp.api.payment.entity.PaymentStatus;
 import com.paymentapp.core.constant.OrderStatus;
@@ -52,7 +53,7 @@ public class Order extends BaseEntity {
 
     public Order(Member member, BigDecimal totalAmount) {
         this.member = member;
-        this.orderNumber = UUID.randomUUID().toString();
+        this.orderNumber = "ORD-" + TsidCreator.getTsid();
         this.totalAmount = totalAmount;
         this.status = OrderStatus.PENDING;
         this.usedPoints = BigDecimal.ZERO;
@@ -82,12 +83,13 @@ public class Order extends BaseEntity {
         this.totalAmount = totalAmount;
     }
 
-    public void updateStatus(OrderStatus status) {
-        this.status = status;
-    }
-
     // 결제 성공시 update
     public void complete() {
         this.status = OrderStatus.COMPLETED;
+    }
+
+    // 결제 환불시 update
+    public void refund() {
+        this.status = OrderStatus.REFUNDED;
     }
 }

@@ -32,6 +32,12 @@ public class PaymentController {
         return ResponseEntity.ok(paymentService.confirmPayment(paymentId));
     }
 
+    /**
+     * 결제 취소 및 환불
+     * @param paymentId
+     * @param request
+     * @return
+     */
     @PostMapping("/payments/{paymentId}/cancel")
     public ResponseEntity<CancelPaymentResponse> cancelPayment(
             @PathVariable String paymentId,

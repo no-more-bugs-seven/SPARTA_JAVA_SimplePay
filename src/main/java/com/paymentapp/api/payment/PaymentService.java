@@ -43,6 +43,11 @@ public class PaymentService {
     private final RefundRepository refundRepository;
     private final PortOneClient portOneClient;
 
+    /**
+     * 결제 시도 생성
+     * @param request
+     * @return
+     */
     @Transactional
     public CreatePaymentResponse createPayment(CreatePaymentRequest request) {
         // 1. 주문 조회
@@ -70,6 +75,11 @@ public class PaymentService {
         );
     }
 
+    /**
+     * 결제 검증 조회 및 확정
+     * @param paymentId
+     * @return
+     */
     @Transactional
     public ConfirmPaymentResponse confirmPayment(String paymentId) {
         // 1. 결제 조회 (Lock)
@@ -143,33 +153,28 @@ public class PaymentService {
         );
     }
 
+    /**
+     * 결제 취소 및 환불
+     * @param paymentId
+     * @param request
+     * @return
+     */
     @Transactional
     public CancelPaymentResponse cancelPayment(String paymentId, CancelPaymentRequest request) {
         // 1. 결제 조회
         Payment payment = paymentRepository.findByPaymentKeyWithLock(paymentId)
                 .orElseThrow(() -> new PaymentException(PaymentErrorCode.PAYMENT_NOT_FOUND));
 
-        // 2. 주문 조회
-        Order order = orderRepository.findById(payment.getOrder().getId())
-                .orElseThrow(() -> new OrderException(OrderErrorCode.ORDER_NOT_FOUND));
-
-        // 3. 멱등성 체크 (이미 환불된 경우)
-        Optional<Refund> existingRefund = refundRepository.findByPaymentId(payment.getId());
-        if (existingRefund.isPresent()) {
+        // 2. 멱등성 체크: 이미 환불된 상태라면 성공으로 간주하고 현재 상태 반환
+        if (payment.getStatus() == PaymentStatus.REFUNDED) {
             return CancelPaymentResponse.of(
-                    false,
-                    payment.getPaymentKey(),
-                    payment.getStatus().toString()
-            );
+                    true,
+                    payment.getOrder().getId().toString(),
+                    "REFUNDED");
         }
 
-        // 4. 상태 검증
-        if (payment.getStatus() != PaymentStatus.PAID) {
-            throw new PaymentException(PaymentErrorCode.INVALID_REFUND_STATE);
-        }
-        if (order.getStatus() != OrderStatus.COMPLETED) {
-            throw new OrderException(OrderErrorCode.INVALID_REFUND_STATE);
-        }
+        // 3. 상태 검증 (주문 완료 및 결제 완료 상태인지)
+        validateRefundableState(payment);
 
         // 4. 환불 이력 생성 (REQUESTED)
         Refund refund = Refund.builder()
@@ -178,7 +183,6 @@ public class PaymentService {
                 .reason(request.reason())
                 .status(RefundStatus.REQUESTED)
                 .build();
-
         refundRepository.save(refund);
 
         try {
@@ -186,9 +190,10 @@ public class PaymentService {
             portOneClient.cancelPayment(paymentId, request.reason());
 
             // 6. 상태 변경
-            payment.updateStatus(PaymentStatus.REFUNDED);
-            payment.getOrder().updateStatus(OrderStatus.REFUNDED);
+            payment.refund();
+            payment.getOrder().refund();
 
+            // 7. 환불 성공 이력 추가 (COMPLETED)
             refund = Refund.builder()
                     .payment(refund.getPayment())
                     .amount(refund.getAmount())
@@ -196,26 +201,39 @@ public class PaymentService {
                     .status(RefundStatus.COMPLETED)
                     .refundedAt(LocalDateTime.now())
                     .build();
-
             refundRepository.save(refund);
 
         } catch (Exception e) {
+            // 8. 환불 실패 이력 추가 (FAILED)
             refund = Refund.builder()
                     .payment(refund.getPayment())
                     .amount(refund.getAmount())
                     .reason(refund.getReason())
                     .status(RefundStatus.FAILED)
                     .build();
-
             refundRepository.save(refund);
 
             throw e;
         }
 
+        // 9. 응답 반환
         return CancelPaymentResponse.of(
                 true,
-                order.getId().toString(),
-                order.getStatus().toString()
+                payment.getOrder().getId().toString(),
+                "REFUNDED"
         );
+    }
+
+    /**
+     * 결제 환불시 상태 검증
+     * @param payment
+     */
+    private void validateRefundableState(Payment payment) {
+        if (payment.getStatus() != PaymentStatus.PAID) {
+            throw new PaymentException(PaymentErrorCode.INVALID_REFUND_STATE);
+        }
+        if (payment.getOrder().getStatus() != OrderStatus.COMPLETED) {
+            throw new OrderException(OrderErrorCode.INVALID_REFUND_STATE);
+        }
     }
 }

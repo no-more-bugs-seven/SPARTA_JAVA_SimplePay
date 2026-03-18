@@ -53,7 +53,7 @@ public class Payment extends BaseEntity {
         this.status = PaymentStatus.FAILED;
     }
 
-    public void updateStatus(PaymentStatus status) {
-        this.status = status;
+    public void refund() {
+        this.status = PaymentStatus.REFUNDED;
     }
 }
