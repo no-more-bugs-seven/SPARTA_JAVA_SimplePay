@@ -26,6 +26,7 @@ import org.springframework.web.bind.annotation.*;
 @RequiredArgsConstructor
 public class AuthController {
 
+    private final RedisService redisService;
     // signUp/login/reissue/logout → AuthService가 모든 인증 흐름 담당
     private final AuthService authService;
     // checkDuplicate는 member 도메인 기능 → MemberService 직접 호출 (auth 흐름 아님)
@@ -134,4 +135,16 @@ public class AuthController {
         response.addCookie(cookie);
         return ResponseEntity.ok(ApiResponse.success(AuthConstants.LOGOUT_SUCCESS_MESSAGE));
     }
+
+    @GetMapping("/redis/test")
+    public String test() {
+        redisService.save();
+        return redisService.get();
+    }
+
+
+
+
+
+
 }
