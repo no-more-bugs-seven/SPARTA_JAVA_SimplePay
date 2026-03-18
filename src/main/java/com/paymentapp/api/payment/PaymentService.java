@@ -3,20 +3,28 @@ package com.paymentapp.api.payment;
 import com.github.f4b6a3.tsid.TsidCreator;
 import com.paymentapp.api.order.Order;
 import com.paymentapp.api.order.OrderItem;
+import com.paymentapp.api.order.OrderItemRepository;
 import com.paymentapp.api.order.OrderRepository;
-import com.paymentapp.api.payment.dto.ConfirmPaymentResponse;
-import com.paymentapp.api.payment.dto.CreatePaymentRequest;
-import com.paymentapp.api.payment.dto.CreatePaymentResponse;
+import com.paymentapp.api.payment.dto.*;
+import com.paymentapp.api.payment.entity.Payment;
+import com.paymentapp.api.payment.entity.PaymentStatus;
+import com.paymentapp.api.payment.entity.Refund;
+import com.paymentapp.api.payment.entity.RefundStatus;
 import com.paymentapp.api.product.Product;
 import com.paymentapp.api.product.ProductRepository;
+import com.paymentapp.core.constant.OrderStatus;
 import com.paymentapp.core.exception.CommonErrorCode;
 import com.paymentapp.core.exception.MemberException;
+import com.paymentapp.core.portone.PortOneClient;
+import com.paymentapp.core.portone.dto.PortOnePaymentResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.math.BigDecimal;
+import java.time.LocalDateTime;
 import java.util.List;
-import java.util.UUID;
+import java.util.Optional;
 
 @Service
 @RequiredArgsConstructor
@@ -25,6 +33,9 @@ public class PaymentService {
     private final PaymentRepository paymentRepository;
     private final ProductRepository productRepository;
     private final OrderRepository orderRepository;
+    private final OrderItemRepository orderItemRepository;
+    private final RefundRepository refundRepository;
+    private final PortOneClient portOneClient;
 
     @Transactional
     public CreatePaymentResponse createPayment(CreatePaymentRequest request) {
@@ -38,7 +49,7 @@ public class PaymentService {
                 .order(order)
                 .paymentKey(paymentKey)
                 .amount(request.totalAmount())
-                .status(PaymentStatus.PENDING.toString())
+                .status(PaymentStatus.PENDING)
                 .build();
         // 결제 저장
         Payment savedPayment = paymentRepository.save(payment);
@@ -46,7 +57,7 @@ public class PaymentService {
         return CreatePaymentResponse.of(
                 true,
                 savedPayment.getPaymentKey(),
-                savedPayment.getStatus()
+                savedPayment.getStatus().toString()
         );
     }
 
@@ -57,16 +68,16 @@ public class PaymentService {
                 .orElseThrow(() -> new MemberException(CommonErrorCode.NOT_FOUND));
 
         // 2. 멱등성 체크 (이미 처리된 경우)
-        if (PaymentStatus.PENDING.toString().equals(payment.getStatus())) {
+        if (payment.getStatus() != PaymentStatus.PENDING) {
             return ConfirmPaymentResponse.of(
                     false,
                     payment.getOrder().getId().toString(),
-                    payment.getStatus()
+                    payment.getStatus().toString()
             );
         }
 
         // 3. PortOne 결제 조회
-        /*PortOnePaymentResponse response = portOneClient.getPayment(paymentId);
+        PortOnePaymentResponse response = portOneClient.getPayment(paymentId);
 
         // 4. 결제 실패
         if (!"PAID".equals(response.getStatus())) {
@@ -74,26 +85,27 @@ public class PaymentService {
             return ConfirmPaymentResponse.of(
                     false,
                     payment.getOrder().getId().toString(),
-                    payment.getStatus()
+                    payment.getStatus().toString()
             );
         }
 
         // 5. 금액 검증
-        if (!payment.getAmount().equals(response.getAmount())) {
-            throw new PaymentException("결제 금액 불일치");
+        BigDecimal orderAmount = payment.getAmount();
+        BigDecimal paidAmount = BigDecimal.valueOf(response.getAmount().getTotal());
+        if (orderAmount.compareTo(paidAmount) != 0) {
+            throw new MemberException(CommonErrorCode.NOT_FOUND);
         }
 
         // 6. 주문 조회
         Order order = orderRepository.findById(payment.getOrder().getId())
-                .orElseThrow(() -> new OrderException("주문 정보 없음"));
+                .orElseThrow(() -> new MemberException(CommonErrorCode.NOT_FOUND));
 
         // 7. 재고 차감
         List<OrderItem> items = orderItemRepository.findByOrderId(order.getId());
 
         for (OrderItem item : items) {
-
-            Product product = productRepository.findById(item.getProductId())
-                    .orElseThrow(() -> new ProductException("상품 없음"));
+            Product product = productRepository.findById(item.getProduct().getId())
+                    .orElseThrow(() -> new MemberException(CommonErrorCode.NOT_FOUND));
 
             product.decreaseStock(item.getQuantity());
         }
@@ -106,8 +118,83 @@ public class PaymentService {
         return ConfirmPaymentResponse.of(
                 true,
                 payment.getOrder().getId().toString(),
-                payment.getStatus()
-        );*/
-        return null;
+                payment.getStatus().toString()
+        );
+    }
+
+    @Transactional
+    public CancelPaymentResponse cancelPayment(String paymentId, CancelPaymentRequest request) {
+        // 1. 결제 조회
+        Payment payment = paymentRepository.findByPaymentKey(paymentId)
+                .orElseThrow(() -> new MemberException(CommonErrorCode.NOT_FOUND));
+
+        // 2. 주문 조회
+        Order order = orderRepository.findById(payment.getOrder().getId())
+                .orElseThrow(() -> new MemberException(CommonErrorCode.NOT_FOUND));
+
+        // 3. 멱등성 체크 (이미 환불된 경우)
+        Optional<Refund> existingRefund = refundRepository.findByPaymentId(payment.getId());
+        if (existingRefund.isPresent()) {
+            return CancelPaymentResponse.of(
+                    false,
+                    payment.getPaymentKey(),
+                    payment.getStatus().toString()
+            );
+        }
+
+        // 4. 상태 검증
+        if (payment.getStatus() != PaymentStatus.PAID) {
+            throw new IllegalStateException("환불 가능한 상태가 아닙니다.");
+        }
+        if (order.getStatus() != OrderStatus.PAID) {
+            throw new IllegalStateException("환불 가능한 상태가 아닙니다.");
+        }
+
+        // 4. 환불 이력 생성 (REQUESTED)
+        Refund refund = Refund.builder()
+                .payment(payment)
+                .amount(payment.getAmount())
+                .reason(request.reason())
+                .status(RefundStatus.REQUESTED)
+                .build();
+
+        refundRepository.save(refund);
+
+        try {
+            // 5. PortOne 환불 API 호출
+            portOneClient.cancelPayment(paymentId, request.reason());
+
+            // 6. 상태 변경
+            payment.updateStatus(PaymentStatus.REFUNDED);
+            payment.getOrder().updateStatus(OrderStatus.REFUNDED);
+
+            refund = Refund.builder()
+                    .payment(refund.getPayment())
+                    .amount(refund.getAmount())
+                    .reason(refund.getReason())
+                    .status(RefundStatus.COMPLETED)
+                    .refundedAt(LocalDateTime.now())
+                    .build();
+
+            refundRepository.save(refund);
+
+        } catch (Exception e) {
+            refund = Refund.builder()
+                    .payment(refund.getPayment())
+                    .amount(refund.getAmount())
+                    .reason(refund.getReason())
+                    .status(RefundStatus.FAILED)
+                    .build();
+
+            refundRepository.save(refund);
+
+            throw e;
+        }
+
+        return CancelPaymentResponse.of(
+                true,
+                order.getId().toString(),
+                order.getStatus().toString()
+        );
     }
 }

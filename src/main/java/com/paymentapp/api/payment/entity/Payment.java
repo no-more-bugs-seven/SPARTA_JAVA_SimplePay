@@ -1,4 +1,4 @@
-package com.paymentapp.api.payment;
+package com.paymentapp.api.payment.entity;
 
 import com.paymentapp.api.order.Order;
 import com.paymentapp.core.entity.BaseEntity;
@@ -8,6 +8,7 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
 @Entity
@@ -24,13 +25,17 @@ public class Payment extends BaseEntity {
     private Order order;
 
     private String paymentKey;
-    private Double amount;
-    private String status;
+    private BigDecimal amount;
+
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    private PaymentStatus status;
+
     private LocalDateTime paidAt;
     private LocalDateTime refundedAt;
 
     @Builder
-    public Payment (Order order, String paymentKey, Double amount, String status) {
+    public Payment (Order order, String paymentKey, BigDecimal amount, PaymentStatus status) {
         this.order = order;
         this.paymentKey = paymentKey;
         this.amount = amount;
@@ -39,12 +44,16 @@ public class Payment extends BaseEntity {
 
     // 결제 성공시 update
     public void complete() {
-        this.status = PaymentStatus.PAID.toString();
+        this.status = PaymentStatus.PAID;
         this.paidAt = LocalDateTime.now();
     }
 
     // 결제 실패시 upate
     public void fail() {
-        this.status = PaymentStatus.FAILED.toString();
+        this.status = PaymentStatus.FAILED;
+    }
+
+    public void updateStatus(PaymentStatus status) {
+        this.status = status;
     }
 }

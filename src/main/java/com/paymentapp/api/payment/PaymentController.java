@@ -1,8 +1,6 @@
 package com.paymentapp.api.payment;
 
-import com.paymentapp.api.payment.dto.ConfirmPaymentResponse;
-import com.paymentapp.api.payment.dto.CreatePaymentRequest;
-import com.paymentapp.api.payment.dto.CreatePaymentResponse;
+import com.paymentapp.api.payment.dto.*;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -32,5 +30,12 @@ public class PaymentController {
     @PostMapping("/payments/{paymentId}/confirm")
     public ResponseEntity<ConfirmPaymentResponse> confirmPayment(@PathVariable String paymentId) {
         return ResponseEntity.ok(paymentService.confirmPayment(paymentId));
+    }
+
+    @PostMapping("/payments/{paymentId}/cancel")
+    public ResponseEntity<CancelPaymentResponse> cancelPayment(
+            @PathVariable String paymentId,
+            @RequestBody CancelPaymentRequest request) {
+        return ResponseEntity.ok(paymentService.cancelPayment(paymentId, request));
     }
 }

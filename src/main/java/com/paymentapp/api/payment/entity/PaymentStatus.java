@@ -1,4 +1,4 @@
-package com.paymentapp.api.payment;
+package com.paymentapp.api.payment.entity;
 
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;

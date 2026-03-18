@@ -1,6 +1,7 @@
 package com.paymentapp.api.order;
 
 import com.paymentapp.api.member.Member;
+import com.paymentapp.api.payment.entity.PaymentStatus;
 import com.paymentapp.core.constant.OrderStatus;
 import com.paymentapp.core.entity.BaseEntity;
 import jakarta.persistence.*;
@@ -9,6 +10,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 
 import java.math.BigDecimal;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
@@ -78,5 +80,14 @@ public class Order extends BaseEntity {
 
     public void updateTotalAmount(BigDecimal totalAmount) {
         this.totalAmount = totalAmount;
+    }
+
+    public void updateStatus(OrderStatus status) {
+        this.status = status;
+    }
+
+    // 결제 성공시 update
+    public void complete() {
+        this.status = OrderStatus.PAID;
     }
 }

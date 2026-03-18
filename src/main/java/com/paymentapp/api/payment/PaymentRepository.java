@@ -1,7 +1,7 @@
 package com.paymentapp.api.payment;
 
+import com.paymentapp.api.payment.entity.Payment;
 import org.springframework.data.jpa.repository.JpaRepository;
-import org.springframework.data.repository.query.Param;
 
 import java.util.Optional;
 
