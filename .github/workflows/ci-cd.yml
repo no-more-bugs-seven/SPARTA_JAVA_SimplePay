@@ -3,9 +3,9 @@ name: CI Pipeline
 # main 브랜치 push 또는 PR
 on:
   push:
-    branches: [main]
+    branches: [main, dev, cicd]
   pull_request:
-    branches: [main]
+    branches: [main, dev, cicd]
 
 # OIDC 토큰 요청 권한
 permissions:
