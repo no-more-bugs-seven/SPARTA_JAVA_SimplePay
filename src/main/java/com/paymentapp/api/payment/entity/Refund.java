@@ -1,6 +1,5 @@
-package com.paymentapp.api.payment;
+package com.paymentapp.api.payment.entity;
 
-import com.paymentapp.api.order.Order;
 import com.paymentapp.core.entity.BaseEntity;
 import jakarta.persistence.*;
 import lombok.AccessLevel;

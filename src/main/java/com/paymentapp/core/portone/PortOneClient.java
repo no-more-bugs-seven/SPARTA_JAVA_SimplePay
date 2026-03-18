@@ -3,37 +3,47 @@ package com.paymentapp.core.portone;
 import com.paymentapp.core.portone.dto.PortOneCancelRequest;
 import com.paymentapp.core.portone.dto.PortOneCancelResponse;
 import com.paymentapp.core.portone.dto.PortOnePaymentResponse;
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.MediaType;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestClient;
 
 @Slf4j
 @Component
-@RequiredArgsConstructor
 public class PortOneClient {
 
     private final RestClient restClient;
 
-    @Value("${portone.api.secret}")
-    private String secretKey;
+    public PortOneClient(
+            @Value("${portone.api.base-url}") String baseUrl,
+            @Value("${portone.api.secret}") String apiSecret
+    ) {
+        this.restClient = RestClient.builder()
+                .baseUrl(baseUrl)
+                .defaultHeader("Authorization", "PortOne " + apiSecret)
+                .defaultHeader("Content-Type", MediaType.APPLICATION_JSON_VALUE)
+                .build();
+    }
 
     public PortOnePaymentResponse getPayment(String paymentId) {
-
         try {
             log.info("PortOne 요청 paymentId={}", paymentId);
-            log.info("secretKey={}", secretKey);
 
-            PortOnePaymentResponse response = restClient.get()
+            return restClient.get()
                     .uri("/payments/{paymentId}", paymentId)
-                    .header("Authorization", "PortOne " + secretKey)
                     .retrieve()
+                    // 401 에러(인증 실패) 발생 시 로그 출력
+                    .onStatus(status -> status.value() == 401, (request, response) -> {
+                        log.error("V2 인증 실패: 시크릿 키가 틀렸거나 'PortOne ' 접두사가 누락됨");
+                        throw new RuntimeException("PortOne V2 인증 실패");
+                    })
+                    // 404 에러(결제 건 없음) 발생 시
+                    .onStatus(status -> status.value() == 404, (request, response) -> {
+                        log.error("결제 건을 찾을 수 없음: paymentId={}", paymentId);
+                        throw new RuntimeException("존재하지 않는 결제 ID");
+                    })
                     .body(PortOnePaymentResponse.class);
-
-            log.info("PortOne 응답={}", response);
-
-            return response;
 
         } catch (Exception e) {
             log.error("PortOne API 호출 실패", e);
@@ -51,7 +61,6 @@ public class PortOneClient {
 
             PortOneCancelResponse response = restClient.post()
                     .uri("/payments/{paymentId}/cancel", paymentId)
-                    .header("Authorization", "PortOne " + secretKey)
                     .body(request)
                     .retrieve()
                     .body(PortOneCancelResponse.class);
