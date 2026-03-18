@@ -1,5 +1,6 @@
-package com.paymentapp.api.plan.entity;
+package com.paymentapp.api.subscription.entity;
 
+import com.paymentapp.api.plan.entity.Plan;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.Getter;

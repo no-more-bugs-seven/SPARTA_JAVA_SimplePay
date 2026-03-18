@@ -1,4 +1,4 @@
-package com.paymentapp.api.plan.entity;
+package com.paymentapp.api.subscription.entity;
 
 public enum SubscriptionStatus {
     ACTIVE,
