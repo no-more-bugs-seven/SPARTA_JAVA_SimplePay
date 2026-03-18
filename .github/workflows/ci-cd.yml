@@ -147,7 +147,7 @@ jobs:
           s|__PORTONE_STORE_ID__|${PORTONE_STORE_ID}|g;
           s|__PORTONE_CHANNEL_KG__|${PORTONE_CHANNEL_KG}|g;
           s|__PORTONE_CHANNEL_TOSS__|${PORTONE_CHANNEL_TOSS}|g;
-          s|BASE_URL|${BASE_URL}|g
+          s|__BASE_URL__|${BASE_URL}|g
           " | base64 -w 0
           #!/bin/bash
           set -e
