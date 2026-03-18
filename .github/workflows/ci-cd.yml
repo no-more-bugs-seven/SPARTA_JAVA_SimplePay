@@ -122,26 +122,69 @@ jobs:
           PORTONE_CHANNEL_KG: ${{ vars.PORTONE_CHANNEL_KG }}
           PORTONE_CHANNEL_TOSS: ${{ vars.PORTONE_CHANNEL_TOSS }}
         run: |
-          USER_DATA=$(cat <<USERDATA | base64 -w 0
+          ECR_URI="${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com/${ECR_REPOSITORY}"
+
+          USER_DATA=$(cat <<'USERDATA' | sed "
+          s|__IMAGE_TAG__|${IMAGE_TAG}|g;
+          s|__AWS_ACCOUNT_ID__|${AWS_ACCOUNT_ID}|g;
+          s|__AWS_REGION__|${AWS_REGION}|g;
+          s|__ECR_REPOSITORY__|${ECR_REPOSITORY}|g;
+          s|__DATABASE_URL__|${DATABASE_URL}|g;
+          s|__DATABASE_USERNAME__|${DATABASE_USERNAME}|g;
+          s|__DATABASE_PASSWORD__|${DATABASE_PASSWORD}|g;
+          s|__JWT_SECRET_KEY__|${JWT_SECRET_KEY}|g;
+          s|__JWT_ACCESS_TOKEN_VALIDITY_TIME__|${JWT_ACCESS_TOKEN_VALIDITY_TIME}|g;
+          s|__JWT_REFRESH_TOKEN_VALIDITY_TIME__|${JWT_REFRESH_TOKEN_VALIDITY_TIME}|g;
+          s|__SERVER_PORT__|${SERVER_PORT}|g;
+          s|__REDIS_HOST__|${REDIS_HOST}|g;
+          s|__REDIS_PORT__|${REDIS_PORT}|g;
+          s|__REDIS_USERNAME__|${REDIS_USERNAME}|g;
+          s|__REDIS_PASSWORD__|${REDIS_PASSWORD}|g;
+          s|__GOOGLE_CLIENT_ID__|${GOOGLE_CLIENT_ID}|g;
+          s|__GOOGLE_CLIENT_SECRET__|${GOOGLE_CLIENT_SECRET}|g;
+          s|__PORTONE_API_SECRET__|${PORTONE_API_SECRET}|g;
+          s|__PORTONE_STORE_ID__|${PORTONE_STORE_ID}|g;
+          s|__PORTONE_CHANNEL_KG__|${PORTONE_CHANNEL_KG}|g;
+          s|__PORTONE_CHANNEL_TOSS__|${PORTONE_CHANNEL_TOSS}|g
+          " | base64 -w 0
           #!/bin/bash
           set -e
+          AWS_REGION="__AWS_REGION__"
+          AWS_ACCOUNT_ID="__AWS_ACCOUNT_ID__"
+          ECR_REPOSITORY="__ECR_REPOSITORY__"
+          IMAGE_TAG="__IMAGE_TAG__"
           
+          DATABASE_URL="__DATABASE_URL__"
+          DATABASE_USERNAME="__DATABASE_USERNAME__"
+          DATABASE_PASSWORD="__DATABASE_PASSWORD__"
+          
+          JWT_SECRET_KEY="__JWT_SECRET_KEY__"
+          JWT_ACCESS_TOKEN_VALIDITY_TIME="__JWT_ACCESS_TOKEN_VALIDITY_TIME__"
+          JWT_REFRESH_TOKEN_VALIDITY_TIME="__JWT_REFRESH_TOKEN_VALIDITY_TIME__"
+          
+          SERVER_PORT="__SERVER_PORT__"
+          
+          REDIS_HOST="__REDIS_HOST__"
+          REDIS_PORT="__REDIS_PORT__"
+          REDIS_USERNAME="__REDIS_USERNAME__"
+          REDIS_PASSWORD="__REDIS_PASSWORD__"
+          
+          GOOGLE_CLIENT_ID="__GOOGLE_CLIENT_ID__"
+          GOOGLE_CLIENT_SECRET="__GOOGLE_CLIENT_SECRET__"
+          
+          PORTONE_API_SECRET="__PORTONE_API_SECRET__"
+          PORTONE_STORE_ID="__PORTONE_STORE_ID__"
+          PORTONE_CHANNEL_KG="__PORTONE_CHANNEL_KG__"
+          PORTONE_CHANNEL_TOSS="__PORTONE_CHANNEL_TOSS__"
+  
           ECR_URI="${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com/${ECR_REPOSITORY}"
-          
           dnf update -y
           dnf install -y docker
           systemctl enable docker
           systemctl start docker
-          
-          aws ecr get-login-password --region ${AWS_REGION} \
-          | docker login --username AWS --password-stdin ${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com
-          
+          aws ecr get-login-password --region ${AWS_REGION} | docker login --username AWS --password-stdin ${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com
           docker pull ${ECR_URI}:${IMAGE_TAG}
-          
-          docker run -d -p 8080:8080 \
-          --restart unless-stopped \
-          --name ci-demo \
-          -e SPRING_PROFILES_ACTIVE=prod \
+          docker run -d -p 8080:8080 --restart unless-stopped --name ci-demo -e SPRING_PROFILES_ACTIVE=prod \
           -e DATABASE_URL=${DATABASE_URL} \
           -e DATABASE_USERNAME=${DATABASE_USERNAME} \
           -e DATABASE_PASSWORD=${DATABASE_PASSWORD} \
