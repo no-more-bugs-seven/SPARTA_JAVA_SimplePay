@@ -5,9 +5,11 @@ import io.github.cdimascio.dotenv.Dotenv;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.data.jpa.repository.config.EnableJpaAuditing;
+import org.springframework.scheduling.annotation.EnableScheduling;
 
 @EnableJpaAuditing
 @SpringBootApplication
+@EnableScheduling // 스케쥴러 활성화 위한 어노테이션
 public class PaymentAppApplication {
 
     public static void main(String[] args) {
