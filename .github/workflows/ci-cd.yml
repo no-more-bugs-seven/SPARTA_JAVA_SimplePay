@@ -124,7 +124,7 @@ jobs:
         run: |
           ECR_URI="${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com/${ECR_REPOSITORY}"
 
-          USER_DATA=$(cat <<'USERDATA' | sed "
+          USER_DATA=$(cat <<USERDATA | sed "
           s|__IMAGE_TAG__|${IMAGE_TAG}|g;
           s|__AWS_ACCOUNT_ID__|${AWS_ACCOUNT_ID}|g;
           s|__AWS_REGION__|${AWS_REGION}|g;
@@ -153,6 +153,7 @@ jobs:
           AWS_ACCOUNT_ID="__AWS_ACCOUNT_ID__"
           ECR_REPOSITORY="__ECR_REPOSITORY__"
           IMAGE_TAG="__IMAGE_TAG__"
+          ECR_URI="${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com/${ECR_REPOSITORY}"
           
           DATABASE_URL="__DATABASE_URL__"
           DATABASE_USERNAME="__DATABASE_USERNAME__"
@@ -177,7 +178,6 @@ jobs:
           PORTONE_CHANNEL_KG="__PORTONE_CHANNEL_KG__"
           PORTONE_CHANNEL_TOSS="__PORTONE_CHANNEL_TOSS__"
   
-          ECR_URI="${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com/${ECR_REPOSITORY}"
           dnf update -y
           dnf install -y docker
           systemctl enable docker
