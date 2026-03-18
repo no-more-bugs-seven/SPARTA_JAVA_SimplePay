@@ -121,6 +121,7 @@ jobs:
           PORTONE_STORE_ID: ${{ vars.PORTONE_STORE_ID }}
           PORTONE_CHANNEL_KG: ${{ vars.PORTONE_CHANNEL_KG }}
           PORTONE_CHANNEL_TOSS: ${{ vars.PORTONE_CHANNEL_TOSS }}
+          BASE_URL: ${{ vars.BASE_URL }}
         run: |
           ECR_URI="${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com/${ECR_REPOSITORY}"
 
@@ -145,7 +146,8 @@ jobs:
           s|__PORTONE_API_SECRET__|${PORTONE_API_SECRET}|g;
           s|__PORTONE_STORE_ID__|${PORTONE_STORE_ID}|g;
           s|__PORTONE_CHANNEL_KG__|${PORTONE_CHANNEL_KG}|g;
-          s|__PORTONE_CHANNEL_TOSS__|${PORTONE_CHANNEL_TOSS}|g
+          s|__PORTONE_CHANNEL_TOSS__|${PORTONE_CHANNEL_TOSS}|g;
+          s|BASE_URL|${BASE_URL}|g
           " | base64 -w 0
           #!/bin/bash
           set -e
@@ -177,6 +179,7 @@ jobs:
           PORTONE_STORE_ID="__PORTONE_STORE_ID__"
           PORTONE_CHANNEL_KG="__PORTONE_CHANNEL_KG__"
           PORTONE_CHANNEL_TOSS="__PORTONE_CHANNEL_TOSS__"
+          BASE_URL="__BASE_URL__"
   
           dnf update -y
           dnf install -y docker
@@ -202,6 +205,7 @@ jobs:
           -e PORTONE_STORE_ID=${PORTONE_STORE_ID} \
           -e PORTONE_CHANNEL_KG=${PORTONE_CHANNEL_KG} \
           -e PORTONE_CHANNEL_TOSS=${PORTONE_CHANNEL_TOSS} \
+          -e BASE_URL=${BASE_URL} \
           ${ECR_URI}:${IMAGE_TAG}
           
           USERDATA
