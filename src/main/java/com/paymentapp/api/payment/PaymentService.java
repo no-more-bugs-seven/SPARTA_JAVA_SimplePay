@@ -63,8 +63,8 @@ public class PaymentService {
 
     @Transactional
     public ConfirmPaymentResponse confirmPayment(String paymentId) {
-        // 1. 결제 조회
-        Payment payment = paymentRepository.findByPaymentKey(paymentId)
+        // 1. 결제 조회 (Lock)
+        Payment payment = paymentRepository.findByPaymentKeyWithLock(paymentId)
                 .orElseThrow(() -> new MemberException(CommonErrorCode.NOT_FOUND));
 
         // 2. 멱등성 체크 (이미 처리된 경우)
@@ -79,13 +79,13 @@ public class PaymentService {
         // 3. PortOne 결제 조회
         PortOnePaymentResponse response = portOneClient.getPayment(paymentId);
 
-        // 4. 결제 실패
+        // 4. 결제 상태 확인
         if (!"PAID".equals(response.getStatus())) {
             payment.fail();
             return ConfirmPaymentResponse.of(
                     false,
                     payment.getOrder().getId().toString(),
-                    payment.getStatus().toString()
+                    "FAILED"
             );
         }
 
@@ -93,6 +93,9 @@ public class PaymentService {
         BigDecimal orderAmount = payment.getAmount();
         BigDecimal paidAmount = BigDecimal.valueOf(response.getAmount().getTotal());
         if (orderAmount.compareTo(paidAmount) != 0) {
+            // [보안] 금액 위변조 감지 시 자동 취소 로직
+            /*portOneClient.cancelPayment(paymentId, "결제 금액 불일치(위변조 의심)");
+            payment.fail();*/
             throw new MemberException(CommonErrorCode.NOT_FOUND);
         }
 
@@ -100,32 +103,41 @@ public class PaymentService {
         Order order = orderRepository.findById(payment.getOrder().getId())
                 .orElseThrow(() -> new MemberException(CommonErrorCode.NOT_FOUND));
 
-        // 7. 재고 차감
-        List<OrderItem> items = orderItemRepository.findByOrderId(order.getId());
+        try {
+            // 7. 재고 차감
+            List<OrderItem> items = orderItemRepository.findByOrderId(order.getId());
 
-        for (OrderItem item : items) {
-            Product product = productRepository.findById(item.getProduct().getId())
-                    .orElseThrow(() -> new MemberException(CommonErrorCode.NOT_FOUND));
+            for (OrderItem item : items) {
+                // Product에도 Lock걸어 동시 재고 차감 방지
+                Product product = productRepository.findByIdWithLock(item.getProduct().getId())
+                        .orElseThrow(() -> new MemberException(CommonErrorCode.NOT_FOUND));
 
-            product.decreaseStock(item.getQuantity());
+                product.decreaseStock(item.getQuantity());
+            }
+
+            // 8. 결제/주문 상태 변경
+            payment.complete();
+            order.complete();
+
+        } catch (IllegalArgumentException e) {
+            // 재고가 없으면 포트원에 즉시 결제 취소 요청
+            portOneClient.cancelPayment(paymentId, "재고 부족으로 인한 자동 결제 취소");
+            payment.fail();
+            throw e;
         }
-
-        // 8. 결제/주문 상태 변경
-        payment.complete();
-        order.complete();
 
         // 9. 응답 반환
         return ConfirmPaymentResponse.of(
                 true,
                 payment.getOrder().getId().toString(),
-                payment.getStatus().toString()
+                "PAID"
         );
     }
 
     @Transactional
     public CancelPaymentResponse cancelPayment(String paymentId, CancelPaymentRequest request) {
         // 1. 결제 조회
-        Payment payment = paymentRepository.findByPaymentKey(paymentId)
+        Payment payment = paymentRepository.findByPaymentKeyWithLock(paymentId)
                 .orElseThrow(() -> new MemberException(CommonErrorCode.NOT_FOUND));
 
         // 2. 주문 조회
@@ -146,7 +158,7 @@ public class PaymentService {
         if (payment.getStatus() != PaymentStatus.PAID) {
             throw new IllegalStateException("환불 가능한 상태가 아닙니다.");
         }
-        if (order.getStatus() != OrderStatus.PAID) {
+        if (order.getStatus() != OrderStatus.COMPLETED) {
             throw new IllegalStateException("환불 가능한 상태가 아닙니다.");
         }
 
