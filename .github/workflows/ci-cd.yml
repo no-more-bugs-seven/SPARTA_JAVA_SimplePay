@@ -121,7 +121,26 @@ jobs:
           systemctl start docker
           aws ecr get-login-password --region ${AWS_REGION} | docker login --username AWS --password-stdin ${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com
           docker pull ${ECR_URI}:${IMAGE_TAG}
-          docker run -d -p 8080:8080 --restart unless-stopped --name ci-demo -e SPRING_PROFILES_ACTIVE=prod ${ECR_URI}:${IMAGE_TAG}
+          docker run -d -p 8080:8080 --restart unless-stopped --name ci-demo -e SPRING_PROFILES_ACTIVE=prod \
+          -e DATABASE_URL=${DATABASE_URL} \
+          -e DATABASE_USERNAME=${DATABASE_USERNAME} \
+          -e DATABASE_PASSWORD=${DATABASE_PASSWORD} \
+          -e JWT_SECRET_KEY=${JWT_SECRET_KEY} \
+          -e JWT_ACCESS_TOKEN_VALIDITY_TIME=${JWT_ACCESS_TOKEN_VALIDITY_TIME} \
+          -e JWT_REFRESH_TOKEN_VALIDITY_TIME=${JWT_REFRESH_TOKEN_VALIDITY_TIME} \
+          -e SERVER_PORT=${SERVER_PORT} \
+          -e REDIS_HOST=${REDIS_HOST} \
+          -e REDIS_PORT=${REDIS_PORT} \
+          -e REDIS_USERNAME=${REDIS_USERNAME} \
+          -e REDIS_PASSWORD=${REDIS_PASSWORD} \
+          -e GOOGLE_CLIENT_ID=${GOOGLE_CLIENT_ID} \
+          -e GOOGLE_CLIENT_SECRET=${GOOGLE_CLIENT_SECRET} \
+          -e PORTONE_API_SECRET=${PORTONE_API_SECRET} \
+          -e PORTONE_STORE_ID=${PORTONE_STORE_ID} \
+          -e PORTONE_CHANNEL_KG=${PORTONE_CHANNEL_KG} \
+          -e PORTONE_CHANNEL_TOSS=${PORTONE_CHANNEL_TOSS} \
+          ${ECR_URI}:${IMAGE_TAG}
+          
           USERDATA
           )
 
@@ -140,51 +159,51 @@ jobs:
 
           echo "✅ 기본 버전 → v${NEW_VERSION} 변경 완료"
 
-      # Step 3: Instance Refresh 시작
-      - name: Start Instance Refresh
-        id: refresh
-        env:
-          ASG_NAME: ${{ vars.ASG_NAME }}
-        run: |
-          REFRESH_ID=$(aws autoscaling start-instance-refresh \
-            --auto-scaling-group-name ${ASG_NAME} \
-            --preferences '{
-              "MinHealthyPercentage": 100,
-              "InstanceWarmup": 120
-            }' \
-            --query 'InstanceRefreshId' \
-            --output text)
-
-          echo "refresh_id=${REFRESH_ID}" >> $GITHUB_OUTPUT
-          echo "✅ Instance Refresh 시작: ${REFRESH_ID}"
-
-      # Step 4: Instance Refresh 완료 대기
-      - name: Wait for Instance Refresh
-        env:
-          ASG_NAME: ${{ vars.ASG_NAME }}
-          REFRESH_ID: ${{ steps.refresh.outputs.refresh_id }}
-        run: |
-          echo "⏳ Instance Refresh 완료 대기 중..."
-
-          for i in $(seq 1 30); do
-            STATUS=$(aws autoscaling describe-instance-refreshes \
-              --auto-scaling-group-name ${ASG_NAME} \
-              --instance-refresh-ids ${REFRESH_ID} \
-              --query 'InstanceRefreshes[0].Status' \
-              --output text)
-
-            echo "시도 ${i}/30 - 상태: ${STATUS}"
-
-            if [ "${STATUS}" = "Successful" ]; then
-              echo "✅ Instance Refresh 성공! 배포 완료!"
-              exit 0
-            elif [ "${STATUS}" = "Failed" ] || [ "${STATUS}" = "Cancelled" ]; then
-              echo "❌ Instance Refresh 실패: ${STATUS}"
-              exit 1
-            fi
-
-            sleep 30
-          done
-
-          echo "❌ Instance Refresh 타임아웃 (15분 초과)"
-          exit 1
+#      # Step 3: Instance Refresh 시작
+#      - name: Start Instance Refresh
+#        id: refresh
+#        env:
+#          ASG_NAME: ${{ vars.ASG_NAME }}
+#        run: |
+#          REFRESH_ID=$(aws autoscaling start-instance-refresh \
+#            --auto-scaling-group-name ${ASG_NAME} \
+#            --preferences '{
+#              "MinHealthyPercentage": 100,
+#              "InstanceWarmup": 120
+#            }' \
+#            --query 'InstanceRefreshId' \
+#            --output text)
+#
+#          echo "refresh_id=${REFRESH_ID}" >> $GITHUB_OUTPUT
+#          echo "✅ Instance Refresh 시작: ${REFRESH_ID}"
+#
+#      # Step 4: Instance Refresh 완료 대기
+#      - name: Wait for Instance Refresh
+#        env:
+#          ASG_NAME: ${{ vars.ASG_NAME }}
+#          REFRESH_ID: ${{ steps.refresh.outputs.refresh_id }}
+#        run: |
+#          echo "⏳ Instance Refresh 완료 대기 중..."
+#
+#          for i in $(seq 1 30); do
+#            STATUS=$(aws autoscaling describe-instance-refreshes \
+#              --auto-scaling-group-name ${ASG_NAME} \
+#              --instance-refresh-ids ${REFRESH_ID} \
+#              --query 'InstanceRefreshes[0].Status' \
+#              --output text)
+#
+#            echo "시도 ${i}/30 - 상태: ${STATUS}"
+#
+#            if [ "${STATUS}" = "Successful" ]; then
+#              echo "✅ Instance Refresh 성공! 배포 완료!"
+#              exit 0
+#            elif [ "${STATUS}" = "Failed" ] || [ "${STATUS}" = "Cancelled" ]; then
+#              echo "❌ Instance Refresh 실패: ${STATUS}"
+#              exit 1
+#            fi
+#
+#            sleep 30
+#          done
+#
+#          echo "❌ Instance Refresh 타임아웃 (15분 초과)"
+#          exit 1
