@@ -3,7 +3,7 @@ package com.paymentapp.core.security.jwt;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.paymentapp.core.dto.ApiResponse;
 import com.paymentapp.core.exception.ErrorResponse;
-import com.paymentapp.core.exception.MemberErrorCode;
+import com.paymentapp.core.exception.errorcode.MemberErrorCode;
 import io.jsonwebtoken.ExpiredJwtException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;

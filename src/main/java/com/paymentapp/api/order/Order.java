@@ -63,7 +63,7 @@ public class Order extends BaseEntity {
     }
 
     public void markPaid() {
-        this.status = OrderStatus.PAID;
+        this.status = OrderStatus.COMPLETED;
     }
 
     public void markCancelled() {
@@ -88,6 +88,6 @@ public class Order extends BaseEntity {
 
     // 결제 성공시 update
     public void complete() {
-        this.status = OrderStatus.PAID;
+        this.status = OrderStatus.COMPLETED;
     }
 }

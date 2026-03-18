@@ -1,5 +1,6 @@
-package com.paymentapp.core.exception;
+package com.paymentapp.core.exception.errorcode;
 
+import com.paymentapp.core.exception.ErrorCode;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
