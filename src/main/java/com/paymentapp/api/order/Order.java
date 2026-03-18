@@ -83,13 +83,8 @@ public class Order extends BaseEntity {
         this.totalAmount = totalAmount;
     }
 
-    // 결제 성공시 update
-    public void complete() {
-        this.status = OrderStatus.COMPLETED;
-    }
-
-    // 결제 환불시 update
-    public void refund() {
-        this.status = OrderStatus.REFUNDED;
+    // 주문 상태 update
+    public void updateStatus(OrderStatus status) {
+        this.status = status;
     }
 }

@@ -24,6 +24,7 @@ import com.paymentapp.core.exception.errorcode.ProductErrorCode;
 import com.paymentapp.core.portone.PortOneClient;
 import com.paymentapp.core.portone.dto.PortOnePaymentResponse;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -32,6 +33,7 @@ import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class PaymentService {
@@ -86,10 +88,10 @@ public class PaymentService {
         Payment payment = paymentRepository.findByPaymentKeyWithLock(paymentId)
                 .orElseThrow(() -> new PaymentException(PaymentErrorCode.PAYMENT_NOT_FOUND));
 
-        // 2. 멱등성 체크 (이미 처리된 경우)
+        // 2. 멱등성 체크 (이미 성공한 결제는 성공으로 응답)
         if (payment.getStatus() != PaymentStatus.PENDING) {
             return ConfirmPaymentResponse.of(
-                    false,
+                    true,
                     payment.getOrder().getId().toString(),
                     payment.getStatus().toString()
             );
@@ -100,7 +102,7 @@ public class PaymentService {
 
         // 4. 결제 상태 확인
         if (!"PAID".equals(response.getStatus())) {
-            payment.fail();
+            payment.updateStatus(PaymentStatus.FAILED);
             return ConfirmPaymentResponse.of(
                     false,
                     payment.getOrder().getId().toString(),
@@ -111,9 +113,8 @@ public class PaymentService {
         // 5. 금액 검증
         BigDecimal paidAmount = BigDecimal.valueOf(response.getAmount().getTotal());
         if (payment.getAmount().compareTo(paidAmount) != 0) {
-            // 금액 위변조 감지 시 자동 취소 로직
-            portOneClient.cancelPayment(paymentId, "결제 금액 불일치");
-            payment.fail();
+            // 보상 트랜잭션 : 금액 위변조 감지 시 자동 취소 로직
+            handleCompensation(payment, payment.getOrder(), "결제 금액 불일치");
             throw new PaymentException(PaymentErrorCode.PAYMENT_AMOUNT_MISMATCH);
         }
 
@@ -123,29 +124,42 @@ public class PaymentService {
 
         // 동시에 같은 상품 재고 차감시 재고가 부족한 경우 예외처리
         try {
-            // 7. 재고 차감
+            // 7. 주문 아이템 조회 (N+1 방지 Fetch Join 사용)
             List<OrderItem> items = orderItemRepository.findByOrderId(order.getId());
 
+            // 8. 상품 ID 리스트 추출
+            List<Long> productIds = items.stream()
+                        .map(item -> item.getProduct().getId())
+                        .toList();
+
+            // 9. 모든 관련 상품에 대해 한 번에 비관적 락 적용
+            List<Product> products = productRepository.findAllByIdsWithLock(productIds);
+
+            // 10. 재고 차감
             for (OrderItem item : items) {
-                // Product에도 Lock걸어 동시 재고 차감 방지
-                Product product = productRepository.findByIdWithLock(item.getProduct().getId())
+                Product product = products.stream()
+                        .filter(p -> p.getId().equals(item.getProduct().getId()))
+                        .findFirst()
                         .orElseThrow(() -> new ProductException(ProductErrorCode.PRODUCT_NOT_FOUND));
 
                 product.decreaseStock(item.getQuantity());
             }
 
-            // 8. 결제/주문 상태 변경
+            // 11. 결제/주문 상태 변경
             payment.complete();
-            order.complete();
+            order.updateStatus(OrderStatus.COMPLETED);
 
         } catch (ProductException e) {
-            // 재고가 부족하면 포트원에 즉시 결제 취소 요청
-            portOneClient.cancelPayment(paymentId, "재고 부족으로 인한 자동 결제 취소");
-            payment.fail();
+            // 보상 트랜잭션 : 재고 부족시 자동 결제 취소
+            handleCompensation(payment, order, "재고 부족으로 인한 자동 결제 취소");
+            throw e;
+        } catch (Exception e) {
+            // 보상 트랜잭션 : 그외 서버 내부 오류시 자동 취소
+            handleCompensation(payment, order, "시스템 오류로 인한 자동 취소");
             throw e;
         }
 
-        // 9. 응답 반환
+        // 12. 응답 반환
         return ConfirmPaymentResponse.of(
                 true,
                 payment.getOrder().getId().toString(),
@@ -190,8 +204,8 @@ public class PaymentService {
             portOneClient.cancelPayment(paymentId, request.reason());
 
             // 6. 상태 변경
-            payment.refund();
-            payment.getOrder().refund();
+            payment.updateStatus(PaymentStatus.REFUNDED);
+            payment.getOrder().updateStatus(OrderStatus.REFUNDED);
 
             // 7. 환불 성공 이력 추가 (COMPLETED)
             refund = Refund.builder()
@@ -222,6 +236,33 @@ public class PaymentService {
                 payment.getOrder().getId().toString(),
                 "REFUNDED"
         );
+    }
+
+    /**
+     * 보상 트랜잭션 공통 로직 (환불 처리 및 상태 변경)
+     */
+    private void handleCompensation(Payment payment, Order order, String reason) {
+        try {
+            // 1. 결제 취소 API 호출
+            portOneClient.cancelPayment(payment.getPaymentKey(), reason);
+
+        } catch (Exception e) {
+            log.error("결제 취소 API 호출 실패 - paymentKey: {}", payment.getPaymentKey(), e);
+        }
+
+        // 2. 상태 변경
+        payment.updateStatus(PaymentStatus.REFUNDED);
+        order.updateStatus(OrderStatus.REFUNDED);
+
+        // 3. 환불 이력 생성
+        Refund refund = Refund.builder()
+                .payment(payment)
+                .amount(payment.getAmount())
+                .reason(reason)
+                .status(RefundStatus.COMPLETED)
+                .refundedAt(LocalDateTime.now())
+                .build();
+        refundRepository.save(refund);
     }
 
     /**
