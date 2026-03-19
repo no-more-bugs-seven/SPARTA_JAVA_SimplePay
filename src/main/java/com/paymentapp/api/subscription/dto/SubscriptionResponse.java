@@ -6,7 +6,7 @@ import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
 public record SubscriptionResponse(
-        Long subscriptionId,
+        String subscriptionId,
         String customerUid,
         String planId,
         Long paymentMethodId,
@@ -16,7 +16,7 @@ public record SubscriptionResponse(
 ) {
     public static SubscriptionResponse from(Subscription subscription) {
         return new SubscriptionResponse(
-                subscription.getId(),
+                String.valueOf(subscription.getId()),
                 subscription.getPaymentMethod().getCustomerUid(),
                 subscription.getPlan().getPlanId(),
                 subscription.getPaymentMethod().getId(),

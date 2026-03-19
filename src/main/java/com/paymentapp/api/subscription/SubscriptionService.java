@@ -109,14 +109,13 @@ public class SubscriptionService {
             throw new SubscriptionException(SubscriptionErrorCode.FAILURE_PAYMENT);
         }
 
-        return new CreateSubscriptionResponse(savedSubscription.getId());
+        return new CreateSubscriptionResponse(String.valueOf(savedSubscription.getId()));
     }
 
     // Q) 'paymentId' 를 포트원이 결제를 성공시키고 나서 발급해 주면 안되나? 왜 우리가 발급하지?
     // A)
     // =>  포트원에서 결제 ID를 발급하게되면 일시적으로 인터넷이 끊겼을때 우리는 포트원의 서버 응답을 못받게 된다.
-    // 이때 한번 결제한 상황이면 중복체크를 하지못해 재결재가 되는 불상사가 일어날수있다.
-    // 고객은 9,900원을 두 번 뜯겼고, 우리 회사는 난리가 납니다.
+    // 이때 한번 결제한 상황이면 중복체크를 하지못해 재결재가 되는 불상사가 일어날수있다
 
 
     /**

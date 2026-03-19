@@ -1,10 +1,8 @@
 package com.paymentapp.api.subscription;
 
-import com.paymentapp.api.subscription.dto.ChangeSubscriptionPlanRequest;
 import com.paymentapp.api.subscription.dto.CreateSubscriptionRequest;
 import com.paymentapp.api.subscription.dto.CreateSubscriptionResponse;
 import com.paymentapp.api.subscription.dto.SubscriptionResponse;
-import com.paymentapp.api.subscription.dto.UpdateSubscriptionRequest;
 import com.paymentapp.api.subscription.dto.UpdateSubscriptionResponse;
 import com.paymentapp.core.annotation.LoginUser;
 import com.paymentapp.core.dto.LoginUserInfoDto;
@@ -64,7 +62,7 @@ public class SubscriptionController {
         subscriptionService.cancelSubscription(loginUser.id(), subscriptionId);
 
         return ResponseEntity.ok(
-                new UpdateSubscriptionResponse(true, subscriptionId)
+                new UpdateSubscriptionResponse(true, String.valueOf(subscriptionId))
         );
     }
 
