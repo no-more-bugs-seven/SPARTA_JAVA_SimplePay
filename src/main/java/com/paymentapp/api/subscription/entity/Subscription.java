@@ -1,6 +1,7 @@
 package com.paymentapp.api.subscription.entity;
 
 import com.paymentapp.api.plan.entity.Plan;
+import com.paymentapp.core.entity.BaseEntity;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.Getter;
@@ -13,7 +14,7 @@ import java.time.LocalDateTime;
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @Table(name = "subscriptions")
-public class Subscription {
+public class Subscription extends BaseEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -35,6 +36,10 @@ public class Subscription {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "next_plan_id")
     private Plan nextPlan;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "subscription_payment_methods_id", nullable = false)
+    private SubscriptionPaymentMethod subscriptionPaymentMethod;
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 20)
@@ -123,5 +128,10 @@ public class Subscription {
 
     public void linkPaymentMethod(String paymentMethodId) {
         this.paymentMethodId = paymentMethodId;
+    }
+
+    public void extendSubscription() {
+        this.currentPeriodStart = this.currentPeriodEnd;
+        this.currentPeriodEnd = this.currentPeriodEnd.plusMonths(1);
     }
 }
