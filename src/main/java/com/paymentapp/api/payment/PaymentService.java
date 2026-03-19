@@ -91,7 +91,7 @@ public class PaymentService {
                 .orElseThrow(() -> new PaymentException(PaymentErrorCode.PAYMENT_NOT_FOUND));
 
         // 2. 멱등성 체크 (이미 성공한 결제는 성공으로 응답)
-        if (payment.getStatus() != PaymentStatus.PENDING) {
+        if (payment.getStatus() != PaymentStatus.PENDING && payment.getStatus() != PaymentStatus.FAILED) {
             return ConfirmPaymentResponse.of(
                     true,
                     payment.getOrder().getId().toString(),
@@ -127,7 +127,7 @@ public class PaymentService {
         // 동시에 같은 상품 재고 차감시 재고가 부족한 경우 예외처리
         try {
             // 7. 재고 차감
-            changeStock(payment.getOrder(), "decrease");
+            //changeStock(payment.getOrder(), "decrease");
 
             // 8. 결제/주문 상태 변경
             payment.complete();
