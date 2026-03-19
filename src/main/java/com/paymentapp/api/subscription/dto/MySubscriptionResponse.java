@@ -1,5 +1,6 @@
 package com.paymentapp.api.subscription.dto;
 
+import com.paymentapp.api.subscription.entity.PgProvider;
 import com.paymentapp.api.subscription.entity.Subscription;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -17,7 +18,7 @@ public class MySubscriptionResponse {
     private BigDecimal price;
     private String status;
     private LocalDateTime nextPaymentDate;
-    private String pgProvider;
+    private PgProvider pgProvider;
 
     public static MySubscriptionResponse from(Subscription subscription) {
         return new MySubscriptionResponse(
@@ -25,7 +26,7 @@ public class MySubscriptionResponse {
                 subscription.getPlan().getAmount(),
                 subscription.getStatus().toString(),
                 subscription.getCurrentPeriodEnd(),
-                subscription.getSubscriptionPaymentMethod().getPgProvider()
+                subscription.getPaymentMethod().getPgProvider()
         );
     }
 }

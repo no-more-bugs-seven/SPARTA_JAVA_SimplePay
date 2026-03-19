@@ -1,146 +1,142 @@
 package com.paymentapp.api.subscription;
 
-import com.paymentapp.api.plan.PlanRepository;
+import com.paymentapp.api.member.Member;
+import com.paymentapp.api.member.MemberService;
+import com.paymentapp.api.plan.PlanService;
+import com.paymentapp.api.plan.entity.Plan;
 import com.paymentapp.api.subscription.dto.CreateSubscriptionResponse;
 import com.paymentapp.api.subscription.dto.SubscriptionResponse;
-import com.paymentapp.api.subscription.dto.UpdateSubscriptionResponse;
-import com.paymentapp.api.plan.entity.Plan;
-import com.paymentapp.api.subscription.entity.Subscription;
-import com.paymentapp.api.subscription.entity.SubscriptionStatus;
+import com.paymentapp.api.subscription.entity.*;
+import com.paymentapp.core.exception.custom.SubscriptionException;
+import com.paymentapp.core.exception.errorcode.SubscriptionErrorCode;
+import com.paymentapp.core.portone.PortOneClient;
+import com.paymentapp.core.portone.dto.PortOneBillingPaymentResponse;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.math.BigDecimal;
 import java.time.LocalDateTime;
-import java.util.List;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
 public class SubscriptionService {
 
-    private static final List<SubscriptionStatus> IN_PROGRESS_STATUSES =
-            List.of(
-                    SubscriptionStatus.ACTIVE,
-                    SubscriptionStatus.SUSPENDED,
-                    SubscriptionStatus.CANCELLED
-            );
-
+    private final SubscriptionPaymentMethodRepository paymentMethodRepository;
     private final SubscriptionRepository subscriptionRepository;
-    private final PlanRepository planRepository;
+    private final SubscriptionBillingRepository billingRepository;
 
+    private final PlanService planService;
+    private final MemberService memberService;
+
+    private final PortOneClient portOneClient;
+
+    /**
+     * 구독 생성
+     */
     @Transactional
-    public CreateSubscriptionResponse create(
+    public CreateSubscriptionResponse createSubscription(
             Long userId,
             String customerUid,
             String planId,
-            String billingKey,
-            BigDecimal amount
+            String billingKey
     ) {
-        validateNoInProgressSubscription(userId);
+        Member member = memberService.findById(userId);
+        Plan plan = planService.findByPlanId(planId);
 
-        Plan plan = planRepository.findByPlanId(planId)
-                .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 플랜입니다."));
-
-        if (!plan.isActive()) {
-            throw new IllegalStateException("비활성화된 플랜은 구독할 수 없습니다.");
+        // 빌링키 검증 (to 포트원)
+        boolean isValidBillingKey = portOneClient.validateBillingKey(billingKey);
+        if (!isValidBillingKey) {
+            throw new SubscriptionException(SubscriptionErrorCode.INVALID_BILLING_KEY);
         }
 
-        if (plan.getAmount().compareTo(amount) != 0) {
-            throw new IllegalArgumentException("요청 금액이 플랜 금액과 일치하지 않습니다.");
-        }
+        SubscriptionPaymentMethod paymentMethod = SubscriptionPaymentMethod.builder()
+                .member(member)
+                .customerUid(customerUid)
+                .billingKey(billingKey)
+                .pgProvider(PgProvider.TOSS_PAYMENTS)
+                .isDefault(true)
+                .status(PaymentMethodStatus.ACTIVE)
+                .build();
+        SubscriptionPaymentMethod savedPaymentMethod = paymentMethodRepository.save(paymentMethod);
 
-        if (billingKey == null || billingKey.isBlank()) {
-            throw new IllegalArgumentException("billingKey는 필수입니다.");
-        }
+        LocalDateTime now = LocalDateTime.now();
+        Subscription subscription = Subscription.builder()
+                .member(member)
+                .plan(plan)
+                .paymentMethod(savedPaymentMethod)
+                .amount(plan.getAmount())
+                .status(SubscriptionStatus.ACTIVE)
+                .currentPeriodStart(now)
+                .currentPeriodEnd(now.plusMonths(1))
+                .build();
+        Subscription savedSubscription = subscriptionRepository.save(subscription);
 
-
-        String paymentMethodId = null;
-
-        Subscription subscription = Subscription.create(
-                userId,
-                customerUid,
-                paymentMethodId,
-                plan,
-                amount
+        // 결제
+        String uniquePaymentId = "SUBSCRIPTION_PAY_" + savedSubscription.getId() + "_" + System.currentTimeMillis();
+        PortOneBillingPaymentResponse paymentResult = portOneClient.payWithBillingKey(
+                billingKey,
+                plan.getAmount(),
+                uniquePaymentId
         );
 
-        Subscription saved = subscriptionRepository.save(subscription);
-        return new CreateSubscriptionResponse(String.valueOf(saved.getId()));
+        // Billing을 DB에 기록
+        if (paymentResult.isSuccess()) {
+            SubscriptionBilling onSuccessBilling = SubscriptionBilling.builder()
+                    .subscription(savedSubscription)
+                    .amount(plan.getAmount())
+                    .status(BillingStatus.COMPLETED)
+                    .paymentId(uniquePaymentId)
+                    .attemptedAt(now)
+                    .errorMessage(null)
+                    .build();
+            billingRepository.save(onSuccessBilling);
+
+        } else {
+            savedSubscription.failPayment();
+            SubscriptionBilling onFailureBilling = SubscriptionBilling.builder()
+                    .subscription(savedSubscription)
+                    .amount(plan.getAmount())
+                    .status(BillingStatus.FAILED)
+                    .paymentId(uniquePaymentId)
+                    .attemptedAt(now)
+                    .errorMessage(paymentResult.getErrorMessage())
+                    .build();
+            billingRepository.save(onFailureBilling);
+            log.warn("결제 실패하였습니다.: {}", paymentResult.getErrorMessage());
+            throw new SubscriptionException(SubscriptionErrorCode.FAILURE_PAYMENT);
+        }
+
+        return new CreateSubscriptionResponse(savedSubscription.getId());
     }
 
-    public SubscriptionResponse getSubscription(Long userId, String subscriptionId) {
-        Long id = parseSubscriptionId(subscriptionId);
+    // Q) 'paymentId' 를 포트원이 결제를 성공시키고 나서 발급해 주면 안되나? 왜 우리가 발급하지?
+    // A)
+    // =>  포트원에서 결제 ID를 발급하게되면 일시적으로 인터넷이 끊겼을때 우리는 포트원의 서버 응답을 못받게 된다.
+    // 이때 한번 결제한 상황이면 중복체크를 하지못해 재결재가 되는 불상사가 일어날수있다.
+    // 고객은 9,900원을 두 번 뜯겼고, 우리 회사는 난리가 납니다.
 
-        Subscription subscription = subscriptionRepository.findByIdAndUserId(id, userId)
-                .orElseThrow(() -> new IllegalArgumentException("구독이 존재하지 않거나 조회 권한이 없습니다."));
+
+    /**
+     * 내 구독 정보 조회
+     */
+    public SubscriptionResponse getMySubscription(Long userId, Long subscriptionId) {
+        Subscription subscription = subscriptionRepository.findByIdAndMemberId(subscriptionId, userId)
+                .orElseThrow(() -> new SubscriptionException(SubscriptionErrorCode.ACTIVE_SUBSCRIPTION_NOT_FOUND));
 
         return SubscriptionResponse.from(subscription);
     }
 
+    /**
+     * 구독 해지
+     */
     @Transactional
-    public UpdateSubscriptionResponse cancel(Long userId, String subscriptionId) {
-        Long id = parseSubscriptionId(subscriptionId);
-
-        Subscription subscription = subscriptionRepository.findByIdAndUserId(id, userId)
-                .orElseThrow(() -> new IllegalArgumentException("구독이 존재하지 않거나 해지 권한이 없습니다."));
+    public void cancelSubscription(Long userId, Long subscriptionId) {
+        Subscription subscription = subscriptionRepository.findByIdAndMemberId(subscriptionId, userId)
+                .orElseThrow(() -> new SubscriptionException(SubscriptionErrorCode.CANCELABLE_SUBSCRIPTION_NOT_FOUND));
 
         subscription.cancel();
-
-        return new UpdateSubscriptionResponse(
-                true,
-                String.valueOf(subscription.getId()),
-                subscription.getStatus().name()
-        );
-    }
-
-    @Transactional
-    public SubscriptionResponse changePlan(Long userId, String subscriptionId, String newPlanId) {
-        Long id = parseSubscriptionId(subscriptionId);
-
-        Subscription subscription = subscriptionRepository.findByIdAndUserId(id, userId)
-                .orElseThrow(() -> new IllegalArgumentException("구독이 존재하지 않거나 변경 권한이 없습니다."));
-
-        if (!subscription.isActive()) {
-            throw new IllegalStateException("ACTIVE 상태의 구독만 플랜 변경이 가능합니다.");
-        }
-
-        Plan newPlan = planRepository.findByPlanId(newPlanId)
-                .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 플랜입니다."));
-
-        if (!newPlan.isActive()) {
-            throw new IllegalStateException("비활성화된 플랜으로는 변경할 수 없습니다.");
-        }
-
-        if (subscription.getPlan().getPlanId().equals(newPlanId)) {
-            throw new IllegalStateException("현재 이용 중인 플랜과 동일한 플랜으로는 변경할 수 없습니다.");
-        }
-
-        subscription.reservePlanChange(newPlan);
-
-        return SubscriptionResponse.from(subscription);
-    }
-
-    private void validateNoInProgressSubscription(Long userId) {
-        boolean exists = subscriptionRepository
-                .findFirstByUserIdAndStatusInAndCurrentPeriodEndAfterOrderByIdDesc(
-                        userId,
-                        IN_PROGRESS_STATUSES,
-                        LocalDateTime.now()
-                )
-                .isPresent();
-
-        if (exists) {
-            throw new IllegalStateException("이미 진행 중인 구독이 존재합니다.");
-        }
-    }
-
-    private Long parseSubscriptionId(String subscriptionId) {
-        try {
-            return Long.parseLong(subscriptionId);
-        } catch (NumberFormatException e) {
-            throw new IllegalArgumentException("subscriptionId 형식이 올바르지 않습니다.");
-        }
     }
 }

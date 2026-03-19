@@ -21,54 +21,51 @@ public class SubscriptionController {
 
     private final SubscriptionService subscriptionService;
 
+
+    /**
+     * 구독 생성
+     */
     @PostMapping
     public ResponseEntity<CreateSubscriptionResponse> createSubscription(
             @LoginUser LoginUserInfoDto loginUser,
             @Valid @RequestBody CreateSubscriptionRequest request
     ) {
-        CreateSubscriptionResponse response = subscriptionService.create(
+        CreateSubscriptionResponse response = subscriptionService.createSubscription(
                 loginUser.id(),
                 request.customerUid(),
                 request.planId(),
-                request.billingKey(),
-                request.amount()
+                request.billingKey()
         );
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 
+
+    /**
+     * 내 구독 단건 조회
+     */
     @GetMapping("/{subscriptionId}")
-    public ResponseEntity<SubscriptionResponse> getSubscription(
+    public ResponseEntity<SubscriptionResponse> getMySubscription(
             @LoginUser LoginUserInfoDto loginUser,
-            @PathVariable String subscriptionId
+            @PathVariable Long subscriptionId
     ) {
+        SubscriptionResponse response = subscriptionService.getMySubscription(loginUser.id(), subscriptionId);
+        return ResponseEntity.ok(response);
+    }
+
+
+    /**
+     * 구독 해지
+     */
+    @PostMapping("/{subscriptionId}/cancel")
+    public ResponseEntity<UpdateSubscriptionResponse> cancelSubscription(
+            @LoginUser LoginUserInfoDto loginUser,
+            @PathVariable Long subscriptionId
+    ) {
+        subscriptionService.cancelSubscription(loginUser.id(), subscriptionId);
+
         return ResponseEntity.ok(
-                subscriptionService.getSubscription(loginUser.id(), subscriptionId)
+                new UpdateSubscriptionResponse(true, subscriptionId)
         );
     }
 
-    @PatchMapping("/{subscriptionId}")
-    public ResponseEntity<UpdateSubscriptionResponse> updateSubscription(
-            @LoginUser LoginUserInfoDto loginUser,
-            @PathVariable String subscriptionId,
-            @RequestBody UpdateSubscriptionRequest request
-    ) {
-        if ("cancel".equalsIgnoreCase(request.action())) {
-            return ResponseEntity.ok(
-                    subscriptionService.cancel(loginUser.id(), subscriptionId)
-            );
-        }
-
-        throw new IllegalArgumentException("지원하지 않는 action 입니다.");
-    }
-
-    @PatchMapping("/{subscriptionId}/plan")
-    public ResponseEntity<SubscriptionResponse> changeSubscriptionPlan(
-            @LoginUser LoginUserInfoDto loginUser,
-            @PathVariable String subscriptionId,
-            @Valid @RequestBody ChangeSubscriptionPlanRequest request
-    ) {
-        return ResponseEntity.ok(
-                subscriptionService.changePlan(loginUser.id(), subscriptionId, request.planId())
-        );
-    }
 }

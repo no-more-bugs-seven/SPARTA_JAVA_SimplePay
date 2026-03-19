@@ -1,5 +1,6 @@
 package com.paymentapp.core.portone;
 
+import com.paymentapp.core.portone.dto.PortOneBillingPaymentResponse;
 import com.paymentapp.core.portone.dto.PortOneCancelRequest;
 import com.paymentapp.core.portone.dto.PortOneCancelResponse;
 import com.paymentapp.core.portone.dto.PortOnePaymentResponse;
@@ -8,6 +9,8 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestClient;
+
+import java.math.BigDecimal;
 
 @Slf4j
 @Component
@@ -34,7 +37,7 @@ public class PortOneClient {
             log.info("PortOne 요청 paymentId={}", paymentId);
 
             return restClient.get()
-                    .uri("/payments/{paymentId}?storeId="+storeId, paymentId)
+                    .uri("/payments/{paymentId}?storeId=" + storeId, paymentId)
                     .retrieve()
                     // 401 에러(인증 실패) 발생 시 로그 출력
                     .onStatus(status -> status.value() == 401, (request, response) -> {
@@ -82,4 +85,27 @@ public class PortOneClient {
             throw new RuntimeException("PortOne 환불 API 호출 실패", e);
         }
     }
+
+
+    /**
+     * 빌링키 검증
+     */
+    public boolean validateBillingKey(String billingKey) {
+        // TODO 포트원 함수 수정필요!
+        return false;
+    }
+
+    /**
+     * 결제 with 빌링키
+     */
+    public PortOneBillingPaymentResponse payWithBillingKey(
+            String billingKey,
+            BigDecimal amount,
+            String uniquePaymentId
+    ) {
+        // TODO 포트원 함수 수정필요!
+        return null;
+    }
+
+
 }

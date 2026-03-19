@@ -4,6 +4,7 @@ import com.paymentapp.api.member.Member;
 import com.paymentapp.core.entity.BaseEntity;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
+import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
@@ -27,8 +28,9 @@ public class SubscriptionPaymentMethod extends BaseEntity {
     @Column(nullable = false)
     private String billingKey;
 
+    @Enumerated(EnumType.STRING)
     @Column(nullable = false)
-    private String pgProvider;
+    private PgProvider pgProvider;
 
     @Column(nullable = false)
     private boolean isDefault;
@@ -37,6 +39,23 @@ public class SubscriptionPaymentMethod extends BaseEntity {
     @Column(nullable = false)
     private PaymentMethodStatus status;
 
+
+    @Builder
+    public SubscriptionPaymentMethod(
+            Member member,
+            String customerUid,
+            String billingKey,
+            PgProvider pgProvider,
+            boolean isDefault,
+            PaymentMethodStatus status
+    ) {
+        this.member = member;
+        this.customerUid = customerUid;
+        this.billingKey = billingKey;
+        this.pgProvider = pgProvider;
+        this.isDefault = isDefault;
+        this.status = status;
+    }
 
 
 }
