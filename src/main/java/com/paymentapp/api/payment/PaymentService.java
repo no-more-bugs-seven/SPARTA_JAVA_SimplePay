@@ -127,7 +127,7 @@ public class PaymentService {
         // 동시에 같은 상품 재고 차감시 재고가 부족한 경우 예외처리
         try {
             // 7. 재고 차감
-            //changeStock(payment.getOrder(), "decrease");
+            changeStock(payment.getOrder(), "decrease");
 
             // 8. 결제/주문 상태 변경
             payment.complete();
@@ -188,7 +188,7 @@ public class PaymentService {
             portOneClient.cancelPayment(paymentId, request.reason());
 
             // 6. 재고 원상 복구
-            changeStock(payment.getOrder());
+            changeStock(payment.getOrder(), "restore");
 
             // 7. 상태 변경
             payment.updateStatus(PaymentStatus.REFUNDED);
@@ -267,7 +267,7 @@ public class PaymentService {
     /**
      * 재고 원상복구 로직 (비관적 일괄 락 사용)
      */
-    private void changeStock(Order order) {
+    private void changeStock(Order order, String type) {
         List<OrderItem> items = orderItemRepository.findByOrderId(order.getId());
 
         List<Long> productIds = items.stream()
@@ -284,7 +284,8 @@ public class PaymentService {
                     .findFirst()
                     .orElseThrow(() -> new ProductException(ProductErrorCode.PRODUCT_NOT_FOUND));
 
-            product.increaseStock(item.getQuantity());
+            if ("restore".equals(type)) product.increaseStock(item.getQuantity());
+            else product.decreaseStock(item.getQuantity());
         }
     }
 }
