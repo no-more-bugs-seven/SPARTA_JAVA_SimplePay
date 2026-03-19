@@ -1,6 +1,7 @@
 package com.paymentapp.api.subscription;
 
 import com.paymentapp.api.plan.PlanRepository;
+import com.paymentapp.api.subscription.dto.ChangeSubscriptionPlanResponse;
 import com.paymentapp.api.subscription.dto.CreateSubscriptionResponse;
 import com.paymentapp.api.subscription.dto.SubscriptionResponse;
 import com.paymentapp.api.subscription.dto.UpdateSubscriptionResponse;
@@ -96,7 +97,7 @@ public class SubscriptionService {
     }
 
     @Transactional
-    public SubscriptionResponse changePlan(Long userId, String subscriptionId, String newPlanId) {
+    public ChangeSubscriptionPlanResponse changePlan(Long userId, String subscriptionId, String newPlanId) {
         Long id = parseSubscriptionId(subscriptionId);
 
         Subscription subscription = subscriptionRepository.findByIdAndUserId(id, userId)
@@ -117,9 +118,20 @@ public class SubscriptionService {
             throw new IllegalStateException("현재 이용 중인 플랜과 동일한 플랜으로는 변경할 수 없습니다.");
         }
 
+        if (subscription.getNextPlan() != null
+                && subscription.getNextPlan().getPlanId().equals(newPlanId)) {
+            throw new IllegalStateException("이미 동일한 플랜 변경이 예약되어 있습니다.");
+        }
+
         subscription.reservePlanChange(newPlan);
 
-        return SubscriptionResponse.from(subscription);
+        return new ChangeSubscriptionPlanResponse(
+                true,
+                String.valueOf(subscription.getId()),
+                subscription.getPlan().getPlanId(),
+                subscription.getNextPlan().getPlanId(),
+                subscription.getStatus().name()
+        );
     }
 
     private void validateNoInProgressSubscription(Long userId) {

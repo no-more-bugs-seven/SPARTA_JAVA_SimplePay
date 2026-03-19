@@ -1,11 +1,6 @@
 package com.paymentapp.api.subscription;
 
-import com.paymentapp.api.subscription.dto.ChangeSubscriptionPlanRequest;
-import com.paymentapp.api.subscription.dto.CreateSubscriptionRequest;
-import com.paymentapp.api.subscription.dto.CreateSubscriptionResponse;
-import com.paymentapp.api.subscription.dto.SubscriptionResponse;
-import com.paymentapp.api.subscription.dto.UpdateSubscriptionRequest;
-import com.paymentapp.api.subscription.dto.UpdateSubscriptionResponse;
+import com.paymentapp.api.subscription.dto.*;
 import com.paymentapp.core.annotation.LoginUser;
 import com.paymentapp.core.dto.LoginUserInfoDto;
 import jakarta.validation.Valid;
@@ -62,7 +57,7 @@ public class SubscriptionController {
     }
 
     @PatchMapping("/{subscriptionId}/plan")
-    public ResponseEntity<SubscriptionResponse> changeSubscriptionPlan(
+    public ResponseEntity<ChangeSubscriptionPlanResponse> changeSubscriptionPlan(
             @LoginUser LoginUserInfoDto loginUser,
             @PathVariable String subscriptionId,
             @Valid @RequestBody ChangeSubscriptionPlanRequest request
