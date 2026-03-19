@@ -1,6 +1,5 @@
 package com.paymentapp.api.webhook;
 
-import com.paymentapp.api.payment.PaymentService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -15,9 +14,10 @@ public class WebhookController {
     @PostMapping("/portone")
     public ResponseEntity<Void> handlePortOneWebhook(
             @RequestHeader("webhook-id") String webhookId,
+            @RequestHeader("webhook-signature") String signature,
             @RequestBody WebhookRequest request
     ) {
-        //webhookService.processWebhook(webhookId, request);
+        webhookService.processWebhook(webhookId, signature, request);
         return ResponseEntity.ok().build();
     }
 }

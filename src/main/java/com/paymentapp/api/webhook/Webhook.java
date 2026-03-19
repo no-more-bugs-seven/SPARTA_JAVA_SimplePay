@@ -18,7 +18,7 @@ public class Webhook extends BaseEntity {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(name = "webhook_id", nullable = false)
+    @Column(name = "webhook_id", nullable = false, unique = true)
     private String webhookId;
     @Column(name = "payment_id", nullable = false)
     private String paymentKey;
