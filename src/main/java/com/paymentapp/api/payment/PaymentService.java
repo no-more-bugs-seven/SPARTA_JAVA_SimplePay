@@ -188,7 +188,7 @@ public class PaymentService {
             portOneClient.cancelPayment(paymentId, request.reason());
 
             // 6. 재고 원상 복구
-            changeStock(payment.getOrder(), "restore");
+            changeStock(payment.getOrder());
 
             // 7. 상태 변경
             payment.updateStatus(PaymentStatus.REFUNDED);
@@ -267,7 +267,7 @@ public class PaymentService {
     /**
      * 재고 원상복구 로직 (비관적 일괄 락 사용)
      */
-    private void changeStock(Order order, String type) {
+    private void changeStock(Order order) {
         List<OrderItem> items = orderItemRepository.findByOrderId(order.getId());
 
         List<Long> productIds = items.stream()
@@ -284,8 +284,7 @@ public class PaymentService {
                     .findFirst()
                     .orElseThrow(() -> new ProductException(ProductErrorCode.PRODUCT_NOT_FOUND));
 
-            if ("restore".equals(type)) product.increaseStock(item.getQuantity());
-            else product.decreaseStock(item.getQuantity());
+            product.increaseStock(item.getQuantity());
         }
     }
 }
