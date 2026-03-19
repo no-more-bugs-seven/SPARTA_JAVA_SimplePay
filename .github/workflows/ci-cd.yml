@@ -3,9 +3,9 @@ name: CI/CD Pipeline
 # main 브랜치 push 또는 PR
 on:
   push:
-    branches: [main]
+    branches: [main, cicd]
   pull_request:
-    branches: [main]
+    branches: [main, cicd]
 
 # OIDC 토큰 요청 권한
 permissions:
@@ -85,7 +85,7 @@ jobs:
 
   deploy:
     needs: build
-    if: github.ref == 'refs/heads/main'   # main push에서만 배포 (PR에서는 CI만 실행)
+    #if: github.ref == 'refs/heads/main'   # main push에서만 배포 (PR에서는 CI만 실행)
     runs-on: ubuntu-latest
 
     steps:
@@ -226,51 +226,51 @@ jobs:
 
           echo "✅ 기본 버전 → v${NEW_VERSION} 변경 완료"
 
-#      # Step 3: Instance Refresh 시작
-#      - name: Start Instance Refresh
-#        id: refresh
-#        env:
-#          ASG_NAME: ${{ vars.ASG_NAME }}
-#        run: |
-#          REFRESH_ID=$(aws autoscaling start-instance-refresh \
-#            --auto-scaling-group-name ${ASG_NAME} \
-#            --preferences '{
-#              "MinHealthyPercentage": 100,
-#              "InstanceWarmup": 120
-#            }' \
-#            --query 'InstanceRefreshId' \
-#            --output text)
-#
-#          echo "refresh_id=${REFRESH_ID}" >> $GITHUB_OUTPUT
-#          echo "✅ Instance Refresh 시작: ${REFRESH_ID}"
-#
-#      # Step 4: Instance Refresh 완료 대기
-#      - name: Wait for Instance Refresh
-#        env:
-#          ASG_NAME: ${{ vars.ASG_NAME }}
-#          REFRESH_ID: ${{ steps.refresh.outputs.refresh_id }}
-#        run: |
-#          echo "⏳ Instance Refresh 완료 대기 중..."
-#
-#          for i in $(seq 1 30); do
-#            STATUS=$(aws autoscaling describe-instance-refreshes \
-#              --auto-scaling-group-name ${ASG_NAME} \
-#              --instance-refresh-ids ${REFRESH_ID} \
-#              --query 'InstanceRefreshes[0].Status' \
-#              --output text)
-#
-#            echo "시도 ${i}/30 - 상태: ${STATUS}"
-#
-#            if [ "${STATUS}" = "Successful" ]; then
-#              echo "✅ Instance Refresh 성공! 배포 완료!"
-#              exit 0
-#            elif [ "${STATUS}" = "Failed" ] || [ "${STATUS}" = "Cancelled" ]; then
-#              echo "❌ Instance Refresh 실패: ${STATUS}"
-#              exit 1
-#            fi
-#
-#            sleep 30
-#          done
-#
-#          echo "❌ Instance Refresh 타임아웃 (15분 초과)"
-#          exit 1
+      # Step 3: Instance Refresh 시작
+      - name: Start Instance Refresh
+        id: refresh
+        env:
+          ASG_NAME: ${{ vars.ASG_NAME }}
+        run: |
+          REFRESH_ID=$(aws autoscaling start-instance-refresh \
+            --auto-scaling-group-name ${ASG_NAME} \
+            --preferences '{
+              "MinHealthyPercentage": 100,
+              "InstanceWarmup": 120
+            }' \
+            --query 'InstanceRefreshId' \
+            --output text)
+
+          echo "refresh_id=${REFRESH_ID}" >> $GITHUB_OUTPUT
+          echo "✅ Instance Refresh 시작: ${REFRESH_ID}"
+
+      # Step 4: Instance Refresh 완료 대기
+      - name: Wait for Instance Refresh
+        env:
+          ASG_NAME: ${{ vars.ASG_NAME }}
+          REFRESH_ID: ${{ steps.refresh.outputs.refresh_id }}
+        run: |
+          echo "⏳ Instance Refresh 완료 대기 중..."
+
+          for i in $(seq 1 30); do
+            STATUS=$(aws autoscaling describe-instance-refreshes \
+              --auto-scaling-group-name ${ASG_NAME} \
+              --instance-refresh-ids ${REFRESH_ID} \
+              --query 'InstanceRefreshes[0].Status' \
+              --output text)
+
+            echo "시도 ${i}/30 - 상태: ${STATUS}"
+
+            if [ "${STATUS}" = "Successful" ]; then
+              echo "✅ Instance Refresh 성공! 배포 완료!"
+              exit 0
+            elif [ "${STATUS}" = "Failed" ] || [ "${STATUS}" = "Cancelled" ]; then
+              echo "❌ Instance Refresh 실패: ${STATUS}"
+              exit 1
+            fi
+
+            sleep 30
+          done
+
+          echo "❌ Instance Refresh 타임아웃 (15분 초과)"
+          exit 1

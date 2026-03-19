@@ -1,5 +1,8 @@
 package com.paymentapp.api.member;
 
+import com.paymentapp.api.membership.MembershipTier;
+import com.paymentapp.api.membership.MembershipTierRepository;
+import com.paymentapp.api.order.Order;
 import com.paymentapp.core.entity.BaseEntity;
 import jakarta.persistence.*;
 import lombok.*;
@@ -36,15 +39,21 @@ public class Member extends BaseEntity {
     @Column()
     private Long pointBalance;
 
+//    @ManyToOne(fetch = FetchType.LAZY, optional = false)
+//    @JoinColumn(name = "membership_tier_id")
+//    private MembershipTier membershipTier;
+
     @Column()
     private Long membershipTierId;
 
     @Builder
-    private Member(String password, String email, String phone, String name, Long pointBalance) {
+    private Member(String password, String email, String phone, String name, Long pointBalance, MembershipTier membershipTier) {
         this.password = password;
         this.email = email;
         this.phone = phone;
         this.name = name;
         this.pointBalance = pointBalance;
+//        this.membershipTier = membershipTier;
+        this.membershipTierId = 1L;
     }
 }

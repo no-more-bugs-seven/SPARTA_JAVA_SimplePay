@@ -122,16 +122,6 @@ api:
       url: /api/auth/reissue
       method: POST
       description: 토큰 재발급
-      request:
-        fields:
-          - name: email
-            type: string
-            required: true
-            example: admin@test.com
-          - name: password
-            type: string
-            required: true
-            example: admin
       response:
         headers:
           - name: Authorization
@@ -139,14 +129,14 @@ api:
             description: "JWT 토큰 (Bearer {token} 형식)"
         body:
           fields:
-            - name: success
-              type: boolean
-              required: true
-              description: 로그인 성공 여부
-            - name: email
+            - name: accessToken
               type: string
-              required: false
-              description: 로그인한 사용자 이메일
+              required: true
+              description: 엑세스 토큰
+            - name: refreshToken
+              type: string
+              required: true
+              description: 리프레쉬 토큰
 
     # ========================================
     # 상품 & 주문 (Product & Order)
