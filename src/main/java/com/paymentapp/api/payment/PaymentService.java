@@ -31,7 +31,9 @@ import org.springframework.transaction.annotation.Transactional;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 @Slf4j
 @Service
@@ -89,7 +91,7 @@ public class PaymentService {
                 .orElseThrow(() -> new PaymentException(PaymentErrorCode.PAYMENT_NOT_FOUND));
 
         // 2. 멱등성 체크 (이미 성공한 결제는 성공으로 응답)
-        if (payment.getStatus() != PaymentStatus.PENDING) {
+        if (payment.getStatus() != PaymentStatus.PENDING && payment.getStatus() != PaymentStatus.FAILED) {
             return ConfirmPaymentResponse.of(
                     true,
                     payment.getOrder().getId().toString(),
@@ -124,28 +126,10 @@ public class PaymentService {
 
         // 동시에 같은 상품 재고 차감시 재고가 부족한 경우 예외처리
         try {
-            // 7. 주문 아이템 조회 (N+1 방지 Fetch Join 사용)
-            List<OrderItem> items = orderItemRepository.findByOrderId(order.getId());
+            // 7. 재고 차감
+            changeStock(payment.getOrder(), "decrease");
 
-            // 8. 상품 ID 리스트 추출
-            List<Long> productIds = items.stream()
-                        .map(item -> item.getProduct().getId())
-                        .toList();
-
-            // 9. 모든 관련 상품에 대해 한 번에 비관적 락 적용
-            List<Product> products = productRepository.findAllByIdsWithLock(productIds);
-
-            // 10. 재고 차감
-            for (OrderItem item : items) {
-                Product product = products.stream()
-                        .filter(p -> p.getId().equals(item.getProduct().getId()))
-                        .findFirst()
-                        .orElseThrow(() -> new ProductException(ProductErrorCode.PRODUCT_NOT_FOUND));
-
-                product.decreaseStock(item.getQuantity());
-            }
-
-            // 11. 결제/주문 상태 변경
+            // 8. 결제/주문 상태 변경
             payment.complete();
             order.updateStatus(OrderStatus.COMPLETED);
 
@@ -159,7 +143,7 @@ public class PaymentService {
             throw e;
         }
 
-        // 12. 응답 반환
+        // 9. 응답 반환
         return ConfirmPaymentResponse.of(
                 true,
                 payment.getOrder().getId().toString(),
@@ -203,11 +187,14 @@ public class PaymentService {
             // 5. PortOne 환불 API 호출
             portOneClient.cancelPayment(paymentId, request.reason());
 
-            // 6. 상태 변경
+            // 6. 재고 원상 복구
+            changeStock(payment.getOrder(), "restore");
+
+            // 7. 상태 변경
             payment.updateStatus(PaymentStatus.REFUNDED);
             payment.getOrder().updateStatus(OrderStatus.REFUNDED);
 
-            // 7. 환불 성공 이력 추가 (COMPLETED)
+            // 8. 환불 성공 이력 추가 (COMPLETED)
             refund = Refund.builder()
                     .payment(refund.getPayment())
                     .amount(refund.getAmount())
@@ -218,7 +205,7 @@ public class PaymentService {
             refundRepository.save(refund);
 
         } catch (Exception e) {
-            // 8. 환불 실패 이력 추가 (FAILED)
+            // 9. 환불 실패 이력 추가 (FAILED)
             refund = Refund.builder()
                     .payment(refund.getPayment())
                     .amount(refund.getAmount())
@@ -230,7 +217,7 @@ public class PaymentService {
             throw e;
         }
 
-        // 9. 응답 반환
+        // 10. 응답 반환
         return CancelPaymentResponse.of(
                 true,
                 payment.getOrder().getId().toString(),
@@ -267,7 +254,6 @@ public class PaymentService {
 
     /**
      * 결제 환불시 상태 검증
-     * @param payment
      */
     private void validateRefundableState(Payment payment) {
         if (payment.getStatus() != PaymentStatus.PAID) {
@@ -275,6 +261,31 @@ public class PaymentService {
         }
         if (payment.getOrder().getStatus() != OrderStatus.COMPLETED) {
             throw new OrderException(OrderErrorCode.INVALID_REFUND_STATE);
+        }
+    }
+
+    /**
+     * 재고 원상복구 로직 (비관적 일괄 락 사용)
+     */
+    private void changeStock(Order order, String type) {
+        List<OrderItem> items = orderItemRepository.findByOrderId(order.getId());
+
+        List<Long> productIds = items.stream()
+                .map(item -> item.getProduct().getId())
+                .toList();
+
+        // 상품들에 대해 비관적 락 획득 (줄 세우기)
+        List<Product> products = productRepository.findAllByIdsWithLock(productIds);
+
+        // 10. 재고 차감
+        for (OrderItem item : items) {
+            Product product = products.stream()
+                    .filter(p -> p.getId().equals(item.getProduct().getId()))
+                    .findFirst()
+                    .orElseThrow(() -> new ProductException(ProductErrorCode.PRODUCT_NOT_FOUND));
+
+            if ("restore".equals(type)) product.increaseStock(item.getQuantity());
+            else product.decreaseStock(item.getQuantity());
         }
     }
 }
