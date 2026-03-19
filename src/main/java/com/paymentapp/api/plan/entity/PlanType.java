@@ -1,7 +1,7 @@
 package com.paymentapp.api.plan.entity;
 
 public enum PlanType {
-    BASIC,
-    PRO,
-    MAX
+    NOOB,
+    BROKER,
+    BLACK_HAND
 }
