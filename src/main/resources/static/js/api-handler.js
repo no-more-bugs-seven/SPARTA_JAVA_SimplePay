@@ -29,7 +29,9 @@ async function makeApiRequest(endpointKey, options = {}) {
 
         // method를 YAML 설정에서 자동으로 가져옴 (options에서 override 가능)
         const method = options.method || endpointContract.method || 'GET';
-
+        console.log(options);
+        console.log(endpointContract);
+        console.log(method);
         // URL 생성
         const url = await buildApiUrl(endpointKey, pathParams);
 
@@ -62,13 +64,31 @@ async function makeApiRequest(endpointKey, options = {}) {
             fetchOptions.body = JSON.stringify(body);
         }
 
-        const response = await fetch(url, fetchOptions);
+        let response = await fetch(url, fetchOptions);
 
         // 401 Unauthorized 응답 시 로그인 페이지로 이동 (쿠키 삭제)
         if (response.status === 401) {
             if (typeof removeToken === 'function') removeToken();
-            window.location.href = '/pages/login';
-            return;
+            // window.location.href = '/pages/login';
+            const reissueMethod = 'POST';
+            const reissueOptions = {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                }
+            };
+            const reissueUrl = await buildApiUrl('reissue', {});
+            const reissue = await fetch(reissueUrl, reissueOptions);
+
+            if (reissue.ok) {
+                const token = typeof getToken === 'function' ? getToken() : null;
+                if (token) {
+                    fetchOptions.headers['Authorization'] = `Bearer ${token}`;
+                }
+                response = await fetch(url, fetchOptions);
+            }else{
+                // return;
+            }
         }
         const text = await response.text();
         const data = text ? JSON.parse(text) : {
@@ -93,7 +113,7 @@ async function makeApiRequest(endpointKey, options = {}) {
                 headers: Object.fromEntries(response.headers.entries())
             };
         }
-
+        console.log(data);
         return data;
     } catch (error) {
         displayError({
