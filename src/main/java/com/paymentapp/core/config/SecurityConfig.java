@@ -32,7 +32,7 @@ public class SecurityConfig {
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
 
         http
-                .csrf(csrf -> csrf.disable()) // CSRF 보호 비활성화 (JWT를 사용하므로 불필요)
+                .csrf(csrf -> csrf.ignoringRequestMatchers("/api/webhooks/**").disable()) // CSRF 보호 비활성화 (JWT를 사용하므로 불필요)
                 .formLogin(form -> form.disable()) // 기본 폼 로그인 비활성화
                 .httpBasic(basic -> basic.disable()) // 기본 HTTP Basic 인증 비활성화
                 .exceptionHandling(exception ->
@@ -46,7 +46,7 @@ public class SecurityConfig {
                         // ==================== 개발용 허용 ====================
                         .requestMatchers(
                                 "/", "/assets/**", "/img/**", "/error", "/favicon.ico",
-                                "/h2-console/**"
+                                "/h2-console/**", "/api/webhooks/**"
                         ).permitAll()
 
                         // ==================== 인증 없이 허용 ====================

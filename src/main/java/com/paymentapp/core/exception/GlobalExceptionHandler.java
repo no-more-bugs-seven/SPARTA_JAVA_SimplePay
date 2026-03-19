@@ -1,6 +1,8 @@
 package com.paymentapp.core.exception;
 
 import com.paymentapp.core.dto.ApiResponse;
+import com.paymentapp.core.exception.custom.BusinessException;
+import com.paymentapp.core.exception.errorcode.CommonErrorCode;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.extern.slf4j.Slf4j;
 

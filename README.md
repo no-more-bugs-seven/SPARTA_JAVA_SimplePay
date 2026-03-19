@@ -338,7 +338,7 @@ cancel-payment:       # 결제 취소
 #### Step 1: 플랜 선택
 
 1. **플랜** 페이지로 이동
-2. 구독 플랜 선택 (Basic/Pro/Max)
+2. 구독 플랜 선택 (Noob/Broker/BlackHand)
 3. "구독 신청하기" 클릭 → 구독 신청 페이지로 이동
 
 #### Step 2: 빌링키 발급 및 구독 생성

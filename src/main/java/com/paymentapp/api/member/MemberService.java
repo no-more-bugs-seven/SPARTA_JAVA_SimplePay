@@ -2,17 +2,13 @@ package com.paymentapp.api.member;
 
 import com.paymentapp.api.auth.dto.MeResponse;
 import com.paymentapp.api.auth.dto.SignUpRequest;
-import com.paymentapp.core.exception.CommonErrorCode;
-import com.paymentapp.core.exception.MemberErrorCode;
-import com.paymentapp.core.exception.MemberException;
+import com.paymentapp.core.exception.errorcode.MemberErrorCode;
+import com.paymentapp.core.exception.custom.MemberException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
-import java.util.HashMap;
-import java.util.Map;
 
 @Service
 @Slf4j

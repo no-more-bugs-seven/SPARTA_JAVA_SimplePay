@@ -3,6 +3,9 @@ package com.paymentapp.core.util;
 
 import com.paymentapp.api.member.Member;
 import com.paymentapp.api.member.MemberRepository;
+import com.paymentapp.api.plan.entity.BillingCycle;
+import com.paymentapp.api.plan.entity.Plan;
+import com.paymentapp.api.plan.PlanRepository;
 import com.paymentapp.api.product.Product;
 import com.paymentapp.api.product.ProductRepository;
 import com.paymentapp.core.constant.ProductStatus;
@@ -23,6 +26,7 @@ public class TestDataInit implements ApplicationRunner {
     private final MemberRepository memberRepository;
     private final ProductRepository productRepository;
     private final PasswordEncoder passwordEncoder;
+    private final PlanRepository planRepository;
 
     @Override
     @Transactional
@@ -128,5 +132,37 @@ public class TestDataInit implements ApplicationRunner {
                         ProductStatus.ON_SALE, "FAKE_LUXURY")
         );
         productRepository.saveAll(products);
+
+        initPlans();
+    }
+
+    private void initPlans() {
+        if (planRepository.count() > 0) {
+            return;
+        }
+
+        planRepository.saveAll(List.of(
+                new Plan(
+                        "NOOB",
+                        "입문자",
+                        new BigDecimal("9900"),
+                        BillingCycle.MONTHLY,
+                        true
+                ),
+                new Plan(
+                        "BROKER",
+                        "중개인",
+                        new BigDecimal("19900"),
+                        BillingCycle.MONTHLY,
+                        true
+                ),
+                new Plan(
+                        "BLACK_HAND",
+                        "검은손",
+                        new BigDecimal("29900"),
+                        BillingCycle.MONTHLY,
+                        true
+                )
+        ));
     }
 }

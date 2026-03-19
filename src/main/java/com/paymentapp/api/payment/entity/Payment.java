@@ -32,7 +32,6 @@ public class Payment extends BaseEntity {
     private PaymentStatus status;
 
     private LocalDateTime paidAt;
-    private LocalDateTime refundedAt;
 
     @Builder
     public Payment (Order order, String paymentKey, BigDecimal amount, PaymentStatus status) {
@@ -48,11 +47,7 @@ public class Payment extends BaseEntity {
         this.paidAt = LocalDateTime.now();
     }
 
-    // 결제 실패시 upate
-    public void fail() {
-        this.status = PaymentStatus.FAILED;
-    }
-
+    // 결제 상태 upate
     public void updateStatus(PaymentStatus status) {
         this.status = status;
     }

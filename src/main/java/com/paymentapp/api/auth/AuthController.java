@@ -1,14 +1,13 @@
 package com.paymentapp.api.auth;
 
 import com.paymentapp.api.auth.dto.*;
-import com.paymentapp.api.member.Member;
 import com.paymentapp.api.member.MemberService;
 import com.paymentapp.core.annotation.LoginUser;
 import com.paymentapp.core.constant.AuthConstants;
 import com.paymentapp.core.dto.ApiResponse;
 import com.paymentapp.core.dto.LoginUserInfoDto;
-import com.paymentapp.core.exception.MemberErrorCode;
-import com.paymentapp.core.exception.MemberException;
+import com.paymentapp.core.exception.errorcode.MemberErrorCode;
+import com.paymentapp.core.exception.custom.MemberException;
 import com.paymentapp.core.security.jwt.JwtTokenProvider;
 import com.paymentapp.core.util.CookieUtils;
 import jakarta.servlet.http.Cookie;
@@ -105,20 +104,25 @@ public class AuthController {
      * 토큰 재발급
      */
     @PostMapping("/reissue")
-    public ResponseEntity<ApiResponse<AuthTokens>> reissue(
+    public ResponseEntity<AuthTokens> reissue(
             @CookieValue(value = AuthConstants.REFRESH_TOKEN, required = false) String refreshToken,
             HttpServletResponse response) {
         if (refreshToken == null) {
             throw new MemberException(MemberErrorCode.UNAUTHORIZED_ACCESS);
         }
         AuthTokens tokens = authService.reissue(refreshToken);
-        Cookie cookie = cookieUtils.createCookie(
+        // 쿠키를 클라이언트에 전송
+        Cookie cookie = new Cookie(AuthConstants.ACCESS_TOKEN, tokens.accessToken());
+        cookie.setPath(AuthConstants.COOKIE_PATH_ROOT);
+        cookie.setMaxAge(AuthConstants.COOKIE_MAX_AGE_DEFAULT);
+        response.addCookie(cookie);
+        cookie = cookieUtils.createCookie(
                 AuthConstants.REFRESH_TOKEN,
                 tokens.refreshToken(),
                 jwtTokenProvider.getRefreshTokenValidityInSeconds()
         );
         response.addCookie(cookie);
-        return ResponseEntity.ok(ApiResponse.success(tokens));
+        return ResponseEntity.ok().header("Authorization", "Bearer " + tokens.accessToken()).body(tokens);
     }
 
     /**

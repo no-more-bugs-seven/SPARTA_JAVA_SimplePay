@@ -20,7 +20,7 @@
 #    클라이언트는 방법 2, 3을 사용하면 수정 불필요!
 
 api:
-  base-url: http://localhost:8080
+  base-url: ${BASE_URL:http://localhost:8080}
 
   # API 엔드포인트 및 계약 정의
   endpoints:
@@ -118,6 +118,35 @@ api:
               type: number
               required: true
               description: 현재 포인트 잔액
+    reissue:
+      url: /api/auth/reissue
+      method: POST
+      description: 토큰 재발급
+      request:
+        fields:
+          - name: email
+            type: string
+            required: true
+            example: admin@test.com
+          - name: password
+            type: string
+            required: true
+            example: admin
+      response:
+        headers:
+          - name: Authorization
+            required: true
+            description: "JWT 토큰 (Bearer {token} 형식)"
+        body:
+          fields:
+            - name: success
+              type: boolean
+              required: true
+              description: 로그인 성공 여부
+            - name: email
+              type: string
+              required: false
+              description: 로그인한 사용자 이메일
 
     # ========================================
     # 상품 & 주문 (Product & Order)
@@ -287,20 +316,7 @@ api:
             - name: items
               type: array
               required: true
-              description: 주문 상품 목록
-              items:
-                - name: productName
-                  type: string
-                  required: true
-                  description: 주문 시점 상품명
-                - name: productPrice
-                  type: number
-                  required: true
-                  description: 주문 시점 상품 가격
-                - name: quantity
-                  type: number
-                  required: true
-                  description: 주문 수량
+              description: "주문 상품 목록 [{ productName, productPrice, quantity }]"
 
     # ========================================
     # 결제 (Payment)
@@ -395,8 +411,8 @@ api:
     # 구독 & 빌링키 (Subscription & Billing Key)
     # ========================================
     list-plans:
-      url:
-      method:
+      url: /api/subscriptions/plans
+      method: GET
       description: 구독 플랜 목록 조회
       response:
         body:
@@ -420,8 +436,8 @@ api:
               description: 결제 주기 (MONTHLY, QUARTERLY, ANNUAL)
 
     create-subscription:
-      url:
-      method:
+      url: /api/subscriptions
+      method: POST
       description: 구독 생성 (빌링키 저장 + 구독 생성을 하나의 트랜잭션으로 처리)
       request:
         fields:
@@ -451,8 +467,8 @@ api:
               usage: 구독 관리 페이지 리다이렉트에 사용
 
     get-subscription:
-      url:
-      method:
+      url: /api/subscriptions/{subscriptionID}
+      method: GET
       description: 구독 조회
       pathParams:
         - name:
@@ -487,8 +503,8 @@ api:
               description: "현재 이용 기간 종료일 (ISO 8601 형식, 예: 2026-03-01T23:59:59)"
 
     update-subscription:
-      url:
-      method:
+      url: /api/subscriptions/{subscriptionID}
+      method: PATCH
       description: 구독 상태 업데이트 (구독 해지)
       pathParams:
         - name:
