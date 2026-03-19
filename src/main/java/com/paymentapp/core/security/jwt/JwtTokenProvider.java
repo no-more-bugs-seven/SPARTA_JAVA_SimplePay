@@ -104,6 +104,10 @@ public class JwtTokenProvider {
         return parseClaims(token).get("role", String.class);
     }
 
+    public Date geExpiration(String token) {
+        return parseClaims(token).getExpiration();
+    }
+
     /**
      * 토큰에서 Claim(Payload) 정보를 파싱하고 서명/만료를 검증합니다
      */
@@ -127,5 +131,9 @@ public class JwtTokenProvider {
 
     public int getRefreshTokenValidityInSeconds() {
         return (int) (refreshTokenValidityInMilliseconds / 1000);
+    }
+
+    public long getRemainingTimeInSeconds(String token) {
+        return (parseClaims(token).getExpiration().getTime() - System.currentTimeMillis()) / 1000;
     }
 }
