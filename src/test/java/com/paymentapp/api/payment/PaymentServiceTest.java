@@ -36,12 +36,13 @@ class PaymentServiceTest {
     private PaymentService paymentService;
 
     @Mock private PaymentRepository paymentRepository;
-    @Mock private ProductRepository productRepository;
     @Mock private OrderRepository orderRepository;
     @Mock private OrderItemRepository orderItemRepository;
-    @Mock private RefundRepository refundRepository;
     @Mock private PortOneClient portOneClient;
 
+    /**
+     * 결제 생성
+     */
     @Test
     void given_유효한_주문_when_결제생성_then_PENDING상태의_결제가_생성된다() {
         // given
@@ -65,6 +66,9 @@ class PaymentServiceTest {
         then(paymentRepository).should().save(any(Payment.class));
     }
 
+    /**
+     * 결제 성공
+     */
     @Test
     void given_정상결제정보_when_결제검증_then_결제와_주문이_완료된다() {
         // given
@@ -103,6 +107,9 @@ class PaymentServiceTest {
         assertThat(order.getStatus()).isEqualTo(OrderStatus.COMPLETED);
     }
 
+    /**
+     * 멱등성 테스트
+     */
     @Test
     void given_이미_처리된_결제_when_재요청_then_외부API를_호출하지_않고_기존결과를_반환한다() {
         // given
@@ -126,6 +133,9 @@ class PaymentServiceTest {
         then(portOneClient).shouldHaveNoInteractions();
     }
 
+    /**
+     * 결제 실패
+     */
     @Test
     void given_PortOne결제가_실패상태_when_검증_then_결제는_FAILED처리된다() {
         // given
@@ -153,6 +163,9 @@ class PaymentServiceTest {
         assertThat(payment.getStatus()).isEqualTo(PaymentStatus.FAILED);
     }
 
+    /**
+     * 금액 위변조 → 보상 트랜잭션
+     */
     @Test
     void given_결제금액이_불일치할때_when_검증_then_자동으로_환불된다() {
         // given
@@ -186,6 +199,9 @@ class PaymentServiceTest {
         assertThat(payment.getStatus()).isEqualTo(PaymentStatus.REFUNDED);
     }
 
+    /**
+     * 환불 성공
+     */
     @Test
     void given_정상결제건_when_환불요청_then_환불되고_재고가_복구된다() {
         // given
@@ -219,6 +235,9 @@ class PaymentServiceTest {
         assertThat(payment.getStatus()).isEqualTo(PaymentStatus.REFUNDED);
     }
 
+    /**
+     * 이미 환불된 경우
+     */
     @Test
     void given_이미_환불된_결제_when_환불요청_then_그대로_성공응답한다() {
         // given

@@ -16,7 +16,7 @@ public class WebhookService {
     private final WebhookRepository webhookRepository;
 
     @Transactional
-    public void processWebhook(String webhookId, String signature, String paymentKey, String eventStatus) {
+    public void processWebhook(String webhookId, String paymentKey, String eventStatus) {
         // 1. 웹훅 중복 수신 체크 (Unique ID)
         if (webhookRepository.existsByWebhookId(webhookId)) {
             log.info("Duplicate Webhook ignored: {}", webhookId);
