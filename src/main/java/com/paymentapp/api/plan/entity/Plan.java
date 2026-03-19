@@ -18,7 +18,7 @@ public class Plan {
     private Long id;
 
     @Column(nullable = false, unique = true, length = 50)
-    private String planId; // BASIC, PRO, MAX
+    private String planId; // NOOB, BROKER, BLACK_HAND
 
     @Column(nullable = false, length = 100)
     private String name;

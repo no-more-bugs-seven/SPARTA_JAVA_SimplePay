@@ -143,22 +143,22 @@ public class TestDataInit implements ApplicationRunner {
 
         planRepository.saveAll(List.of(
                 new Plan(
-                        "BASIC",
-                        "베이직",
+                        "NOOB",
+                        "입문자",
                         new BigDecimal("9900"),
                         BillingCycle.MONTHLY,
                         true
                 ),
                 new Plan(
-                        "PRO",
-                        "프로",
+                        "BROKER",
+                        "중개인",
                         new BigDecimal("19900"),
                         BillingCycle.MONTHLY,
                         true
                 ),
                 new Plan(
-                        "MAX",
-                        "맥스",
+                        "BLACK_HAND",
+                        "검은손",
                         new BigDecimal("29900"),
                         BillingCycle.MONTHLY,
                         true
