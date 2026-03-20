@@ -2,8 +2,11 @@ package com.paymentapp.api.subscription.entity;
 
 import jakarta.persistence.*;
 import lombok.AccessLevel;
+import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
 @Entity
@@ -21,7 +24,7 @@ public class SubscriptionBilling {
     private Subscription subscription;
 
     @Column(nullable = false)
-    private Integer amount;
+    private BigDecimal amount;
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
@@ -36,5 +39,20 @@ public class SubscriptionBilling {
     @Column()
     private String errorMessage;
 
-
+    @Builder
+    public SubscriptionBilling(
+            Subscription subscription,
+            BigDecimal amount,
+            BillingStatus status,
+            String paymentId,
+            LocalDateTime attemptedAt,
+            String errorMessage
+    ) {
+        this.subscription = subscription;
+        this.amount = amount;
+        this.status = status;
+        this.paymentId = paymentId;
+        this.attemptedAt = attemptedAt;
+        this.errorMessage = errorMessage;
+    }
 }

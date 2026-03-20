@@ -128,7 +128,7 @@ public class AuthController {
      * 로그아웃
      */
     @PostMapping("/logout")
-    public ResponseEntity<ApiResponse<String>> logout(
+    public ResponseEntity<String> logout(
             @CookieValue(value = AuthConstants.ACCESS_TOKEN, required = false) String accessToken,
             @CookieValue(value = AuthConstants.REFRESH_TOKEN, required = false) String refreshToken,
             HttpServletResponse response) {
@@ -137,6 +137,6 @@ public class AuthController {
         }
         Cookie cookie = cookieUtils.deleteCookie(AuthConstants.REFRESH_TOKEN);
         response.addCookie(cookie);
-        return ResponseEntity.ok(ApiResponse.success(AuthConstants.LOGOUT_SUCCESS_MESSAGE));
+        return ResponseEntity.ok("{}");
     }
 }
