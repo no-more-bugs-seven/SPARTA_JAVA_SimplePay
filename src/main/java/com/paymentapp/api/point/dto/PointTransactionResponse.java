@@ -21,7 +21,7 @@ public record PointTransactionResponse(
                 transaction.getOrder() != null ? transaction.getOrder().getId() : null,
                 transaction.getPoints(),
                 transaction.getTransactionType(),
-                transaction.getExpiryAt(),
+                transaction.getExpiredAt(),
                 transaction.getCreatedAt()
         );
     }

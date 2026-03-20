@@ -2,14 +2,18 @@ package com.paymentapp.api.member;
 
 import com.paymentapp.api.auth.dto.MeResponse;
 import com.paymentapp.api.auth.dto.SignUpRequest;
-import com.paymentapp.api.membership.MembershipTierRepository;
+import com.paymentapp.api.membership.MembershipService;
 import com.paymentapp.core.exception.errorcode.MemberErrorCode;
 import com.paymentapp.core.exception.custom.MemberException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.math.BigDecimal;
 
 @Service
 @Slf4j
@@ -18,8 +22,11 @@ import org.springframework.transaction.annotation.Transactional;
 public class MemberService {
 
     private final MemberRepository memberRepository;
-    private final MembershipTierRepository membershipTierRepository;
     private final PasswordEncoder passwordEncoder;
+
+    @Lazy
+    @Autowired
+    private final MembershipService membershipService;
 
     /**
      * 회원 생성 (auth 도메인에서 회원가입 시 위임받아 실행)
@@ -43,10 +50,12 @@ public class MemberService {
                 .email(email)
                 .phone(phone)
                 .name(signUpRequest.name())
-                .pointBalance(0L)
+                .pointBalance(BigDecimal.ZERO)
+                .membershipTier(membershipService.getNormalTier())
                 .build();
-
-        return memberRepository.save(member);
+        Member saved = memberRepository.save(member);
+        membershipService.initMembership(saved);
+        return saved;
     }
 
     /**

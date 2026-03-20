@@ -6,5 +6,5 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import java.util.List;
 
 public interface MembershipHistoryRepository extends JpaRepository<MembershipHistory, Long> {
-    List<MembershipHistory> findByMemberOrderByChangedAtDesc(Member member);
+    List<MembershipHistory> findByMemberOrderByCreatedAtDesc(Member member);
 }

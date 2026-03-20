@@ -33,11 +33,42 @@ public class TestDataInit implements ApplicationRunner {
     @Transactional
     public void run(ApplicationArguments args) throws Exception {
         try{
+            insertMembershipTiers();
             insertMembers();
+            insertMembershipHistories();
             insertProducts();
             insertPlans();
         }catch(Exception e){
         }
+    }
+
+    /**
+     * 멤버십 등급 마스터 데이터 초기화
+     *   - Normal : 0       원 이상 (= 모든 신규 가입자 기본 등급)
+     *   - VIP    : 50,001  원 이상 (= 5만 원 초과 시 승급)
+     *   - VVIP   : 150,000 원 이상 (= 15만 원 이상 시 승급)
+     */
+
+    private void insertMembershipTiers() {
+        Long tierCount = jdbcTemplate.queryForObject("SELECT COUNT(*) FROM membership_tiers", Long.class);
+        if (tierCount != null && tierCount > 0) {
+            return;
+        }
+
+        Timestamp now = Timestamp.valueOf(LocalDateTime.now());
+
+        List<Object[]> batchArgs = List.of(
+                // name,    min_spent_amount, point_rate, created_at, modified_at
+                new Object[]{"Normal", new BigDecimal("0"),       new BigDecimal("0.01"), now, now},
+                new Object[]{"VIP",    new BigDecimal("50001"),   new BigDecimal("0.05"), now, now},
+                new Object[]{"VVIP",   new BigDecimal("150000"),  new BigDecimal("0.10"), now, now}
+        );
+
+        jdbcTemplate.batchUpdate(
+                "INSERT INTO membership_tiers (name, min_spent_amount, point_rate, created_at, modified_at) " +
+                        "VALUES (?, ?, ?, ?, ?)",
+                batchArgs
+        );
     }
 
     private void insertMembers() {
@@ -45,6 +76,11 @@ public class TestDataInit implements ApplicationRunner {
         if (memberCount != null && memberCount > 0) {
             return;
         }
+
+        Long normalTierId = jdbcTemplate.queryForObject(
+                "SELECT id FROM membership_tiers WHERE min_spent_amount = 0",
+                Long.class
+        );
 
         List<String> usernames = List.of("kuromi", "mamel", "pikachu", "kitty", "heartping");
         List<String> names = List.of("고은지", "김소현", "박영수", "성기찬", "이지민");
@@ -57,12 +93,42 @@ public class TestDataInit implements ApplicationRunner {
                     names.get(i),
                     usernames.get(i) + "@test.com",
                     "010-1234-567" + i,
-                    1000L
+                    1000L,
+                    normalTierId
             });
         }
 
         jdbcTemplate.batchUpdate(
                 "INSERT INTO users (password, name, email, phone, point_balance) VALUES (?, ?, ?, ?, ?)",
+                batchArgs
+        );
+    }
+
+    /**
+     * 테스트 유저들의 초기 멤버십 히스토리 생성
+     */
+    private void insertMembershipHistories() {
+        Long historyCount = jdbcTemplate.queryForObject("SELECT COUNT(*) FROM membership_histories", Long.class);
+        if (historyCount != null && historyCount > 0) {
+            return;
+        }
+
+        Long normalTierId = jdbcTemplate.queryForObject(
+                "SELECT id FROM membership_tiers WHERE min_spent_amount = 0",
+                Long.class
+        );
+
+        List<Long> userIds = jdbcTemplate.queryForList("SELECT id FROM users", Long.class);
+        Timestamp now = Timestamp.valueOf(LocalDateTime.now());
+
+        List<Object[]> batchArgs = new java.util.ArrayList<>();
+        for (Long userId : userIds) {
+            batchArgs.add(new Object[]{userId, normalTierId, now, now, now});
+        }
+
+        jdbcTemplate.batchUpdate(
+                "INSERT INTO membership_histories (user_id, tier_id, changed_at, created_at, modified_at) " +
+                        "VALUES (?, ?, ?, ?, ?)",
                 batchArgs
         );
     }

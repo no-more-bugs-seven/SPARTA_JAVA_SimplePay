@@ -9,6 +9,8 @@ import com.paymentapp.core.exception.errorcode.PointErrorCode;
 import jakarta.persistence.*;
 import lombok.*;
 
+import java.math.BigDecimal;
+
 @Entity
 @Table(name = "users")
 @Getter
@@ -39,41 +41,40 @@ public class Member extends BaseEntity {
     private String name;
 
     @Column()
-    private Long pointBalance;
+    private BigDecimal pointBalance;
 
-//    @ManyToOne(fetch = FetchType.LAZY, optional = false)
-//    @JoinColumn(name = "membership_tier_id")
-//    private MembershipTier membershipTier;
+    @ManyToOne(fetch = FetchType.LAZY, optional = false)
+    @JoinColumn(name = "membership_tier_id")
+    private MembershipTier membershipTier;
 
     @Column()
     private Long membershipTierId;
 
     @Builder
-    private Member(String password, String email, String phone, String name, Long pointBalance, MembershipTier membershipTier) {
+    private Member(String password, String email, String phone, String name, BigDecimal pointBalance, MembershipTier membershipTier) {
         this.password = password;
         this.email = email;
         this.phone = phone;
         this.name = name;
         this.pointBalance = pointBalance;
-//        this.membershipTier = membershipTier;
-        this.membershipTierId = 1L;
+        this.membershipTier = membershipTier;
     }
 
     // 포인트 적립
-    public void addPointBalance(Long amount) {
-        this.pointBalance = this.pointBalance + amount;
+    public void addPointBalance(BigDecimal amount) {
+        this.pointBalance = this.pointBalance.add(amount);
     }
 
     // 포인트 차감 (잔액 부족 시 예외)
-    public void subtractPointBalance(Long amount) {
-        if (this.pointBalance < amount) {
+    public void subtractPointBalance(BigDecimal amount) {
+        if (this.pointBalance.compareTo(amount) < 0) {
             throw new PointException(PointErrorCode.INSUFFICIENT_POINTS);
         }
-        this.pointBalance = this.pointBalance - amount;
+        this.pointBalance = this.pointBalance.subtract(amount);
     }
 
     // 멤버십 등급 갱신
-    public void updateMembershipTier(Long tierId) {
-        this.membershipTierId = tierId;
+    public void updateMembershipTier(MembershipTier tier) {
+        this.membershipTier = tier;
     }
 }
