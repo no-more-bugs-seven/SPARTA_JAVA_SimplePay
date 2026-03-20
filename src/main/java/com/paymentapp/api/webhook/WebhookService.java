@@ -31,18 +31,25 @@ public class WebhookService {
                 .build();
         webhookRepository.save(event);
 
-        if (eventStatus.equals("Transaction.Paid")) {
-            try {
-                // 3. 기존 결제 확정 로직 호출
-                paymentService.confirmPayment(paymentKey);
-
-                // 4. 성공 시 상태 변경
-                event.markAsProcessed();
-            } catch (Exception e) {
-                // 5. 실패 시 상태 변경 및 예외 전파
-                event.markAsFailed();
-                throw e;
+        try {
+            // 3. 이벤트 타입별 처리
+            switch (eventStatus) {
+                case "Transaction.Paid":
+                    paymentService.confirmPayment(paymentKey);
+                    event.markAsProcessed();
+                    break;
+                case "Transaction.Failed":
+                    paymentService.failPayment(paymentKey);
+                    event.markAsProcessed();
+                    break;
+                default:
+                    log.info("Ignored event type: {}", eventStatus);
             }
+
+        } catch (Exception e) {
+            log.error("Webhook processing failed. webhookId={}, paymentId={}", webhookId, paymentKey, e);
+            event.markAsFailed();
+            throw e;
         }
     }
 }

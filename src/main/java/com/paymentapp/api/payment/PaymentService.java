@@ -306,4 +306,35 @@ public class PaymentService {
             else product.decreaseStock(item.getQuantity());
         }
     }
+
+    /**
+     * 웹훅 수신 실패시
+     * @param paymentId
+     */
+    @Transactional
+    public void failPayment(String paymentId) {
+        // 1. 결제 조회 (Lock)
+        Payment payment = paymentRepository.findByPaymentKeyWithLock(paymentId)
+                .orElseThrow(() -> new PaymentException(PaymentErrorCode.PAYMENT_NOT_FOUND));
+
+        // 2. 멱등성 체크
+        if (payment.getStatus() == PaymentStatus.FAILED) {
+            return;
+        }
+
+        // 이미 완료된 결제면 무시
+        if (payment.getStatus() == PaymentStatus.PAID) {
+            log.warn("이미 완료된 결제에 대해 실패 이벤트 수신. paymentId={}", paymentId);
+            return;
+        }
+
+        // 3. 상태 변경
+        payment.updateStatus(PaymentStatus.FAILED);
+
+        // 4. 주문 상태 처리
+        Order order = payment.getOrder();
+        order.updateStatus(OrderStatus.CANCELLED);
+
+        log.info("결제 실패 처리 완료. paymentId={}, orderId={}", paymentId, order.getId());
+    }
 }
