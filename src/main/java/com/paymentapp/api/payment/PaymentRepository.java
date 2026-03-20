@@ -1,11 +1,14 @@
 package com.paymentapp.api.payment;
 
+import com.paymentapp.api.member.Member;
 import com.paymentapp.api.payment.entity.Payment;
+import com.paymentapp.api.payment.entity.PaymentStatus;
 import jakarta.persistence.LockModeType;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Lock;
 import org.springframework.data.jpa.repository.Query;
 
+import java.math.BigDecimal;
 import java.util.Optional;
 
 public interface PaymentRepository extends JpaRepository<Payment, Long> {
@@ -14,4 +17,7 @@ public interface PaymentRepository extends JpaRepository<Payment, Long> {
     @Lock(LockModeType.PESSIMISTIC_WRITE)
     @Query("select p from Payment p where p.paymentKey = :paymentKey")
     Optional<Payment> findByPaymentKeyWithLock(String paymentKey);
+
+    @Query("SELECT COALESCE(SUM(p.amount), 0) FROM Payment p WHERE p.order.member = :member AND p.status = :status")
+    BigDecimal sumAmountByMemberAndStatus(Member member, PaymentStatus status);
 }

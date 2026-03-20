@@ -35,9 +35,6 @@ public class PointService {
                         .expiryAt(LocalDateTime.now().plusDays(PointConstants.POINT_EXPIRY_DAYS))
                         .build()
         );
-
-        // TODO: Member에 메서드 추가되면 아래 주석 해제, 검증 로직 추가
-        // member.addPoints(points);
     }
 
 
@@ -48,13 +45,11 @@ public class PointService {
                 PointTransaction.builder()
                         .member(member)
                         .order(order)
-                        .points(points) // 양수 저장, SPENT 타입이 차감 의미
+                        .points(points)
                         .transactionType(PointTransactionType.SPENT)
                         .expiryAt(null)
                         .build()
         );
-
-        // member.subtractPoints(points);
     }
 
     @Transactional
@@ -67,12 +62,11 @@ public class PointService {
                     PointTransaction.builder()
                             .member(member)
                             .order(order)
-                            .points(spent.getPoints()) // 양수 그대로
+                            .points(spent.getPoints())
                             .transactionType(PointTransactionType.RECOVERED)
                             .expiryAt(null)
                             .build()
             );
-            // member.addPoints(recoveredAmount);
         }
     }
 
@@ -86,12 +80,11 @@ public class PointService {
                     PointTransaction.builder()
                             .member(member)
                             .order(order)
-                            .points(earned.getPoints()) // 양수 그대로
+                            .points(earned.getPoints())
                             .transactionType(PointTransactionType.CANCELED)
                             .expiryAt(null)
                             .build()
             );
-            // member.subtractPoints(earned.getPoints());
         }
     }
 
@@ -111,7 +104,6 @@ public class PointService {
                             .expiryAt(null)
                             .build()
             );
-            // member.subtractPoints(earned.getPoints());
         }
     }
 
