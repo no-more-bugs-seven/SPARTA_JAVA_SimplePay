@@ -8,7 +8,7 @@ import java.util.Optional;
 
 public interface SubscriptionRepository extends JpaRepository<Subscription, Long> {
 
-    Optional<Subscription> findByIdAndMemberId(Long subscriptionId, Long userId);
+    Optional<Subscription> findByIdAndMemberId(Long subscriptionId, Long memberId);
 
     boolean existsByMemberIdAndStatus(Long memberId, SubscriptionStatus status);
 }

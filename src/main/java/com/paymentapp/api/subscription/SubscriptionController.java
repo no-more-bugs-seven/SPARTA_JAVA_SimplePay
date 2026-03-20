@@ -1,9 +1,6 @@
 package com.paymentapp.api.subscription;
 
-import com.paymentapp.api.subscription.dto.CreateSubscriptionRequest;
-import com.paymentapp.api.subscription.dto.CreateSubscriptionResponse;
-import com.paymentapp.api.subscription.dto.SubscriptionResponse;
-import com.paymentapp.api.subscription.dto.UpdateSubscriptionResponse;
+import com.paymentapp.api.subscription.dto.*;
 import com.paymentapp.core.annotation.LoginUser;
 import com.paymentapp.core.dto.LoginUserInfoDto;
 import jakarta.validation.Valid;
@@ -32,7 +29,8 @@ public class SubscriptionController {
                 loginUser.id(),
                 request.customerUid(),
                 request.planId(),
-                request.billingKey()
+                request.billingKey(),
+                request.amount()
         );
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
@@ -59,10 +57,21 @@ public class SubscriptionController {
             @LoginUser LoginUserInfoDto loginUser,
             @PathVariable Long subscriptionId
     ) {
-        subscriptionService.cancelSubscription(loginUser.id(), subscriptionId);
+        UpdateSubscriptionResponse response = subscriptionService.cancelSubscription(loginUser.id(), subscriptionId);
+        return ResponseEntity.ok(response);
+    }
 
+    /**
+     * 구독 플랜 변경
+     */
+    @PatchMapping("/{subscriptionId}/plan")
+    public ResponseEntity<SubscriptionResponse> changeSubscriptionPlan(
+            @LoginUser LoginUserInfoDto loginUser,
+            @PathVariable String subscriptionId,
+            @Valid @RequestBody ChangeSubscriptionPlanRequest request
+    ) {
         return ResponseEntity.ok(
-                new UpdateSubscriptionResponse(true, String.valueOf(subscriptionId))
+                subscriptionService.changePlan(loginUser.id(), subscriptionId, request.planId())
         );
     }
 

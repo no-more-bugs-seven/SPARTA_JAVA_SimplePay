@@ -6,8 +6,11 @@ import com.paymentapp.api.plan.PlanService;
 import com.paymentapp.api.plan.entity.Plan;
 import com.paymentapp.api.subscription.dto.CreateSubscriptionResponse;
 import com.paymentapp.api.subscription.dto.SubscriptionResponse;
+import com.paymentapp.api.subscription.dto.UpdateSubscriptionResponse;
 import com.paymentapp.api.subscription.entity.*;
+import com.paymentapp.core.exception.custom.PlanException;
 import com.paymentapp.core.exception.custom.SubscriptionException;
+import com.paymentapp.core.exception.errorcode.PlanErrorCode;
 import com.paymentapp.core.exception.errorcode.SubscriptionErrorCode;
 import com.paymentapp.core.portone.PortOneClient;
 import com.paymentapp.core.portone.dto.PortOneBillingPaymentResponse;
@@ -16,6 +19,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
 @Slf4j
@@ -38,19 +42,27 @@ public class SubscriptionService {
      */
     @Transactional
     public CreateSubscriptionResponse createSubscription(
-            Long userId,
+            Long memberId,
             String customerUid,
             String planId,
-            String billingKey
-    ) {
-        boolean isAlreadySubscribed = subscriptionRepository.existsByMemberIdAndStatus(userId, SubscriptionStatus.ACTIVE);
+            String billingKey,
+            BigDecimal amount) {
+        boolean isAlreadySubscribed = subscriptionRepository.existsByMemberIdAndStatus(memberId, SubscriptionStatus.ACTIVE);
         if (isAlreadySubscribed) {
-            log.warn("다중 구독 시도 차단! userId: {}", userId);
+            log.warn("다중 구독 시도 차단! memberId: {}", memberId);
              throw new SubscriptionException(SubscriptionErrorCode.ALREADY_SUBSCRIBED);
         }
 
-        Member member = memberService.findById(userId);
+        Member member = memberService.findById(memberId);
         Plan plan = planService.findByPlanId(planId);
+        if(!plan.isActive()) {
+            throw new PlanException(PlanErrorCode.PLAN_INACTIVE);
+        }
+        if (plan.getAmount().compareTo(amount) != 0) {
+            throw new PlanException(PlanErrorCode.AMOUNT_MISMATCH);
+        }
+
+
 
         // 빌링키 검증 (to 포트원)
         boolean isValidBillingKey = portOneClient.validateBillingKey(billingKey);
@@ -127,8 +139,8 @@ public class SubscriptionService {
     /**
      * 내 구독 정보 조회
      */
-    public SubscriptionResponse getMySubscription(Long userId, Long subscriptionId) {
-        Subscription subscription = subscriptionRepository.findByIdAndMemberId(subscriptionId, userId)
+    public SubscriptionResponse getMySubscription(Long memberId, Long subscriptionId) {
+        Subscription subscription = subscriptionRepository.findByIdAndMemberId(subscriptionId, memberId)
                 .orElseThrow(() -> new SubscriptionException(SubscriptionErrorCode.ACTIVE_SUBSCRIPTION_NOT_FOUND));
 
         return SubscriptionResponse.from(subscription);
@@ -138,10 +150,49 @@ public class SubscriptionService {
      * 구독 해지
      */
     @Transactional
-    public void cancelSubscription(Long userId, Long subscriptionId) {
-        Subscription subscription = subscriptionRepository.findByIdAndMemberId(subscriptionId, userId)
+    public UpdateSubscriptionResponse cancelSubscription(Long memberId, Long subscriptionId) {
+        Subscription subscription = subscriptionRepository.findByIdAndMemberId(subscriptionId, memberId)
                 .orElseThrow(() -> new SubscriptionException(SubscriptionErrorCode.CANCELABLE_SUBSCRIPTION_NOT_FOUND));
-
         subscription.cancel();
+
+        return new UpdateSubscriptionResponse(true, String.valueOf(subscriptionId));
+    }
+
+
+    /**
+     * 구독 플랜 변경
+     */
+    @Transactional
+    public SubscriptionResponse changePlan(Long userId, String subscriptionId, String newPlanId) {
+        Long id = parseSubscriptionId(subscriptionId);
+
+        Subscription subscription = subscriptionRepository.findByIdAndMemberId(id, userId)
+                .orElseThrow(() -> new SubscriptionException(SubscriptionErrorCode.ACTIVE_SUBSCRIPTION_NOT_FOUND));
+
+        if (!subscription.isActive()) {
+            throw new SubscriptionException(SubscriptionErrorCode.INVALID_SUBSCRIPTION_STATUS_MESSAGE);
+        }
+
+        Plan newPlan = planService.findByPlanId(newPlanId);
+
+        if (!newPlan.isActive()) {
+            throw new PlanException(PlanErrorCode.PLAN_INACTIVE);
+        }
+
+        if (subscription.getPlan().getPlanId().equals(newPlanId)) {
+            throw new SubscriptionException(SubscriptionErrorCode.SAME_PLAN_NOT_ALLOWED);
+        }
+
+        subscription.reservePlanChange(newPlan);
+
+        return SubscriptionResponse.from(subscription);
+    }
+
+    private Long parseSubscriptionId(String subscriptionId) {
+        try {
+            return Long.parseLong(subscriptionId);
+        } catch (NumberFormatException e) {
+            throw new SubscriptionException(SubscriptionErrorCode.INVALID_SUBSCRIPTION_ID);
+        }
     }
 }
