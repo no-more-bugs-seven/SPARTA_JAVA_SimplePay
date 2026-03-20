@@ -1,9 +1,13 @@
 package com.paymentapp.api.subscription.entity;
 
+import com.paymentapp.api.member.Member;
 import com.paymentapp.api.plan.entity.Plan;
 import com.paymentapp.core.entity.BaseEntity;
+import com.paymentapp.core.exception.custom.SubscriptionException;
+import com.paymentapp.core.exception.errorcode.SubscriptionErrorCode;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
+import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
@@ -20,14 +24,9 @@ public class Subscription extends BaseEntity {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(nullable = false)
-    private Long userId;
-
-    @Column(nullable = false, length = 100)
-    private String customerUid;
-
-    @Column(length = 100)
-    private String paymentMethodId;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "user_id", nullable = false)
+    private Member member;
 
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "plan_id", nullable = false)
@@ -39,7 +38,7 @@ public class Subscription extends BaseEntity {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "subscription_payment_methods_id", nullable = false)
-    private SubscriptionPaymentMethod subscriptionPaymentMethod;
+    private SubscriptionPaymentMethod paymentMethod;
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 20)
@@ -56,42 +55,31 @@ public class Subscription extends BaseEntity {
 
     private LocalDateTime cancelledAt;
 
-    private Subscription(
-            Long userId,
-            String customerUid,
-            String paymentMethodId,
+    @Builder
+    public Subscription(
+            Member member,
             Plan plan,
+            SubscriptionPaymentMethod paymentMethod,
             BigDecimal amount,
+            SubscriptionStatus status,
             LocalDateTime currentPeriodStart,
             LocalDateTime currentPeriodEnd
     ) {
-        this.userId = userId;
-        this.customerUid = customerUid;
-        this.paymentMethodId = paymentMethodId;
+        this.member = member;
         this.plan = plan;
+        this.paymentMethod = paymentMethod;
         this.amount = amount;
-        this.status = SubscriptionStatus.ACTIVE;
+        this.status = status != null ? status : SubscriptionStatus.ACTIVE; // 기본값 셋팅
         this.currentPeriodStart = currentPeriodStart;
         this.currentPeriodEnd = currentPeriodEnd;
     }
 
-    public static Subscription create(
-            Long userId,
-            String customerUid,
-            String paymentMethodId,
-            Plan plan,
-            BigDecimal amount
-    ) {
-        LocalDateTime now = LocalDateTime.now();
-        return new Subscription(
-                userId,
-                customerUid,
-                paymentMethodId,
-                plan,
-                amount,
-                now,
-                now.plusMonths(1)
-        );
+    public void failPayment() {
+        if (this.status == SubscriptionStatus.CANCELLED) {
+            return;
+        }
+
+        this.status = SubscriptionStatus.PAST_DUE;
     }
 
     public void reservePlanChange(Plan newPlan) {
@@ -103,8 +91,8 @@ public class Subscription extends BaseEntity {
             return;
         }
 
-        if (this.status == SubscriptionStatus.EXPIRED) {
-            throw new IllegalStateException("이미 종료된 구독은 해지할 수 없습니다.");
+        if (this.status == SubscriptionStatus.PAST_DUE) {
+            throw new SubscriptionException(SubscriptionErrorCode.SUBSCRIPTION_ALREADY_ENDED);
         }
 
         this.status = SubscriptionStatus.CANCELLED;
@@ -112,7 +100,7 @@ public class Subscription extends BaseEntity {
     }
 
     public boolean isOwnedBy(Long userId) {
-        return this.userId.equals(userId);
+        return member.getId().equals(userId);
     }
 
     public boolean isActive() {
@@ -121,13 +109,8 @@ public class Subscription extends BaseEntity {
 
     public boolean isInProgress() {
         return (this.status == SubscriptionStatus.ACTIVE
-                || this.status == SubscriptionStatus.SUSPENDED
                 || this.status == SubscriptionStatus.CANCELLED)
                 && this.currentPeriodEnd.isAfter(LocalDateTime.now());
-    }
-
-    public void linkPaymentMethod(String paymentMethodId) {
-        this.paymentMethodId = paymentMethodId;
     }
 
     public void extendSubscription() {

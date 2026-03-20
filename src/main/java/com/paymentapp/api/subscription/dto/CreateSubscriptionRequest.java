@@ -7,8 +7,11 @@ import jakarta.validation.constraints.NotNull;
 import java.math.BigDecimal;
 
 public record CreateSubscriptionRequest(
-        @NotBlank String customerUid,
-        @NotBlank String planId,
+        @NotBlank(message = "customerUid 는 필수입니다.")
+        String customerUid,
+        @NotBlank(message = "planId 는 필수입니다.")
+        String planId,
+        @NotBlank(message = "billingKey 는 필수입니다.")
         @NotBlank String billingKey,
         @NotNull @DecimalMin("0.0") BigDecimal amount
 ) {

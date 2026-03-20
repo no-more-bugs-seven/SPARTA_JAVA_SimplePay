@@ -9,7 +9,7 @@ public record SubscriptionResponse(
         String subscriptionId,
         String customerUid,
         String planId,
-        String paymentMethodId,
+        Long paymentMethodId,
         String status,
         BigDecimal amount,
         LocalDateTime currentPeriodEnd
@@ -17,9 +17,9 @@ public record SubscriptionResponse(
     public static SubscriptionResponse from(Subscription subscription) {
         return new SubscriptionResponse(
                 String.valueOf(subscription.getId()),
-                subscription.getCustomerUid(),
+                subscription.getPaymentMethod().getCustomerUid(),
                 subscription.getPlan().getPlanId(),
-                subscription.getPaymentMethodId(),
+                subscription.getPaymentMethod().getId(),
                 subscription.getStatus().name(),
                 subscription.getAmount(),
                 subscription.getCurrentPeriodEnd()
