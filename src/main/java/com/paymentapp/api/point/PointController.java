@@ -18,7 +18,7 @@ public class PointController {
 
     private final PointService pointService;
 
-    @GetMapping("/points/me/transactions")
+    @GetMapping("/points/transactions/me")
     public ResponseEntity<List<PointTransactionResponse>> getMyTransactions(
             @LoginUser LoginUserInfoDto loginUser) {
         return ResponseEntity.ok(pointService.getMyTransactions(loginUser.id()));

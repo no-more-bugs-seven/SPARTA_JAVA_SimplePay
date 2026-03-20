@@ -1,6 +1,7 @@
 package com.paymentapp.api.payment;
 
 import com.paymentapp.api.member.Member;
+import com.paymentapp.api.order.Order;
 import com.paymentapp.api.payment.entity.Payment;
 import com.paymentapp.api.payment.entity.PaymentStatus;
 import jakarta.persistence.LockModeType;
@@ -20,4 +21,6 @@ public interface PaymentRepository extends JpaRepository<Payment, Long> {
 
     @Query("SELECT COALESCE(SUM(p.amount), 0) FROM Payment p WHERE p.order.member = :member AND p.status = :status")
     BigDecimal sumAmountByMemberAndStatus(Member member, PaymentStatus status);
+
+    Optional<Payment> findByOrder(Order order);
 }

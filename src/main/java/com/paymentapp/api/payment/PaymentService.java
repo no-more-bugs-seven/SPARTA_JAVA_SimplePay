@@ -57,7 +57,12 @@ public class PaymentService {
         Order order = orderRepository.findById(request.orderId())
                 .orElseThrow(() -> new OrderException(OrderErrorCode.ORDER_NOT_FOUND));
 
-        // 2. 결제 시도 생성
+        // 2. 포인트 사용 처리
+        if (order.getUsedPoints().compareTo(BigDecimal.ZERO) > 0) {
+            pointService.spendPoints(order.getMember(), order, order.getUsedPoints());
+        }
+
+        // 3. 결제 시도 생성
         String paymentKey = "PAY-" + TsidCreator.getTsid();
 
         Payment payment = Payment.builder()
@@ -67,10 +72,10 @@ public class PaymentService {
                 .status(PaymentStatus.PENDING)
                 .build();
 
-        // 3. 결제 저장
+        // 4. 결제 저장
         Payment savedPayment = paymentRepository.save(payment);
 
-        // 4. 응답 반환
+        // 5. 응답 반환
         return CreatePaymentResponse.of(
                 true,
                 savedPayment.getPaymentKey(),
@@ -154,7 +159,7 @@ public class PaymentService {
                 throw new PaymentException(PaymentErrorCode.INVALID_PAYMENT_STATUS);
         }
 
-        // 5. 금액 검증
+        // 6. 금액 검증
         BigDecimal paidAmount = BigDecimal.valueOf(response.getAmount().getTotal());
         if (payment.getAmount().compareTo(paidAmount) != 0) {
             // 보상 트랜잭션 : 금액 위변조 감지 시 자동 취소 로직
@@ -171,16 +176,11 @@ public class PaymentService {
             payment.complete();
             order.updateStatus(OrderStatus.COMPLETED);
 
-            // 추가: 포인트 사용 처리
-            if (order.getUsedPoints().compareTo(BigDecimal.ZERO) > 0) {
-                pointService.spendPoints(order.getMember(), order, order.getUsedPoints());
-            }
-
-            // 추가: 포인트 적립
+            // 9. 포인트 적립
             BigDecimal pointRate = membershipService.getPointRate(order.getMember());
             pointService.earnPoints(order.getMember(), order, payment.getAmount().multiply(pointRate));
 
-            // 추가: 멤버십 등급 갱신
+            // 10. 멤버십 등급 갱신
             membershipService.updateMembershipTier(order.getMember(), membershipService.calculateTotalSpentAmount(order.getMember()));
 
         } catch (ProductException e) {
@@ -286,31 +286,40 @@ public class PaymentService {
      * 보상 트랜잭션 공통 로직 (환불 처리 및 상태 변경)
      */
     private void handleCompensation(Payment payment, Order order, String reason) {
-        // 이미 환불된 경우 방어
+        // 이미 환불된 경우 중복 실행 방지
         if (payment.getStatus() == PaymentStatus.REFUNDED) {
-            log.warn("이미 보상 처리된 결제. 중복 실행 방지 paymentId={}", payment.getPaymentKey());
+            log.warn("이미 보상 처리된 결제 - paymentKey: {}", payment.getPaymentKey());
             return;
         }
 
         try {
-            // 결제 취소 API 호출
+            // 1. 결제 취소 API 호출
             portOneClient.cancelPayment(payment.getPaymentKey(), reason);
         } catch (Exception e) {
             log.error("결제 취소 API 호출 실패 - paymentKey: {}", payment.getPaymentKey(), e);
         }
 
-        // 재고 복구
+        // 2. 재고 복구
         try {
             changeStock(order, "restore");
         } catch (Exception e) {
             log.error("재고 복구 실패", e);
         }
 
-        // 2. 상태 변경
+        // 3. 포인트 복구 (createPayment() 에서 차감된 포인트를 되돌림)
+        pointService.recoverPoints(order.getMember(), order);
+
+        // 4. 적립 포인트 취소 (earnPoints() 이후 보상 트랜잭션 시 적립분도 롤백 / 적립 전이면 빈 리스트로 무해하게 종료)
+        pointService.cancelEarnedPoints(order.getMember(), order);
+
+        // 5. 멤버십 등급 재계산
+        membershipService.updateMembershipTier(order.getMember(), membershipService.calculateTotalSpentAmount(order.getMember()));
+
+        // 6. 상태 변경
         payment.updateStatus(PaymentStatus.REFUNDED);
         order.updateStatus(OrderStatus.REFUNDED);
 
-        // 3. 환불 이력 생성
+        // 7. 환불 이력 생성
         Refund refund = Refund.builder()
                 .payment(payment)
                 .amount(payment.getAmount())

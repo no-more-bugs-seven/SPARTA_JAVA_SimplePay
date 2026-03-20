@@ -15,5 +15,7 @@ public class OrderCreateResponse {
 
     private String orderId;
     private BigDecimal totalAmount;
+    private BigDecimal usedPoints;    // 사용한 포인트
+    private BigDecimal finalAmount;   // 포인트 차감 후 실결제 금액
     private String orderNumber;
 }

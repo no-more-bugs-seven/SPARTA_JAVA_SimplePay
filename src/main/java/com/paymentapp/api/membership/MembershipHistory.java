@@ -28,13 +28,10 @@ public class MembershipHistory extends BaseEntity {
     @JoinColumn(name = "tier_id", nullable = false)
     private MembershipTier tier;
 
-    @Column(name = "changed_at", nullable = false)
-    private LocalDateTime changedAt;
 
     @Builder
-    private MembershipHistory(Member member, MembershipTier tier, LocalDateTime changedAt) {
+    private MembershipHistory(Member member, MembershipTier tier) {
         this.member = member;
         this.tier = tier;
-        this.changedAt = changedAt;
     }
 }
