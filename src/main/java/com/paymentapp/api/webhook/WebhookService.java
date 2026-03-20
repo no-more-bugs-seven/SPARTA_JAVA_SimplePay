@@ -1,6 +1,7 @@
 package com.paymentapp.api.webhook;
 
 import com.paymentapp.api.payment.PaymentService;
+import com.paymentapp.api.payment.dto.ConfirmPaymentResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -32,15 +33,16 @@ public class WebhookService {
         webhookRepository.save(event);
 
         try {
-            // 3. 이벤트 타입별 처리
+            // 3. 이벤트 상태별 결제 확정 처리 + 웹훅 상태 변경
             switch (eventStatus) {
                 case "Transaction.Paid":
-                    paymentService.confirmPayment(paymentKey);
-                    event.markAsProcessed();
-                    break;
                 case "Transaction.Failed":
-                    paymentService.failPayment(paymentKey);
-                    event.markAsProcessed();
+                    ConfirmPaymentResponse response = paymentService.confirmPayment(paymentKey);
+                    String result = response.status();
+
+                    if ("COMPLETED".equals(result) || "FAILED".equals(result)) event.markAsProcessed();
+                    else log.info("Payment not finished yet. paymentId={}", paymentKey);
+
                     break;
                 default:
                     log.info("Ignored event type: {}", eventStatus);
