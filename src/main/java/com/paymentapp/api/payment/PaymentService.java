@@ -126,17 +126,26 @@ public class PaymentService {
         // 5. 결제 상태별 처리
         switch (response.getStatus()) {
             case "FAILED":
-            case "CANCELLED":
                 payment.updateStatus(PaymentStatus.FAILED);
                 order.updateStatus(OrderStatus.CANCELLED);
-
                 return ConfirmPaymentResponse.of(
                         false,
                         order.getId().toString(),
                         "CANCELLED"
                 );
+            case "CANCELLED":
+                payment.updateStatus(PaymentStatus.REFUNDED);
+                order.updateStatus(OrderStatus.REFUNDED);
+                return ConfirmPaymentResponse.of(
+                        false,
+                        order.getId().toString(),
+                        "REFUNDED"
+                );
             case "READY":
                 // 결제 대기 상태 (아직 완료 안됨)
+                if (payment.getStatus() != PaymentStatus.PENDING) {
+                    payment.updateStatus(PaymentStatus.PENDING);
+                }
                 return ConfirmPaymentResponse.of(
                         false,
                         order.getId().toString(),
@@ -280,10 +289,15 @@ public class PaymentService {
      * 보상 트랜잭션 공통 로직 (환불 처리 및 상태 변경)
      */
     private void handleCompensation(Payment payment, Order order, String reason) {
-        try {
-            // 1. 결제 취소 API 호출
-            portOneClient.cancelPayment(payment.getPaymentKey(), reason);
+        // 이미 환불된 경우 방어
+        if (payment.getStatus() == PaymentStatus.REFUNDED) {
+            log.warn("이미 보상 처리된 결제. 중복 실행 방지 paymentId={}", payment.getPaymentKey());
+            return;
+        }
 
+        try {
+            // 결제 취소 API 호출
+            portOneClient.cancelPayment(payment.getPaymentKey(), reason);
         } catch (Exception e) {
             log.error("결제 취소 API 호출 실패 - paymentKey: {}", payment.getPaymentKey(), e);
         }
