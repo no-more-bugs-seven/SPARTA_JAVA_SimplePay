@@ -4,6 +4,8 @@ import com.paymentapp.api.member.Member;
 import com.paymentapp.api.member.MemberRepository;
 import com.paymentapp.api.membership.dto.MembershipPolicyResponse;
 import com.paymentapp.api.membership.dto.MyMembershipResponse;
+import com.paymentapp.api.payment.PaymentRepository;
+import com.paymentapp.api.payment.entity.PaymentStatus;
 import com.paymentapp.core.exception.errorcode.MembershipErrorCode;
 import com.paymentapp.core.exception.custom.MembershipException;
 import lombok.RequiredArgsConstructor;
@@ -22,12 +24,12 @@ public class MembershipService {
     private final MembershipTierRepository membershipTierRepository;
     private final MembershipHistoryRepository membershipHistoryRepository;
     private final MemberRepository memberRepository;
+    private final PaymentRepository paymentRepository;
 
     public MyMembershipResponse getMyMembership(Long userId) {
         Member member = getMember(userId);
 
         // 히스토리 기준 최신 등급 반환
-        // TODO: Member.membershipTier 연관관계 추가 후 member.getMembershipTier()로 교체
         MembershipTier tier = membershipHistoryRepository.findByMemberOrderByChangedAtDesc(member)
                 .stream()
                 .findFirst()
@@ -61,13 +63,17 @@ public class MembershipService {
                         .changedAt(LocalDateTime.now())
                         .build()
         );
-        // member.updateMembershipTier(newTier);
+        member.updateMembershipTier(newTier.getId());
+    }
+
+    // PAID 상태 결제 금액 합산 (결제 완료/환불 후 등급 재계산 시 호출)
+    public BigDecimal calculateTotalSpentAmount(Member member) {
+        return paymentRepository.sumAmountByMemberAndStatus(member, PaymentStatus.PAID);
     }
 
     public BigDecimal getPointRate(Member member) {
-        // return member.getMembershipTier().getPointRate();
 
-        // 임시: 히스토리 기준 최신 등급의 적립률 반환
+        // 히스토리 기준 최신 등급의 적립률 반환
         return membershipHistoryRepository.findByMemberOrderByChangedAtDesc(member)
                 .stream()
                 .findFirst()
