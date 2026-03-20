@@ -1,16 +1,33 @@
 package com.paymentapp.core.portone.dto;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonProperty;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
+
+@Getter
+@Setter
+@NoArgsConstructor
+@JsonIgnoreProperties(ignoreUnknown = true)
 public class PortOneBillingPaymentResponse {
+    private boolean success;
+    private String paymentId;
 
+    @JsonProperty("message")
+    private String errorMessage;
+    private BillingKeyPaymentSummary payment;
 
-    public boolean isSuccess() {
-
-        // TODO 포트원 함수 수정필요!
-        return true;
+    public PortOneBillingPaymentResponse(boolean success, String paymentId, String errorMessage) {
+        this.success = success;
+        this.paymentId = paymentId;
+        this.errorMessage = errorMessage;
     }
 
-    public String getErrorMessage() {
-        // TODO 포트원 함수 수정필요!
-        return "";
+    @Getter
+    @JsonIgnoreProperties(ignoreUnknown = true)
+    public static class BillingKeyPaymentSummary {
+        private String pgTxId;
+        private String paidAt;
     }
 }

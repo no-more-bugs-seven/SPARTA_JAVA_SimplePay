@@ -43,6 +43,12 @@ public class SubscriptionService {
             String planId,
             String billingKey
     ) {
+        boolean isAlreadySubscribed = subscriptionRepository.existsByMemberIdAndStatus(userId, SubscriptionStatus.ACTIVE);
+        if (isAlreadySubscribed) {
+            log.warn("다중 구독 시도 차단! userId: {}", userId);
+             throw new SubscriptionException(SubscriptionErrorCode.ALREADY_SUBSCRIBED);
+        }
+
         Member member = memberService.findById(userId);
         Plan plan = planService.findByPlanId(planId);
 

@@ -58,4 +58,8 @@ public class SubscriptionPaymentMethod extends BaseEntity {
     }
 
 
+    public void updateBillingKey(String newBillingKey) {
+        this.billingKey = newBillingKey;
+        this.status = PaymentMethodStatus.ACTIVE;
+    }
 }
