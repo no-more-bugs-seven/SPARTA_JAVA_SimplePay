@@ -38,15 +38,15 @@ public class PointTransaction extends BaseEntity {
     @Column(name = "transaction_type", nullable = false, length = 20)
     private PointTransactionType transactionType;
 
-    @Column(name = "expiry_at")
-    private LocalDateTime expiryAt;
+    @Column(name = "expired_at")
+    private LocalDateTime expiredAt;
 
     @Builder
-    private PointTransaction(Member member, Order order, BigDecimal points, PointTransactionType transactionType, LocalDateTime expiryAt) {
+    private PointTransaction(Member member, Order order, BigDecimal points, PointTransactionType transactionType, LocalDateTime expiredAt) {
         this.member = member;
         this.order = order;
         this.points = points;
         this.transactionType = transactionType;
-        this.expiryAt = expiryAt;
+        this.expiredAt = expiredAt;
     }
 }

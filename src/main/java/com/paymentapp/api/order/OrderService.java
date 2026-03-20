@@ -2,6 +2,9 @@ package com.paymentapp.api.order;
 
 import com.paymentapp.api.member.Member;
 import com.paymentapp.api.member.MemberRepository;
+import com.paymentapp.api.payment.PaymentRepository;
+import com.paymentapp.api.point.PointTransactionRepository;
+import com.paymentapp.api.point.dto.PointTransactionResponse;
 import com.paymentapp.api.product.Product;
 import com.paymentapp.api.product.ProductRepository;
 import com.paymentapp.api.order.dto.CreateOrderRequest;
@@ -9,6 +12,8 @@ import com.paymentapp.api.order.dto.OrderCreateResponse;
 import com.paymentapp.api.order.dto.OrderDetailResponse;
 import com.paymentapp.api.order.dto.OrderListResponse;
 import com.paymentapp.core.dto.LoginUserInfoDto;
+import com.paymentapp.core.exception.custom.PointException;
+import com.paymentapp.core.exception.errorcode.PointErrorCode;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -24,6 +29,8 @@ public class OrderService {
     private final OrderRepository orderRepository;
     private final ProductRepository productRepository;
     private final MemberRepository memberRepository;
+    private final PaymentRepository paymentRepository;
+    private final PointTransactionRepository pointTransactionRepository;
 
     // 주문 생성
     public OrderCreateResponse createOrder(LoginUserInfoDto loginUser, CreateOrderRequest request) {
@@ -58,11 +65,23 @@ public class OrderService {
         // 총 금액 반영
         order.updateTotalAmount(totalAmount);
 
+        // 포인트 사용 처리
+        BigDecimal usedPoints = request.getUsedPoints() != null ? request.getUsedPoints() : BigDecimal.ZERO;
+        if (usedPoints.compareTo(BigDecimal.ZERO) > 0) {
+            BigDecimal pointBalance = member.getPointBalance() != null ? member.getPointBalance() : BigDecimal.ZERO;
+            if (usedPoints.compareTo(pointBalance) > 0) throw new PointException(PointErrorCode.INSUFFICIENT_POINTS);
+            if (usedPoints.compareTo(totalAmount) > 0) throw new PointException(PointErrorCode.POINTS_EXCEED_ORDER_AMOUNT);
+            order.applyUsedPoints(usedPoints);
+            order.updateTotalAmount(totalAmount.subtract(usedPoints));
+        }
+
         Order savedOrder = orderRepository.save(order);
 
         return OrderCreateResponse.builder()
                 .orderId(savedOrder.getId().toString())
-                .totalAmount(savedOrder.getTotalAmount())
+                .totalAmount(totalAmount)
+                .usedPoints(savedOrder.getUsedPoints())
+                .finalAmount(savedOrder.getTotalAmount())
                 .orderNumber(savedOrder.getOrderNumber())
                 .build();
     }
@@ -100,12 +119,29 @@ public class OrderService {
         Order order = orderRepository.findByIdAndMember(orderId, member)
                 .orElseThrow(() -> new IllegalArgumentException("주문을 찾을 수 없습니다."));
 
+        // 결제 정보 조회
+        OrderDetailResponse.PaymentDto paymentDto = paymentRepository.findByOrder(order)
+                .map(p -> OrderDetailResponse.PaymentDto.builder()
+                        .paymentKey(p.getPaymentKey())
+                        .amount(p.getAmount())
+                        .status(p.getStatus().name())
+                        .paidAt(p.getPaidAt())
+                        .build())
+                .orElse(OrderDetailResponse.PaymentDto.builder().build());
+
+        // 포인트 사용/적립 내역 조회
+        List<PointTransactionResponse> pointTransactions = pointTransactionRepository
+                .findByOrderOrderByCreatedAtDesc(order)
+                .stream()
+                .map(PointTransactionResponse::from)
+                .toList();
+
         return OrderDetailResponse.builder()
                 .orderId(order.getId())
                 .orderNumber(order.getOrderNumber())
-                .totalAmount(order.getTotalAmount())
+                .totalAmount(order.getTotalAmount().add(order.getUsedPoints())) // 원가 합계
                 .usedPoints(order.getUsedPoints())
-                .status(order.getStatus().name())
+                .finalAmount(order.getTotalAmount()) // 실결제 금액
                 .createdAt(order.getCreatedAt())
                 .items(order.getOrderItems().stream()
                         .map(item -> OrderDetailResponse.OrderItemDto.builder()
