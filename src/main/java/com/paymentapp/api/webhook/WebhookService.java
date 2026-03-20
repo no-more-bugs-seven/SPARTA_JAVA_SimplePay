@@ -37,12 +37,12 @@ public class WebhookService {
             switch (eventStatus) {
                 case "Transaction.Paid":
                 case "Transaction.Failed":
+                case "Transaction.Cancelled":
                     ConfirmPaymentResponse response = paymentService.confirmPayment(paymentKey);
                     String result = response.status();
 
-                    if ("COMPLETED".equals(result) || "FAILED".equals(result)) event.markAsProcessed();
+                    if ("COMPLETED".equals(result) || "CANCELLED".equals(result) || "REFUNDED".equals(result)) event.markAsProcessed();
                     else log.info("Payment not finished yet. paymentId={}", paymentKey);
-
                     break;
                 default:
                     log.info("Ignored event type: {}", eventStatus);
