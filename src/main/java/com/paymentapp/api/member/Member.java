@@ -47,9 +47,6 @@ public class Member extends BaseEntity {
     @JoinColumn(name = "membership_tier_id")
     private MembershipTier membershipTier;
 
-    @Column()
-    private Long membershipTierId;
-
     @Builder
     private Member(String password, String email, String phone, String name, BigDecimal pointBalance, MembershipTier membershipTier) {
         this.password = password;
