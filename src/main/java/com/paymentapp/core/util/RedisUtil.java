@@ -1,4 +1,4 @@
-package com.paymentapp.api.auth;
+package com.paymentapp.core.util;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.redis.core.StringRedisTemplate;
@@ -8,7 +8,7 @@ import java.util.concurrent.TimeUnit;
 
 @Service
 @RequiredArgsConstructor
-public class RedisService {
+public class RedisUtil {
     public static final String RT = "RT ";
     public static final String BL = "BL ";
     private final StringRedisTemplate redisTemplate;

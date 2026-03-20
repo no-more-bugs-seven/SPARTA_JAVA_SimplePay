@@ -1,9 +1,11 @@
 package com.paymentapp.core.security.jwt;
 
+import com.paymentapp.core.util.RedisUtil;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.JwtBuilder;
 import io.jsonwebtoken.Jwts;
 import jakarta.annotation.PostConstruct;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
@@ -11,12 +13,17 @@ import org.springframework.stereotype.Component;
 import javax.crypto.SecretKey;
 import io.jsonwebtoken.io.Decoders;
 import io.jsonwebtoken.security.Keys;
+import org.springframework.util.StringUtils;
+
 import java.util.Date;
 import java.util.UUID;
 
 @Slf4j
 @Component
+@RequiredArgsConstructor
 public class JwtTokenProvider {
+
+    private final RedisUtil redisUtil;
 
     private static final String ISSUER = "InstagramCloneAuthServer"; // 표준 Claim: 발급자 (iss)
 
@@ -135,5 +142,9 @@ public class JwtTokenProvider {
 
     public long getRemainingTimeInSeconds(String token) {
         return (parseClaims(token).getExpiration().getTime() - System.currentTimeMillis()) / 1000;
+    }
+
+    public boolean isBlack(String token) {
+        return StringUtils.hasText(redisUtil.get(RedisUtil.BL, token));
     }
 }
