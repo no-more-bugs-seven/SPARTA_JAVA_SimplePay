@@ -143,9 +143,6 @@ public class PaymentService {
                 );
             case "READY":
                 // 결제 대기 상태 (아직 완료 안됨)
-                if (payment.getStatus() != PaymentStatus.PENDING) {
-                    payment.updateStatus(PaymentStatus.PENDING);
-                }
                 return ConfirmPaymentResponse.of(
                         false,
                         order.getId().toString(),
