@@ -524,7 +524,7 @@ api:
               required: false
               description: 변경된 구독 상태
     change-subscription-plan:
-      url: /api/subscriptions/{subscriptionId}/plan
+      url: /api/subscriptions/{subscriptionId}
       method: PATCH
       description: 구독 플랜 변경 예약 (다음 결제부터 반영)
       pathParams:
