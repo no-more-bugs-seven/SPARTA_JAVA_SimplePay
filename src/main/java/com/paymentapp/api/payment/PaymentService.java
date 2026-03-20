@@ -1,6 +1,7 @@
 package com.paymentapp.api.payment;
 
 import com.github.f4b6a3.tsid.TsidCreator;
+import com.paymentapp.api.membership.MembershipService;
 import com.paymentapp.api.order.Order;
 import com.paymentapp.api.order.OrderItem;
 import com.paymentapp.api.order.OrderItemRepository;
@@ -10,6 +11,7 @@ import com.paymentapp.api.payment.entity.Payment;
 import com.paymentapp.api.payment.entity.PaymentStatus;
 import com.paymentapp.api.payment.entity.Refund;
 import com.paymentapp.api.payment.entity.RefundStatus;
+import com.paymentapp.api.point.PointService;
 import com.paymentapp.api.product.Product;
 import com.paymentapp.api.product.ProductRepository;
 import com.paymentapp.core.constant.OrderStatus;
@@ -41,6 +43,8 @@ public class PaymentService {
     private final OrderItemRepository orderItemRepository;
     private final RefundRepository refundRepository;
     private final PortOneClient portOneClient;
+    private final PointService pointService;
+    private final MembershipService membershipService;
 
     /**
      * 결제 시도 생성
@@ -128,6 +132,18 @@ public class PaymentService {
             payment.complete();
             order.updateStatus(OrderStatus.COMPLETED);
 
+            // 추가: 포인트 사용 처리
+            if (order.getUsedPoints().compareTo(BigDecimal.ZERO) > 0) {
+                pointService.spendPoints(order.getMember(), order, order.getUsedPoints());
+            }
+
+            // 추가: 포인트 적립
+            BigDecimal pointRate = membershipService.getPointRate(order.getMember());
+            pointService.earnPoints(order.getMember(), order, payment.getAmount().multiply(pointRate));
+
+            // 추가: 멤버십 등급 갱신
+            membershipService.updateMembershipTier(order.getMember(), membershipService.calculateTotalSpentAmount(order.getMember()));
+
         } catch (ProductException e) {
             // 보상 트랜잭션 : 재고 부족시 자동 결제 취소
             handleCompensation(payment, order, "재고 부족으로 인한 자동 결제 취소");
@@ -188,6 +204,13 @@ public class PaymentService {
             // 7. 상태 변경
             payment.updateStatus(PaymentStatus.REFUNDED);
             payment.getOrder().updateStatus(OrderStatus.REFUNDED);
+
+            // 추가: 포인트 복구 및 적립 취소
+            pointService.recoverPoints(payment.getOrder().getMember(), payment.getOrder());
+            pointService.cancelEarnedPoints(payment.getOrder().getMember(), payment.getOrder());
+
+            // 추가: 멤버십 등급 재계산
+            membershipService.updateMembershipTier(payment.getOrder().getMember(), membershipService.calculateTotalSpentAmount(payment.getOrder().getMember()));
 
             // 8. 환불 성공 이력 추가 (COMPLETED)
             refund = Refund.builder()
