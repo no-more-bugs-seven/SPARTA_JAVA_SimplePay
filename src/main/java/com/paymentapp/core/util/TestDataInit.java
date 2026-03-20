@@ -1,14 +1,7 @@
 package com.paymentapp.core.util;
 
 
-import com.paymentapp.api.member.Member;
-import com.paymentapp.api.member.MemberRepository;
 import com.paymentapp.api.plan.entity.BillingCycle;
-import com.paymentapp.api.plan.entity.Plan;
-import com.paymentapp.api.plan.PlanRepository;
-import com.paymentapp.api.product.Product;
-import com.paymentapp.api.product.ProductRepository;
-import com.paymentapp.core.constant.ProductStatus;
 import lombok.RequiredArgsConstructor;
 import org.springframework.boot.ApplicationArguments;
 import org.springframework.boot.ApplicationRunner;
