@@ -1,6 +1,7 @@
 package com.paymentapp.api.payment;
 
 import com.github.f4b6a3.tsid.TsidCreator;
+import com.paymentapp.api.membership.MembershipService;
 import com.paymentapp.api.order.Order;
 import com.paymentapp.api.order.OrderItem;
 import com.paymentapp.api.order.OrderItemRepository;
@@ -10,14 +11,13 @@ import com.paymentapp.api.payment.entity.Payment;
 import com.paymentapp.api.payment.entity.PaymentStatus;
 import com.paymentapp.api.payment.entity.Refund;
 import com.paymentapp.api.payment.entity.RefundStatus;
+import com.paymentapp.api.point.PointService;
 import com.paymentapp.api.product.Product;
 import com.paymentapp.api.product.ProductRepository;
 import com.paymentapp.core.constant.OrderStatus;
-import com.paymentapp.core.exception.custom.MemberException;
 import com.paymentapp.core.exception.custom.OrderException;
 import com.paymentapp.core.exception.custom.PaymentException;
 import com.paymentapp.core.exception.custom.ProductException;
-import com.paymentapp.core.exception.errorcode.CommonErrorCode;
 import com.paymentapp.core.exception.errorcode.OrderErrorCode;
 import com.paymentapp.core.exception.errorcode.PaymentErrorCode;
 import com.paymentapp.core.exception.errorcode.ProductErrorCode;
@@ -31,7 +31,6 @@ import org.springframework.transaction.annotation.Transactional;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
-import java.util.Optional;
 
 @Slf4j
 @Service
@@ -44,6 +43,8 @@ public class PaymentService {
     private final OrderItemRepository orderItemRepository;
     private final RefundRepository refundRepository;
     private final PortOneClient portOneClient;
+    private final PointService pointService;
+    private final MembershipService membershipService;
 
     /**
      * 결제 시도 생성
@@ -88,26 +89,69 @@ public class PaymentService {
         Payment payment = paymentRepository.findByPaymentKeyWithLock(paymentId)
                 .orElseThrow(() -> new PaymentException(PaymentErrorCode.PAYMENT_NOT_FOUND));
 
-        // 2. 멱등성 체크 (이미 성공한 결제는 성공으로 응답)
-        if (payment.getStatus() != PaymentStatus.PENDING) {
+        // 2. 주문 조회
+        Order order = payment.getOrder();
+
+        // 3. 멱등성 체크 (이미 성공한 결제는 성공으로 응답)
+        if (payment.getStatus() == PaymentStatus.PAID) {
             return ConfirmPaymentResponse.of(
                     true,
                     payment.getOrder().getId().toString(),
-                    payment.getStatus().toString()
+                    "COMPLETED"
             );
         }
 
-        // 3. PortOne 결제 조회
-        PortOnePaymentResponse response = portOneClient.getPayment(paymentId);
-
-        // 4. 결제 상태 확인
-        if (!"PAID".equals(response.getStatus())) {
-            payment.updateStatus(PaymentStatus.FAILED);
+        // 이미 환불된 경우 (보상 트랜잭션 이후)
+        if (payment.getStatus() == PaymentStatus.REFUNDED) {
+            log.info("이미 환불된 결제. 무시 paymentId={}", paymentId);
             return ConfirmPaymentResponse.of(
                     false,
-                    payment.getOrder().getId().toString(),
-                    "FAILED"
+                    order.getId().toString(),
+                    "REFUNDED"
             );
+        }
+
+        // 이미 실패 처리된 경우
+        if (payment.getStatus() == PaymentStatus.FAILED) {
+            return ConfirmPaymentResponse.of(
+                    false,
+                    order.getId().toString(),
+                    "CANCELLED"
+            );
+        }
+
+        // 4. PortOne 결제 조회
+        PortOnePaymentResponse response = portOneClient.getPayment(paymentId);
+
+        // 5. 결제 상태별 처리
+        switch (response.getStatus()) {
+            case "FAILED":
+                payment.updateStatus(PaymentStatus.FAILED);
+                order.updateStatus(OrderStatus.CANCELLED);
+                return ConfirmPaymentResponse.of(
+                        false,
+                        order.getId().toString(),
+                        "CANCELLED"
+                );
+            case "CANCELLED":
+                payment.updateStatus(PaymentStatus.REFUNDED);
+                order.updateStatus(OrderStatus.REFUNDED);
+                return ConfirmPaymentResponse.of(
+                        false,
+                        order.getId().toString(),
+                        "REFUNDED"
+                );
+            case "READY":
+                // 결제 대기 상태 (아직 완료 안됨)
+                return ConfirmPaymentResponse.of(
+                        false,
+                        order.getId().toString(),
+                        "PENDING"
+                );
+            case "PAID":
+                break;
+            default:
+                throw new PaymentException(PaymentErrorCode.INVALID_PAYMENT_STATUS);
         }
 
         // 5. 금액 검증
@@ -118,36 +162,26 @@ public class PaymentService {
             throw new PaymentException(PaymentErrorCode.PAYMENT_AMOUNT_MISMATCH);
         }
 
-        // 6. 주문 조회
-        Order order = orderRepository.findById(payment.getOrder().getId())
-                .orElseThrow(() -> new OrderException(OrderErrorCode.ORDER_NOT_FOUND));
-
-        // 동시에 같은 상품 재고 차감시 재고가 부족한 경우 예외처리
+        // 결제 성공 처리
         try {
-            // 7. 주문 아이템 조회 (N+1 방지 Fetch Join 사용)
-            List<OrderItem> items = orderItemRepository.findByOrderId(order.getId());
+            // 7. 재고 차감
+            changeStock(payment.getOrder(), "decrease");
 
-            // 8. 상품 ID 리스트 추출
-            List<Long> productIds = items.stream()
-                        .map(item -> item.getProduct().getId())
-                        .toList();
-
-            // 9. 모든 관련 상품에 대해 한 번에 비관적 락 적용
-            List<Product> products = productRepository.findAllByIdsWithLock(productIds);
-
-            // 10. 재고 차감
-            for (OrderItem item : items) {
-                Product product = products.stream()
-                        .filter(p -> p.getId().equals(item.getProduct().getId()))
-                        .findFirst()
-                        .orElseThrow(() -> new ProductException(ProductErrorCode.PRODUCT_NOT_FOUND));
-
-                product.decreaseStock(item.getQuantity());
-            }
-
-            // 11. 결제/주문 상태 변경
+            // 8. 결제/주문 상태 변경
             payment.complete();
             order.updateStatus(OrderStatus.COMPLETED);
+
+            // 추가: 포인트 사용 처리
+            if (order.getUsedPoints().compareTo(BigDecimal.ZERO) > 0) {
+                pointService.spendPoints(order.getMember(), order, order.getUsedPoints());
+            }
+
+            // 추가: 포인트 적립
+            BigDecimal pointRate = membershipService.getPointRate(order.getMember());
+            pointService.earnPoints(order.getMember(), order, payment.getAmount().multiply(pointRate));
+
+            // 추가: 멤버십 등급 갱신
+            membershipService.updateMembershipTier(order.getMember(), membershipService.calculateTotalSpentAmount(order.getMember()));
 
         } catch (ProductException e) {
             // 보상 트랜잭션 : 재고 부족시 자동 결제 취소
@@ -159,11 +193,11 @@ public class PaymentService {
             throw e;
         }
 
-        // 12. 응답 반환
+        // 9. 응답 반환
         return ConfirmPaymentResponse.of(
                 true,
                 payment.getOrder().getId().toString(),
-                "PAID"
+                "COMPLETED"
         );
     }
 
@@ -203,11 +237,21 @@ public class PaymentService {
             // 5. PortOne 환불 API 호출
             portOneClient.cancelPayment(paymentId, request.reason());
 
-            // 6. 상태 변경
+            // 6. 재고 원상 복구
+            changeStock(payment.getOrder(), "restore");
+
+            // 7. 상태 변경
             payment.updateStatus(PaymentStatus.REFUNDED);
             payment.getOrder().updateStatus(OrderStatus.REFUNDED);
 
-            // 7. 환불 성공 이력 추가 (COMPLETED)
+            // 추가: 포인트 복구 및 적립 취소
+            pointService.recoverPoints(payment.getOrder().getMember(), payment.getOrder());
+            pointService.cancelEarnedPoints(payment.getOrder().getMember(), payment.getOrder());
+
+            // 추가: 멤버십 등급 재계산
+            membershipService.updateMembershipTier(payment.getOrder().getMember(), membershipService.calculateTotalSpentAmount(payment.getOrder().getMember()));
+
+            // 8. 환불 성공 이력 추가 (COMPLETED)
             refund = Refund.builder()
                     .payment(refund.getPayment())
                     .amount(refund.getAmount())
@@ -218,7 +262,7 @@ public class PaymentService {
             refundRepository.save(refund);
 
         } catch (Exception e) {
-            // 8. 환불 실패 이력 추가 (FAILED)
+            // 9. 환불 실패 이력 추가 (FAILED)
             refund = Refund.builder()
                     .payment(refund.getPayment())
                     .amount(refund.getAmount())
@@ -230,7 +274,7 @@ public class PaymentService {
             throw e;
         }
 
-        // 9. 응답 반환
+        // 10. 응답 반환
         return CancelPaymentResponse.of(
                 true,
                 payment.getOrder().getId().toString(),
@@ -242,12 +286,24 @@ public class PaymentService {
      * 보상 트랜잭션 공통 로직 (환불 처리 및 상태 변경)
      */
     private void handleCompensation(Payment payment, Order order, String reason) {
-        try {
-            // 1. 결제 취소 API 호출
-            portOneClient.cancelPayment(payment.getPaymentKey(), reason);
+        // 이미 환불된 경우 방어
+        if (payment.getStatus() == PaymentStatus.REFUNDED) {
+            log.warn("이미 보상 처리된 결제. 중복 실행 방지 paymentId={}", payment.getPaymentKey());
+            return;
+        }
 
+        try {
+            // 결제 취소 API 호출
+            portOneClient.cancelPayment(payment.getPaymentKey(), reason);
         } catch (Exception e) {
             log.error("결제 취소 API 호출 실패 - paymentKey: {}", payment.getPaymentKey(), e);
+        }
+
+        // 재고 복구
+        try {
+            changeStock(order, "restore");
+        } catch (Exception e) {
+            log.error("재고 복구 실패", e);
         }
 
         // 2. 상태 변경
@@ -267,7 +323,6 @@ public class PaymentService {
 
     /**
      * 결제 환불시 상태 검증
-     * @param payment
      */
     private void validateRefundableState(Payment payment) {
         if (payment.getStatus() != PaymentStatus.PAID) {
@@ -275,6 +330,31 @@ public class PaymentService {
         }
         if (payment.getOrder().getStatus() != OrderStatus.COMPLETED) {
             throw new OrderException(OrderErrorCode.INVALID_REFUND_STATE);
+        }
+    }
+
+    /**
+     * 재고 원상복구 로직 (비관적 일괄 락 사용)
+     */
+    private void changeStock(Order order, String type) {
+        List<OrderItem> items = orderItemRepository.findByOrderId(order.getId());
+
+        List<Long> productIds = items.stream()
+                .map(item -> item.getProduct().getId())
+                .toList();
+
+        // 상품들에 대해 비관적 락 획득 (줄 세우기)
+        List<Product> products = productRepository.findAllByIdsWithLock(productIds);
+
+        // 재고 차감/복구
+        for (OrderItem item : items) {
+            Product product = products.stream()
+                    .filter(p -> p.getId().equals(item.getProduct().getId()))
+                    .findFirst()
+                    .orElseThrow(() -> new ProductException(ProductErrorCode.PRODUCT_NOT_FOUND));
+
+            if ("restore".equals(type)) product.increaseStock(item.getQuantity());
+            else product.decreaseStock(item.getQuantity());
         }
     }
 }

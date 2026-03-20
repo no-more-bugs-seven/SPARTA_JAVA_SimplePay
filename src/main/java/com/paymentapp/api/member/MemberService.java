@@ -2,6 +2,7 @@ package com.paymentapp.api.member;
 
 import com.paymentapp.api.auth.dto.MeResponse;
 import com.paymentapp.api.auth.dto.SignUpRequest;
+import com.paymentapp.api.membership.MembershipTierRepository;
 import com.paymentapp.core.exception.errorcode.MemberErrorCode;
 import com.paymentapp.core.exception.custom.MemberException;
 import lombok.RequiredArgsConstructor;
@@ -17,6 +18,7 @@ import org.springframework.transaction.annotation.Transactional;
 public class MemberService {
 
     private final MemberRepository memberRepository;
+    private final MembershipTierRepository membershipTierRepository;
     private final PasswordEncoder passwordEncoder;
 
     /**

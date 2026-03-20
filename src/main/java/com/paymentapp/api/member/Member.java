@@ -1,6 +1,11 @@
 package com.paymentapp.api.member;
 
+import com.paymentapp.api.membership.MembershipTier;
+import com.paymentapp.api.membership.MembershipTierRepository;
+import com.paymentapp.api.order.Order;
 import com.paymentapp.core.entity.BaseEntity;
+import com.paymentapp.core.exception.custom.PointException;
+import com.paymentapp.core.exception.errorcode.PointErrorCode;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -36,15 +41,39 @@ public class Member extends BaseEntity {
     @Column()
     private Long pointBalance;
 
+//    @ManyToOne(fetch = FetchType.LAZY, optional = false)
+//    @JoinColumn(name = "membership_tier_id")
+//    private MembershipTier membershipTier;
+
     @Column()
     private Long membershipTierId;
 
     @Builder
-    private Member(String password, String email, String phone, String name, Long pointBalance) {
+    private Member(String password, String email, String phone, String name, Long pointBalance, MembershipTier membershipTier) {
         this.password = password;
         this.email = email;
         this.phone = phone;
         this.name = name;
         this.pointBalance = pointBalance;
+//        this.membershipTier = membershipTier;
+        this.membershipTierId = 1L;
+    }
+
+    // 포인트 적립
+    public void addPointBalance(Long amount) {
+        this.pointBalance = this.pointBalance + amount;
+    }
+
+    // 포인트 차감 (잔액 부족 시 예외)
+    public void subtractPointBalance(Long amount) {
+        if (this.pointBalance < amount) {
+            throw new PointException(PointErrorCode.INSUFFICIENT_POINTS);
+        }
+        this.pointBalance = this.pointBalance - amount;
+    }
+
+    // 멤버십 등급 갱신
+    public void updateMembershipTier(Long tierId) {
+        this.membershipTierId = tierId;
     }
 }

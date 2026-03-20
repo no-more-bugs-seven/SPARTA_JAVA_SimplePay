@@ -4,6 +4,8 @@ import com.paymentapp.api.member.Member;
 import com.paymentapp.api.member.MemberService;
 import com.paymentapp.api.plan.PlanService;
 import com.paymentapp.api.plan.entity.Plan;
+import com.paymentapp.api.plan.PlanRepository;
+import com.paymentapp.api.subscription.dto.ChangeSubscriptionPlanResponse;
 import com.paymentapp.api.subscription.dto.CreateSubscriptionResponse;
 import com.paymentapp.api.subscription.dto.SubscriptionResponse;
 import com.paymentapp.api.subscription.dto.UpdateSubscriptionResponse;
@@ -163,7 +165,7 @@ public class SubscriptionService {
      * 구독 플랜 변경
      */
     @Transactional
-    public SubscriptionResponse changePlan(Long userId, String subscriptionId, String newPlanId) {
+    public ChangeSubscriptionPlanResponse changePlan(Long userId, String subscriptionId, String newPlanId) {
         Long id = parseSubscriptionId(subscriptionId);
 
         Subscription subscription = subscriptionRepository.findByIdAndMemberId(id, userId)
@@ -183,9 +185,20 @@ public class SubscriptionService {
             throw new SubscriptionException(SubscriptionErrorCode.SAME_PLAN_NOT_ALLOWED);
         }
 
+        if (subscription.getNextPlan() != null
+                && subscription.getNextPlan().getPlanId().equals(newPlanId)) {
+            throw new IllegalStateException("이미 동일한 플랜 변경이 예약되어 있습니다.");
+        }
+
         subscription.reservePlanChange(newPlan);
 
-        return SubscriptionResponse.from(subscription);
+        return new ChangeSubscriptionPlanResponse(
+                true,
+                String.valueOf(subscription.getId()),
+                subscription.getPlan().getPlanId(),
+                subscription.getNextPlan().getPlanId(),
+                subscription.getStatus().name()
+        );
     }
 
     private Long parseSubscriptionId(String subscriptionId) {

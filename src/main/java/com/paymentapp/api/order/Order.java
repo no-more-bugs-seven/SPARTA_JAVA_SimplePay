@@ -7,6 +7,7 @@ import com.paymentapp.core.constant.OrderStatus;
 import com.paymentapp.core.entity.BaseEntity;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
+import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
@@ -51,6 +52,7 @@ public class Order extends BaseEntity {
     @OneToMany(mappedBy = "order", cascade = CascadeType.ALL, orphanRemoval = true)
     private final List<OrderItem> orderItems = new ArrayList<>();
 
+    @Builder
     public Order(Member member, BigDecimal totalAmount) {
         this.member = member;
         this.orderNumber = "ORD-" + TsidCreator.getTsid();

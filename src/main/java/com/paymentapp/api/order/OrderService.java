@@ -47,7 +47,7 @@ public class OrderService {
             Product product = productRepository.findById(item.getProductId())
                     .orElseThrow(() -> new IllegalArgumentException("상품을 찾을 수 없습니다."));
 
-            product.decreaseStock(item.getQuantity());
+            //product.decreaseStock(item.getQuantity());
 
             OrderItem orderItem = new OrderItem(order, product, item.getQuantity());
             order.addOrderItem(orderItem);

@@ -65,7 +65,7 @@ public class SubscriptionController {
      * 구독 플랜 변경
      */
     @PatchMapping("/{subscriptionId}/plan")
-    public ResponseEntity<SubscriptionResponse> changeSubscriptionPlan(
+    public ResponseEntity<ChangeSubscriptionPlanResponse> changeSubscriptionPlan(
             @LoginUser LoginUserInfoDto loginUser,
             @PathVariable String subscriptionId,
             @Valid @RequestBody ChangeSubscriptionPlanRequest request

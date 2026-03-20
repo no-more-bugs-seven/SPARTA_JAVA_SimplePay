@@ -40,10 +40,13 @@ portone:
   channel:
     kg-inicis: ${PORTONE_CHANNEL_KG}
     toss: ${PORTONE_CHANNEL_TOSS}
+  webhook:
+    secret: ${PORTONE_WEBHOOK_SECRET}
+
 # JWT Configuration
 jwt:
   secret-key: ${JWT_SECRET_KEY}
-  access-token-validity-time: 1209600000 # 1시간 (ms) 개발 기간에는 14일로 해놓음
+  access-token-validity-time: 3600000 # 1시간 (ms)
   refresh-token-validity-time: 1209600000 # 7일 (ms) 개발 기간에는 14일로 해놓음
 
 # UI Branding Configuration

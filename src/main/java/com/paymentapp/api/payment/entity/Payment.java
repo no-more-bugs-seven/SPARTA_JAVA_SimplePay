@@ -32,7 +32,6 @@ public class Payment extends BaseEntity {
     private PaymentStatus status;
 
     private LocalDateTime paidAt;
-    private LocalDateTime refundedAt;
 
     @Builder
     public Payment (Order order, String paymentKey, BigDecimal amount, PaymentStatus status) {
