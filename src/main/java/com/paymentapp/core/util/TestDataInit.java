@@ -25,14 +25,11 @@ public class TestDataInit implements ApplicationRunner {
     @Override
     @Transactional
     public void run(ApplicationArguments args) throws Exception {
-        try{
             insertMembershipTiers();
             insertMembers();
             insertMembershipHistories();
             insertProducts();
             insertPlans();
-        }catch(Exception e){
-        }
     }
 
     /**
@@ -58,7 +55,7 @@ public class TestDataInit implements ApplicationRunner {
         );
 
         jdbcTemplate.batchUpdate(
-                "INSERT INTO membership_tiers (name, min_spent_amount, point_rate, created_at, modified_at) " +
+                "INSERT INTO membership_tiers (name, min_spent_amount, point_rate, created_at, updated_at) " +
                         "VALUES (?, ?, ?, ?, ?)",
                 batchArgs
         );
@@ -92,7 +89,7 @@ public class TestDataInit implements ApplicationRunner {
         }
 
         jdbcTemplate.batchUpdate(
-                "INSERT INTO users (password, name, email, phone, point_balance) VALUES (?, ?, ?, ?, ?)",
+                "INSERT INTO users (password, name, email, phone, point_balance, membership_tier_id) VALUES (?, ?, ?, ?, ?, ?)",
                 batchArgs
         );
     }
@@ -116,12 +113,12 @@ public class TestDataInit implements ApplicationRunner {
 
         List<Object[]> batchArgs = new java.util.ArrayList<>();
         for (Long userId : userIds) {
-            batchArgs.add(new Object[]{userId, normalTierId, now, now, now});
+            batchArgs.add(new Object[]{userId, normalTierId, now, now});
         }
-
+        // changed_at 엔티티에 없어서 뺏음
         jdbcTemplate.batchUpdate(
-                "INSERT INTO membership_histories (user_id, tier_id, changed_at, created_at, modified_at) " +
-                        "VALUES (?, ?, ?, ?, ?)",
+                "INSERT INTO membership_histories (user_id, tier_id, created_at, updated_at) " +
+                        "VALUES (?, ?, ?, ?)",
                 batchArgs
         );
     }
