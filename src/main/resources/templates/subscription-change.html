@@ -1,0 +1,335 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" type="image/x-icon" th:href="@{/favicon.ico}">
+    <title>플랜 변경 - Commerce Demo</title>
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+    <script th:src="@{/js/cookie-util.js}"></script>
+    <script th:src="@{/js/app-config.js}"></script>
+    <script th:src="@{/js/api-handler.js}"></script>
+    <script th:src="@{/js/api-validator.js}"></script>
+    <script th:src="@{/js/theme.js}"></script>
+    <script th:src="@{/js/auth-check.js}"></script>
+</head>
+<body>
+<nav class="navbar">
+    <div class="navbar-container">
+        <a href="/" class="navbar-brand">🏪 CommerceHub</a>
+        <ul class="navbar-nav">
+            <li><a href="/" class="nav-link">홈</a></li>
+            <li><a href="/pages/shop" class="nav-link">상점</a></li>
+            <li><a href="/pages/orders" class="nav-link">주문</a></li>
+            <li><a href="/pages/points" class="nav-link">포인트</a></li>
+            <li><a href="/pages/plans" class="nav-link">플랜</a></li>
+            <li><a href="/pages/subscribe" class="nav-link">구독 신청</a></li>
+            <li><a href="/pages/subscriptions" class="nav-link active">구독 관리</a></li>
+        </ul>
+        <div class="navbar-actions">
+            <div class="config-badge-container"></div>
+            <button id="theme-toggle" class="theme-toggle" onclick="toggleTheme()">🌙</button>
+        </div>
+    </div>
+</nav>
+
+<div class="main-container">
+    <div class="content-area">
+        <h1 style="font-size: 2rem; margin-bottom: 0.5rem; text-align: center;">🔄 플랜 변경</h1>
+        <p style="text-align: center; color: var(--text-secondary); margin-bottom: 2rem;">
+            현재 구독 중인 플랜을 제외한 다른 플랜으로 변경할 수 있습니다
+        </p>
+
+        <div class="card" style="margin-bottom: 2rem;">
+            <div class="card-header">현재 구독 정보</div>
+            <div class="card-body">
+                <div id="current-subscription-info">
+                    <p style="color: var(--text-secondary);">구독 정보를 불러오는 중...</p>
+                </div>
+            </div>
+        </div>
+
+        <div id="plans-container" class="card-grid" style="grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));">
+            <div style="text-align: center; padding: 3rem; color: var(--text-secondary);">
+                플랜 로딩 중...
+            </div>
+        </div>
+
+        <div style="margin-top: 2rem; text-align: center;">
+            <button class="btn btn-outline" onclick="goBackToSubscriptions()">
+                ← 구독 관리로 돌아가기
+            </button>
+        </div>
+    </div>
+
+    <div class="api-panel">
+        <div class="panel-section">
+            <h3 class="panel-title">📡 현재 엔드포인트</h3>
+            <div id="current-endpoint" class="endpoint-badge">아직 요청 없음</div>
+        </div>
+        <div class="panel-section">
+            <h3 class="panel-title">📤 요청</h3>
+            <textarea id="request-body" class="api-textarea"></textarea>
+        </div>
+        <div class="panel-section">
+            <h3 class="panel-title">📥 응답</h3>
+            <pre id="response-output" class="response-box">요청 대기 중...</pre>
+        </div>
+    </div>
+</div>
+
+<script>
+    const urlParams = new URLSearchParams(window.location.search);
+    const subscriptionId = urlParams.get('subscriptionId');
+
+    let currentSubscription = null;
+    let allPlans = [];
+
+    const planEmojis = {
+        'NOOB': '🐣',
+        'BROKER': '🤝🏽',
+        'BLACK_HAND': '😎'
+    };
+
+    const defaultFeatures = {
+        'NOOB': ['무료 배송', '기본 고객센터', '월 10회 할인쿠폰', '구매 시 1% 적립'],
+        'BROKER': ['무료 배송', '우선 고객센터', '월 30회 할인쿠폰', '구매 시 3% 적립', '신제품 우선 구매'],
+        'BLACK_HAND': ['무료 배송', '프리미엄 고객센터', '무제한 할인쿠폰', '구매 시 5% 적립', '신제품 우선 구매', 'VIP 이벤트 초대', '전용 상담사 배정']
+    };
+
+    const billingCycleText = {
+        'MONTHLY': '월',
+        'QUARTERLY': '분기',
+        'ANNUAL': '년'
+    };
+
+    const statusTextMap = {
+        'ACTIVE': '활성',
+        'CANCELLED': '해지',
+        'SUSPENDED': '미납',
+        'EXPIRED': '기간 종료'
+    };
+
+    document.addEventListener('DOMContentLoaded', async () => {
+        if (!subscriptionId) {
+            showNotification('⚠️ subscriptionId가 없습니다', 'error');
+            document.getElementById('current-subscription-info').innerHTML = `
+                <div class="alert alert-danger">
+                    잘못된 접근입니다. 구독 관리 페이지에서 다시 시도해주세요.
+                </div>
+            `;
+            document.getElementById('plans-container').innerHTML = '';
+            return;
+        }
+
+        await loadPageData();
+    });
+
+    async function loadPageData() {
+        try {
+            await loadSubscription();
+            await loadPlans();
+            renderCurrentSubscriptionInfo();
+            renderPlans();
+        } catch (error) {
+            console.error('페이지 데이터 로드 실패:', error);
+            showNotification(`페이지 로드 실패: ${error.message}`, 'error');
+
+            document.getElementById('current-subscription-info').innerHTML = `
+                <div class="alert alert-danger">
+                    구독 정보를 불러오지 못했습니다.
+                </div>
+            `;
+
+            document.getElementById('plans-container').innerHTML = `
+                <div style="grid-column: 1 / -1;">
+                    <div class="alert alert-danger">
+                        플랜 정보를 불러오지 못했습니다.
+                    </div>
+                </div>
+            `;
+        }
+    }
+
+    async function loadSubscription() {
+        currentSubscription = await makeApiRequest('get-subscription', {
+            pathParams: subscriptionId
+        });
+    }
+
+    async function loadPlans() {
+        allPlans = await makeApiRequest('list-plans', {});
+    }
+
+    function isChangeableSubscription() {
+        return currentSubscription && currentSubscription.status === 'ACTIVE';
+    }
+
+    function renderCurrentSubscriptionInfo() {
+        const container = document.getElementById('current-subscription-info');
+
+        const periodEnd = currentSubscription.currentPeriodEnd
+            ? currentSubscription.currentPeriodEnd.substring(0, 19).replace('T', ' ')
+            : 'N/A';
+
+        const statusText = statusTextMap[currentSubscription.status] || currentSubscription.status;
+
+        if (!isChangeableSubscription()) {
+            container.innerHTML = `
+                <div class="alert alert-warning" style="margin-bottom: 1rem;">
+                    <strong>⚠️ 현재 구독중인 상품이 없습니다.</strong><br>
+                    플랜 변경은 활성 상태의 구독에서만 가능합니다.
+                </div>
+
+                <div style="display: grid; gap: 0.75rem;">
+                    <div style="display: flex; justify-content: space-between;">
+                        <span style="color: var(--text-secondary);">구독 ID</span>
+                        <span style="font-weight: 600;">${subscriptionId}</span>
+                    </div>
+                    <div style="display: flex; justify-content: space-between;">
+                        <span style="color: var(--text-secondary);">마지막 플랜 ID</span>
+                        <span style="font-weight: 600;">${currentSubscription.planId || '-'}</span>
+                    </div>
+                    <div style="display: flex; justify-content: space-between;">
+                        <span style="color: var(--text-secondary);">구독 상태</span>
+                        <span style="font-weight: 600;">${statusText}</span>
+                    </div>
+                    <div style="display: flex; justify-content: space-between;">
+                        <span style="color: var(--text-secondary);">현재 이용 기간 종료일</span>
+                        <span style="font-weight: 600;">${periodEnd}</span>
+                    </div>
+                </div>
+            `;
+            return;
+        }
+
+        container.innerHTML = `
+            <div style="display: grid; gap: 0.75rem;">
+                <div style="display: flex; justify-content: space-between;">
+                    <span style="color: var(--text-secondary);">구독 ID</span>
+                    <span style="font-weight: 600;">${subscriptionId}</span>
+                </div>
+                <div style="display: flex; justify-content: space-between;">
+                    <span style="color: var(--text-secondary);">현재 플랜 ID</span>
+                    <span style="font-weight: 600;">${currentSubscription.planId}</span>
+                </div>
+                <div style="display: flex; justify-content: space-between;">
+                    <span style="color: var(--text-secondary);">구독 상태</span>
+                    <span style="font-weight: 600;">${statusText}</span>
+                </div>
+                <div style="display: flex; justify-content: space-between;">
+                    <span style="color: var(--text-secondary);">현재 이용 기간 종료일</span>
+                    <span style="font-weight: 600;">${periodEnd}</span>
+                </div>
+            </div>
+        `;
+    }
+
+    function renderPlans() {
+        const container = document.getElementById('plans-container');
+
+        if (!allPlans || allPlans.length === 0) {
+            container.innerHTML = `
+                <div style="text-align: center; padding: 3rem; color: var(--text-secondary);">
+                    등록된 플랜이 없습니다.
+                </div>
+            `;
+            return;
+        }
+
+        if (!isChangeableSubscription()) {
+            container.innerHTML = `
+                <div style="grid-column: 1 / -1;">
+                    <div class="alert alert-warning">
+                        <h3>현재 구독중인 상품이 없습니다</h3>
+                        <p>플랜 변경은 <strong>ACTIVE(활성)</strong> 상태의 구독에서만 가능합니다.</p>
+                        <p style="margin-top: 0.75rem; color: var(--text-secondary);">
+                            새 플랜을 이용하려면 구독 신청 페이지에서 다시 구독을 생성해주세요.
+                        </p>
+                        <div style="margin-top: 1rem;">
+                            <a href="/pages/subscribe" class="btn btn-primary">구독 신청하러 가기</a>
+                        </div>
+                    </div>
+                </div>
+            `;
+            return;
+        }
+
+        container.innerHTML = allPlans.map(plan => {
+            const isCurrentPlan = plan.planId === currentSubscription.planId;
+            const emoji = planEmojis[plan.planId] || planEmojis[plan.name?.toUpperCase()] || '📦';
+            const features = defaultFeatures[plan.planId] || defaultFeatures[plan.name?.toUpperCase()] || ['플랜 혜택 제공'];
+            const cycleText = billingCycleText[plan.billingCycle] || '월';
+
+            const cardStyle = isCurrentPlan
+                ? 'border-color: var(--primary); border-width: 3px; opacity: 0.95;'
+                : '';
+
+            return `
+                <div class="plan-card" style="${cardStyle}">
+                    ${isCurrentPlan ? `
+                        <div style="background: var(--primary); color: white; padding: 0.5rem; border-radius: var(--radius-sm); text-align: center; margin-bottom: 1rem; font-weight: 600;">
+                            ✅ 현재 구독중인 플랜
+                        </div>
+                    ` : ''}
+
+                    <div style="text-align: center;">
+                        <div style="font-size: 3rem; margin-bottom: 1rem;">${emoji}</div>
+                        <div class="card-header">${plan.name}</div>
+                        <div class="price">₩${plan.amount.toLocaleString()}<span style="font-size: 1rem; color: var(--text-secondary);">/${cycleText}</span></div>
+                    </div>
+
+                    <ul class="features-list" style="margin: 2rem 0;">
+                        ${features.map(feature => `<li class="feature-item">${feature}</li>`).join('')}
+                    </ul>
+
+                    ${
+                isCurrentPlan
+                    ? `<button class="btn btn-outline" style="width: 100%; cursor: not-allowed;" disabled>현재 구독중</button>`
+                    : `<button class="btn btn-primary" onclick="changePlan('${plan.planId}', '${plan.name}')" style="width: 100%;">${plan.name} 선택</button>`
+            }
+                </div>
+            `;
+        }).join('');
+    }
+
+    async function changePlan(newPlanId, planName) {
+        if (!isChangeableSubscription()) {
+            showNotification('⚠️ 현재 구독중인 상품이 없어 플랜을 변경할 수 없습니다', 'warning');
+            return;
+        }
+
+        if (!confirm(`정말로 ${planName} 플랜으로 변경하시겠습니까?`)) {
+            return;
+        }
+
+        try {
+            await makeApiRequest('change-subscription-plan', {
+                pathParams: subscriptionId,
+                body: {
+                    planId: newPlanId
+                }
+            });
+
+            showNotification('플랜이 변경되었습니다', 'success');
+
+            setTimeout(() => {
+                window.location.href = `/pages/subscriptions?subscriptionId=${subscriptionId}`;
+            }, 1200);
+        } catch (error) {
+            console.error('플랜 변경 실패:', error);
+
+            if (error.message.includes('404') || error.message.includes('Not Found')) {
+                showNotification('⚠️ 구독 플랜 변경 API가 구현되지 않았습니다. PATCH /api/subscriptions/{subscriptionId}/plan 엔드포인트를 확인해주세요.', 'error');
+            } else {
+                showNotification(`플랜 변경 실패: ${error.message}`, 'error');
+            }
+        }
+    }
+
+    function goBackToSubscriptions() {
+        window.location.href = `/pages/subscriptions?subscriptionId=${subscriptionId}`;
+    }
+</script>
+</body>
+</html>

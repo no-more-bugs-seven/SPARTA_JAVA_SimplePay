@@ -103,6 +103,9 @@
                 <div class="card-header">⚙️ 구독 관리</div>
                 <div class="card-body">
                     <div class="btn-group">
+                        <button class="btn btn-secondary" onclick="goToPlanChangePage()">
+                            🔄 구독 플랜 변경
+                        </button>
                         <button class="btn btn-danger" onclick="cancelSubscription()">
                             ❌ 구독 해지
                         </button>
@@ -340,6 +343,17 @@
                     showNotification(`구독 해지 실패: ${error.message}`, 'error');
                 }
             }
+        }
+
+        function goToPlanChangePage() {
+            const subscriptionId = document.getElementById('subscription-id').value.trim();
+
+            if (!subscriptionId) {
+                showNotification('⚠️ 구독 ID를 입력해주세요', 'warning');
+                return;
+            }
+
+            window.location.href = `/pages/subscription-change?subscriptionId=${subscriptionId}`;
         }
     </script>
 </body>
