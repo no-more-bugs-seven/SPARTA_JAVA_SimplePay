@@ -38,6 +38,12 @@ public class PageController {
         return "subscriptions";
     }
 
+    // 구독 플랜 변경 페이지
+    @GetMapping("/subscription-change")
+    public String subscriptionChange() {
+        return "subscription-change";
+    }
+
     @GetMapping("/login")
     public String login() {
         return "login";
