@@ -6,6 +6,7 @@ import com.paymentapp.core.exception.errorcode.ProductErrorCode;
 import com.paymentapp.core.exception.custom.ProductException;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
+import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
@@ -46,6 +47,7 @@ public class Product extends BaseEntity {
     @Column(nullable = false, length = 50)
     private String category;
 
+    @Builder
     public Product(String name, BigDecimal price, Integer stock, String description,
                    ProductStatus status, String category) {
         this.name = name;
