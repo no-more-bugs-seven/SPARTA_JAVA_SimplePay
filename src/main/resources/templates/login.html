@@ -12,121 +12,196 @@
     <script th:src="@{/js/api-handler.js}"></script>
     <script th:src="@{/js/api-validator.js}"></script>
 </head>
-<body>
-    <div style="min-height: 100vh; display: flex; align-items: center; justify-content: center; background: var(--bg-secondary);">
-        <div style="width: 100%; max-width: 400px; padding: 2rem;">
-            <div style="text-align: center; margin-bottom: 2rem;">
-                <h1 style="font-size: 2.5rem; margin-bottom: 0.5rem;">🏪 CommerceHub</h1>
-                <p style="color: var(--text-secondary);">통합 커머스 플랫폼</p>
-            </div>
+<body class="dark-bg">
+<div class="overlay"></div>
 
-            <div class="card">
-                <div class="card-header" style="text-align: center;">로그인</div>
-                <div class="card-body">
-                    <div id="error-message" class="alert alert-danger" style="margin-bottom: 1rem; display: none;">
-                        <strong>⚠️ 로그인 실패</strong><br>
-                        <span id="error-text">이메일 또는 비밀번호가 올바르지 않습니다.</span>
+<div class="login-wrapper">
+    <div style="width: 100%; max-width: 420px; padding: 2rem; position: relative; z-index: 1;">
+        <div style="text-align: center; margin: 5px 0 2rem 0; color: white;">            <h1 class="market-login-title">🕶️ CommerceHub</h1>
+            <p class="market-subtitle">BLACK MARKET ACCESS</p>
+        </div>
+
+        <div class="card" style="
+                background: rgba(17, 24, 39, 0.82);
+                backdrop-filter: blur(10px);
+                -webkit-backdrop-filter: blur(10px);
+                border: 1px solid rgba(255,255,255,0.08);
+                box-shadow: 0 10px 40px rgba(0,0,0,0.45);
+            ">
+            <div class="card-header" style="text-align: center; color: white;">로그인</div>
+            <div class="card-body">
+                <div id="error-message" class="alert alert-danger" style="margin-bottom: 1rem; display: none;">
+                    <strong>⚠️ 로그인 실패</strong><br>
+                    <span id="error-text">이메일 또는 비밀번호가 올바르지 않습니다.</span>
+                </div>
+
+                <form id="login-form" onsubmit="handleLogin(event)">
+                    <div class="form-group">
+                        <label class="form-label" style="color: rgba(255,255,255,0.88);">이메일</label>
+                        <input
+                                type="email"
+                                id="email"
+                                class="form-input"
+                                placeholder="admin@test.com"
+                                required
+                                autofocus
+                                style="
+                                    background: rgba(255,255,255,0.08);
+                                    border: 1px solid rgba(255,255,255,0.12);
+                                    color: white;
+                                "
+                        >
                     </div>
 
-                    <form id="login-form" onsubmit="handleLogin(event)">
-                        <div class="form-group">
-                            <label class="form-label">이메일</label>
-                            <input type="email" id="email" class="form-input" placeholder="admin@test.com" required autofocus>
-                        </div>
-                        <div class="form-group">
-                            <label class="form-label">비밀번호</label>
-                            <input type="password" id="password" class="form-input" placeholder="••••••••" required>
-                        </div>
+                    <div class="form-group">
+                        <label class="form-label" style="color: rgba(255,255,255,0.88);">비밀번호</label>
+                        <input
+                                type="password"
+                                id="password"
+                                class="form-input"
+                                placeholder="••••••••"
+                                required
+                                style="
+                                    background: rgba(255,255,255,0.08);
+                                    border: 1px solid rgba(255,255,255,0.12);
+                                    color: white;
+                                "
+                        >
+                    </div>
 
-                        <button type="submit" class="btn btn-primary" style="width: 100%;">로그인</button>
-                    </form>
-                    <a href="/oauth2/authorization/google">
+                    <button
+                            type="submit"
+                            class="btn btn-primary"
+                            style="width: 100%; background: linear-gradient(135deg, #6d28d9, #7c3aed, #db2777); border: none;"
+                    >
+                        암시장 입장
+                    </button>
+                </form>
+
+                <div style="margin-top: 1rem; text-align: center;">
+                    <a href="/oauth2/authorization/google" style="color: white; text-decoration: none; display: inline-flex; align-items: center; gap: 0.5rem;">
                         <img src="https://developers.google.com/identity/images/g-logo.png"
                              style="width:20px; vertical-align:middle;">
                         Google 로그인
                     </a>
-                    <div style="margin-top: 1.5rem; text-align: center;">
-                        <p style="color: var(--text-secondary); margin-bottom: 1rem;">계정이 없으신가요?</p>
-                        <a href="/pages/register" class="btn btn-outline" style="width: 100%;">회원가입</a>
-                    </div>
+                </div>
 
-                    <div style="margin-top: 2rem; padding-top: 1.5rem; border-top: 1px solid var(--border);">
-                        <p style="color: var(--text-secondary); font-size: 0.875rem; margin-bottom: 0.5rem;">
-                            <strong>테스트 계정:</strong>
-                        </p>
-                        <ul style="color: var(--text-secondary); font-size: 0.875rem; list-style: none; padding: 0;">
-                            <li>📧 admin@test.com / admin</li>
-                        </ul>
-                    </div>
+                <div style="margin-top: 1.5rem; text-align: center;">
+                    <p style="color: rgba(255,255,255,0.65); margin-bottom: 1rem;">계정이 없으신가요?</p>
+                    <a
+                            href="/pages/register"
+                            class="btn btn-outline"
+                            style="
+                                width: 100%;
+                                border-color: rgba(167, 139, 250, 0.9);
+                                color: #c4b5fd;
+                            "
+                    >
+                        회원가입
+                    </a>
+                </div>
+
+                <div style="margin-top: 2rem; padding-top: 1.5rem; border-top: 1px solid rgba(255,255,255,0.08);">
+                    <p style="color: rgba(255,255,255,0.7); font-size: 0.875rem; margin-bottom: 0.5rem;">
+                        <strong>테스트 계정</strong>
+                    </p>
+                    <ul style="color: rgba(255,255,255,0.65); font-size: 0.875rem; list-style: none; padding: 0;">
+                        <li>📧 admin@test.com / admin</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <div style="text-align: center; margin-top: 2rem; position: relative; z-index: 1;">
+            <button id="theme-toggle" class="theme-toggle" onclick="toggleTheme()">🌙</button>
+        </div>
+    </div>
+</div>
+
+<script>
+    async function handleLogin(event) {
+        event.preventDefault();
+
+        const email = document.getElementById('email').value;
+        const password = document.getElementById('password').value;
+        const errorMessage = document.getElementById('error-message');
+        const errorText = document.getElementById('error-text');
+
+        errorMessage.style.display = 'none';
+
+        try {
+            const result = await makeApiRequest('login', {
+                body: {
+                    email: email,
+                    password: password
+                },
+                returnHeaders: true
+            });
+
+            if (!validateApiResponse('login', result.data, result.headers)) {
+                errorText.textContent = 'API 응답 형식이 올바르지 않습니다.';
+                errorMessage.style.display = 'block';
+                return;
+            }
+
+            if (result.data.success) {
+                const authHeader = result.headers['authorization'];
+
+                if (authHeader && authHeader.startsWith('Bearer ')) {
+                    const token = authHeader.substring(7);
+                    saveToken(token);
+                    showLoadingAndMove();
+                } else {
+                    errorText.textContent = '토큰을 받을 수 없습니다.';
+                    errorMessage.style.display = 'block';
+                }
+            } else {
+                errorText.textContent = result.data.message || '이메일 또는 비밀번호가 올바르지 않습니다.';
+                errorMessage.style.display = 'block';
+            }
+        } catch (error) {
+            console.error('로그인 오류:', error);
+            errorText.textContent = '로그인 중 오류가 발생했습니다.';
+            errorMessage.style.display = 'block';
+        }
+    }
+
+    function showLoadingAndMove() {
+        const loading = document.createElement('div');
+        loading.className = 'loading-screen';
+
+        loading.innerHTML = `
+        <div class="weapon-loader">
+
+            <!-- 하나의 궤도 -->
+            <div class="weapon-orbit">
+                <span class="weapon weapon-1">🔪</span>
+                <span class="weapon weapon-2">🔫</span>
+                <span class="weapon weapon-3">🗡️</span>
+            </div>
+
+            <!-- 중앙 -->
+            <div class="weapon-core">
+                <div class="weapon-core-ring"></div>
+                <div class="weapon-core-text">
+                    암시장으로<br>잠입 중...
                 </div>
             </div>
 
-            <div style="text-align: center; margin-top: 2rem;">
-                <button id="theme-toggle" class="theme-toggle" onclick="toggleTheme()">🌙</button>
-            </div>
         </div>
-    </div>
+    `;
 
-    <script>
-        async function handleLogin(event) {
-            event.preventDefault();
+        document.body.appendChild(loading);
 
-            const email = document.getElementById('email').value;
-            const password = document.getElementById('password').value;
-            const errorMessage = document.getElementById('error-message');
-            const errorText = document.getElementById('error-text');
+        setTimeout(() => {
+            window.location.href = '/pages/shop';
+        }, 1800);
+    }
 
-            // 에러 메시지 숨기기
-            errorMessage.style.display = 'none';
-
-            try {
-                // returnHeaders: true 옵션으로 헤더도 받아오기
-                const result = await makeApiRequest('login', {
-                    body: {
-                        email: email,
-                        password: password
-                    },
-                    returnHeaders: true
-                });
-
-                // YML 스키마 기반 자동 검증
-                if (!validateApiResponse('login', result.data, result.headers)) {
-                    errorText.textContent = 'API 응답 형식이 올바르지 않습니다.';
-                    errorMessage.style.display = 'block';
-                    return;
-                }
-
-                if (result.data.success) {
-                    // Authorization 헤더에서 토큰 추출
-                    const authHeader = result.headers['authorization'];
-                    if (authHeader && authHeader.startsWith('Bearer ')) {
-                        const token = authHeader.substring(7);  // "Bearer " 제거
-
-                        // JWT 토큰을 쿠키에 저장
-                        saveToken(token);
-
-                        // 홈으로 이동
-                        window.location.href = '/';
-                    } else {
-                        errorText.textContent = '토큰을 받을 수 없습니다.';
-                        errorMessage.style.display = 'block';
-                    }
-                } else {
-                    // 로그인 실패
-                    errorText.textContent = result.data.message || '이메일 또는 비밀번호가 올바르지 않습니다.';
-                    errorMessage.style.display = 'block';
-                }
-            } catch (error) {
-                console.error('로그인 오류:', error);
-                errorText.textContent = '로그인 중 오류가 발생했습니다.';
-                errorMessage.style.display = 'block';
-            }
-        }
-
-        // 이미 로그인되어 있으면 홈으로 이동 (쿠키 체크)
-        if (getToken()) {
-            window.location.href = '/';
-        }
-    </script>
+    /* 이미 로그인 상태면 바로 이동 */
+    if (getToken()) {
+        window.location.href = '/pages/shop';
+    }
+</script>
 </body>
 </html>
