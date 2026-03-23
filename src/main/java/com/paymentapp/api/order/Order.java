@@ -2,8 +2,6 @@ package com.paymentapp.api.order;
 
 import com.github.f4b6a3.tsid.TsidCreator;
 import com.paymentapp.api.member.Member;
-import com.paymentapp.api.payment.entity.PaymentStatus;
-import com.paymentapp.core.constant.OrderStatus;
 import com.paymentapp.core.entity.BaseEntity;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
@@ -12,10 +10,8 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 
 import java.math.BigDecimal;
-import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.UUID;
 
 @Entity
 @Getter
@@ -66,7 +62,7 @@ public class Order extends BaseEntity {
     }
 
     public void markPaid() {
-        this.status = OrderStatus.COMPLETED;
+        this.status = OrderStatus.PAID;
     }
 
     public void markCancelled() {

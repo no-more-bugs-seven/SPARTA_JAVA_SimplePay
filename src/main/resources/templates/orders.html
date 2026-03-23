@@ -298,7 +298,7 @@
                         ${pointsDisplay}
                     </td>
                     <td style="padding: 0.75rem;">
-                        <span style="display: inline-block; padding: 0.25rem 0.75rem; border-radius: 4px; font-size: 0.875rem; font-weight: 500; ${statusStyle}">
+                        <span id="order-status${order.orderId}" style="display: inline-block; padding: 0.25rem 0.75rem; border-radius: 4px; font-size: 0.875rem; font-weight: 500; ${statusStyle}">
                             ${getStatusText(order.status)}
                         </span>
                     </td>
@@ -355,6 +355,15 @@
 
                     // 주문 목록 새로고침
                     await loadOrders();
+                    const es = new EventSource("http://localhost:8080/api/webhooks/sse?paymentId="+result.paymentId);
+                    es.addEventListener("payment", (event) => {
+                        // const data = JSON.parse(event.data);
+                        // const status = document.getElementById('order-status'+data.orderId);
+                        // status.textContent = getStatusText(data.status);
+                        // setStatusStyle(status, data.status);
+                        // console.log("결제 이벤트:", data.orderId + data.status);
+                        loadOrders(); // 주문 목록 새로고침
+                    });
                 }
             } catch (error) {
                 console.error('Payment failed:', error);
@@ -396,6 +405,24 @@
                 await loadOrders(); // 주문 목록 새로고침
             } catch (error) {
                 console.error('Failed to cancel payment:', error);
+            }
+        }
+        function setStatusStyle(el, status) {
+            if (status === "PENDING") {
+                el.style.backgroundColor = "#FEF3C7";
+                el.style.color = "#92400E";
+            } else if((status === "PAID")){
+                el.style.backgroundColor = "#D1FAE5";
+                el.style.color = "#065F46";
+            }else if((status === "CANCELLED")){
+                el.style.backgroundColor = "#FEE2E2";
+                el.style.color = "#991B1B";
+            }else if((status === "SHIPPED")){
+                el.style.backgroundColor = "#DBEAFE";
+                el.style.color = "#1E40AF";
+            }else if((status === "DELIVERED")){
+                el.style.backgroundColor = "#E0E7FF";
+                el.style.color = "#3730A3";
             }
         }
 
