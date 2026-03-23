@@ -57,6 +57,35 @@ public class PaymentService {
         Order order = orderRepository.findById(request.orderId())
                 .orElseThrow(() -> new OrderException(OrderErrorCode.ORDER_NOT_FOUND));
 
+        // 1-0. 중복 결제 시도 방지
+        Payment existingPayment = paymentRepository
+                .findFirstByOrderAndStatusInOrderByCreatedAtDesc(
+                        order,
+                        List.of(PaymentStatus.PENDING, PaymentStatus.PAID)
+                )
+                .orElse(null);
+        if (existingPayment != null) {
+            // 이미 결제 완료된 건 처리
+            if (existingPayment.getStatus() == PaymentStatus.PAID) {
+                return CreatePaymentResponse.of(
+                        false,
+                        existingPayment.getPaymentKey(),
+                        existingPayment.getStatus().toString()
+                );
+            }
+            return CreatePaymentResponse.of(
+                    true,
+                    existingPayment.getPaymentKey(),
+                    existingPayment.getStatus().toString()
+            );
+        }
+
+        // 1-1. 주문 기준 결제 금액 검증 (포인트 차감된 최종 결제 금액)
+        BigDecimal finalAmount = order.getTotalAmount();
+        if (request.totalAmount() == null || request.totalAmount().compareTo(finalAmount) != 0) {
+            throw new PaymentException(PaymentErrorCode.PAYMENT_AMOUNT_MISMATCH);
+        }
+
         // 2. 포인트 사용 처리
         if (order.getUsedPoints().compareTo(BigDecimal.ZERO) > 0) {
             pointService.spendPoints(order.getMember(), order, order.getUsedPoints());
@@ -68,7 +97,7 @@ public class PaymentService {
         Payment payment = Payment.builder()
                 .order(order)
                 .paymentKey(paymentKey)
-                .amount(request.totalAmount())
+                .amount(finalAmount)
                 .status(PaymentStatus.PENDING)
                 .build();
 
