@@ -10,6 +10,7 @@ import org.springframework.data.jpa.repository.Lock;
 import org.springframework.data.jpa.repository.Query;
 
 import java.math.BigDecimal;
+import java.util.List;
 import java.util.Optional;
 
 public interface PaymentRepository extends JpaRepository<Payment, Long> {
@@ -23,4 +24,5 @@ public interface PaymentRepository extends JpaRepository<Payment, Long> {
     BigDecimal sumAmountByMemberAndStatus(Member member, PaymentStatus status);
 
     Optional<Payment> findByOrder(Order order);
+    Optional<Payment> findFirstByOrderAndStatusInOrderByCreatedAtDesc(Order order, List<PaymentStatus> statuses);
 }
