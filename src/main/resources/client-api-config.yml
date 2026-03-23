@@ -556,11 +556,11 @@ api:
               required: true
 
     create-billing:
-      url:
-      method:
+      url: /api/subscriptions/{subscriptionId}/billings
+      method: POST
       description: 즉시 결제 (현재 주기 청구 실행)
       pathParams:
-        - name:
+        - name: subscriptionId
           description: 구독 ID
       request:
         fields:
@@ -596,11 +596,11 @@ api:
               description: "청구 상태 (COMPLETED: 결제 완료, FAILED: 실패)"
 
     list-billing-history:
-      url:
-      method:
+      url: /api/subscriptions/{subscriptionId}/billings
+      method: GET
       description: 청구 내역 조회
       pathParams:
-        - name:
+        - name: subscriptionId
           description: 구독 ID
       response:
         body:

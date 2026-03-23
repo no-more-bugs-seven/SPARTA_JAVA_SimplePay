@@ -61,6 +61,7 @@ public class SubscriptionController {
         return ResponseEntity.ok(response);
     }
 
+
     /**
      * 구독 플랜 변경
      */
@@ -73,6 +74,37 @@ public class SubscriptionController {
         return ResponseEntity.ok(
                 subscriptionService.changePlan(loginUser.id(), subscriptionId, request.planId())
         );
+    }
+
+
+    /**
+     * 정기 구독
+     */
+    @PostMapping("/{subscriptionId}/billings")
+    public ResponseEntity<CreateBillingResponse> createBilling(
+            @PathVariable Long subscriptionId,
+            @Valid @RequestBody CreateBillingRequest request
+    ) {
+        CreateBillingResponse response = subscriptionService.renewSubscription(
+                subscriptionId,
+                request.periodStart(),
+                request.periodEnd()
+        );
+
+        return ResponseEntity.status(HttpStatus.CREATED).body(response);
+    }
+
+
+    /**
+     * 구독 청구 내역 조회
+     */
+    @GetMapping("/{subscriptionId}/billings")
+    public ResponseEntity<BillingHistoryListResponse> getBillingHistories(
+            @LoginUser LoginUserInfoDto loginUser,
+            @PathVariable Long subscriptionId
+    ) {
+        BillingHistoryListResponse response = subscriptionService.getBillingHistories(loginUser.id(), subscriptionId);
+        return ResponseEntity.ok(response);
     }
 
 }

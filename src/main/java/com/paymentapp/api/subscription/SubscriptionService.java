@@ -4,11 +4,7 @@ import com.paymentapp.api.member.Member;
 import com.paymentapp.api.member.MemberService;
 import com.paymentapp.api.plan.PlanService;
 import com.paymentapp.api.plan.entity.Plan;
-import com.paymentapp.api.plan.PlanRepository;
-import com.paymentapp.api.subscription.dto.ChangeSubscriptionPlanResponse;
-import com.paymentapp.api.subscription.dto.CreateSubscriptionResponse;
-import com.paymentapp.api.subscription.dto.SubscriptionResponse;
-import com.paymentapp.api.subscription.dto.UpdateSubscriptionResponse;
+import com.paymentapp.api.subscription.dto.*;
 import com.paymentapp.api.subscription.entity.*;
 import com.paymentapp.core.exception.custom.PlanException;
 import com.paymentapp.core.exception.custom.SubscriptionException;
@@ -23,6 +19,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.List;
 
 @Slf4j
 @Service
@@ -52,18 +49,17 @@ public class SubscriptionService {
         boolean isAlreadySubscribed = subscriptionRepository.existsByMemberIdAndStatus(memberId, SubscriptionStatus.ACTIVE);
         if (isAlreadySubscribed) {
             log.warn("다중 구독 시도 차단! memberId: {}", memberId);
-             throw new SubscriptionException(SubscriptionErrorCode.ALREADY_SUBSCRIBED);
+            throw new SubscriptionException(SubscriptionErrorCode.ALREADY_SUBSCRIBED);
         }
 
         Member member = memberService.findById(memberId);
         Plan plan = planService.findByPlanId(planId);
-        if(!plan.isActive()) {
+        if (!plan.isActive()) {
             throw new PlanException(PlanErrorCode.PLAN_INACTIVE);
         }
         if (plan.getAmount().compareTo(amount) != 0) {
             throw new PlanException(PlanErrorCode.AMOUNT_MISMATCH);
         }
-
 
 
         // 빌링키 검증 (to 포트원)
@@ -83,6 +79,7 @@ public class SubscriptionService {
         SubscriptionPaymentMethod savedPaymentMethod = paymentMethodRepository.save(paymentMethod);
 
         LocalDateTime now = LocalDateTime.now();
+        LocalDateTime nextMonth = now.plusMonths(1);
         Subscription subscription = Subscription.builder()
                 .member(member)
                 .plan(plan)
@@ -90,12 +87,13 @@ public class SubscriptionService {
                 .amount(plan.getAmount())
                 .status(SubscriptionStatus.ACTIVE)
                 .currentPeriodStart(now)
-                .currentPeriodEnd(now.plusMonths(1))
+                .currentPeriodEnd(nextMonth)
+                .nextPaymentAt(nextMonth)
                 .build();
         Subscription savedSubscription = subscriptionRepository.save(subscription);
 
         // 결제
-        String uniquePaymentId = "SUBSCRIPTION_PAY_" + savedSubscription.getId() + "_" + System.currentTimeMillis();
+        String uniquePaymentId = generatePaymentId(savedSubscription.getId());
         PortOneBillingPaymentResponse paymentResult = portOneClient.payWithBillingKey(
                 billingKey,
                 plan.getAmount(),
@@ -131,6 +129,11 @@ public class SubscriptionService {
 
         return new CreateSubscriptionResponse(String.valueOf(savedSubscription.getId()));
     }
+
+    private String generatePaymentId(Long subscriptionId) {
+        return "SUBS_PAY_" + subscriptionId + "_" + System.currentTimeMillis();
+    }
+
 
     // Q) 'paymentId' 를 포트원이 결제를 성공시키고 나서 발급해 주면 안되나? 왜 우리가 발급하지?
     // A)
@@ -208,4 +211,60 @@ public class SubscriptionService {
             throw new SubscriptionException(SubscriptionErrorCode.INVALID_SUBSCRIPTION_ID);
         }
     }
+
+    /**
+     * 정기 결제
+     */
+    @Transactional
+    public CreateBillingResponse renewSubscription(Long subscriptionId, LocalDateTime nextStart, LocalDateTime nextEnd) {
+        Subscription subscription = subscriptionRepository.findById(subscriptionId)
+                .orElseThrow(() -> new SubscriptionException(SubscriptionErrorCode.ACTIVE_SUBSCRIPTION_NOT_FOUND));
+
+        String paymentId = generatePaymentId(subscriptionId);
+        PortOneBillingPaymentResponse result = portOneClient.payWithBillingKey(
+                subscription.getPaymentMethod().getBillingKey(),
+                subscription.getPlan().getAmount(),
+                paymentId
+        );
+
+        if (result.isSuccess()) {
+            subscription.renew(nextStart, nextEnd, subscription.getPlan());
+
+            SubscriptionBilling savedBilling = billingRepository.save(SubscriptionBilling.builder()
+                    .subscription(subscription)
+                    .amount(subscription.getPlan().getAmount())
+                    .status(BillingStatus.COMPLETED)
+                    .paymentId(paymentId)
+                    .attemptedAt(LocalDateTime.now())
+                    .build());
+
+            return new CreateBillingResponse(true, String.valueOf(savedBilling.getId()), paymentId, subscription.getPlan().getAmount(), "COMPLETED");
+        } else {
+            throw new SubscriptionException(SubscriptionErrorCode.FAILURE_PAYMENT);
+        }
+    }
+
+
+    /**
+     * 청구 내역 조회
+     */
+    public BillingHistoryListResponse getBillingHistories(Long memberId, Long subscriptionId) {
+        subscriptionRepository.findByIdAndMemberId(subscriptionId, memberId)
+                .orElseThrow(() -> new SubscriptionException(SubscriptionErrorCode.ACTIVE_SUBSCRIPTION_NOT_FOUND));
+
+        List<BillingHistoryResponse> historyList = billingRepository.findBySubscriptionIdOrderByAttemptedAtDesc(subscriptionId)
+                .stream()
+                .map(billing -> new BillingHistoryResponse(
+                        String.valueOf(billing.getId()),
+                        billing.getPaymentId(),
+                        billing.getAmount(),
+                        billing.getStatus().name(),
+                        billing.getAttemptedAt(),
+                        billing.getErrorMessage()
+                ))
+                .toList();
+
+        return new BillingHistoryListResponse(historyList);
+    }
+
 }
