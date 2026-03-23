@@ -126,7 +126,6 @@ public class PortOneClient {
         try {
             log.info("PortOne 빌링키 결제 요청 uniquePaymentId={}, amount={}", uniquePaymentId, amount);
 
-
             PortOneBillingPaymentRequest requestBody = new PortOneBillingPaymentRequest(
                     storeId,
                     billingKey,
@@ -141,8 +140,7 @@ public class PortOneClient {
                     .body(PortOneBillingPaymentResponse.class);
 
             if (responseBody != null) {
-                responseBody.setSuccess(true);
-                responseBody.setPaymentId(uniquePaymentId);
+                responseBody.handleSuccess(uniquePaymentId);
                 log.info("PortOne 빌링키 결제 성공! pgTxId={}, paidAt={}", responseBody.getPayment().getPgTxId(), responseBody.getPayment().getPaidAt());
 
                 return responseBody;
@@ -174,5 +172,6 @@ public class PortOneClient {
             return new PortOneBillingPaymentResponse(false, uniquePaymentId, "결제 서버 통신 오류");
         }
     }
+
 
 }

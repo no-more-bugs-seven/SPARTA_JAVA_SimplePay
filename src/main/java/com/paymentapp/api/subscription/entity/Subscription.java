@@ -99,22 +99,7 @@ public class Subscription extends BaseEntity {
         this.cancelledAt = LocalDateTime.now();
     }
 
-    public boolean isOwnedBy(Long userId) {
-        return member.getId().equals(userId);
-    }
-
     public boolean isActive() {
         return this.status == SubscriptionStatus.ACTIVE;
-    }
-
-    public boolean isInProgress() {
-        return (this.status == SubscriptionStatus.ACTIVE
-                || this.status == SubscriptionStatus.CANCELLED)
-                && this.currentPeriodEnd.isAfter(LocalDateTime.now());
-    }
-
-    public void extendSubscription() {
-        this.currentPeriodStart = this.currentPeriodEnd;
-        this.currentPeriodEnd = this.currentPeriodEnd.plusMonths(1);
     }
 }

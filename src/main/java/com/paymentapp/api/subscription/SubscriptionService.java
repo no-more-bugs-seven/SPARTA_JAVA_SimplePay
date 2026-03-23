@@ -4,7 +4,6 @@ import com.paymentapp.api.member.Member;
 import com.paymentapp.api.member.MemberService;
 import com.paymentapp.api.plan.PlanService;
 import com.paymentapp.api.plan.entity.Plan;
-import com.paymentapp.api.plan.PlanRepository;
 import com.paymentapp.api.subscription.dto.ChangeSubscriptionPlanResponse;
 import com.paymentapp.api.subscription.dto.CreateSubscriptionResponse;
 import com.paymentapp.api.subscription.dto.SubscriptionResponse;
@@ -95,7 +94,7 @@ public class SubscriptionService {
         Subscription savedSubscription = subscriptionRepository.save(subscription);
 
         // 결제
-        String uniquePaymentId = "SUBSCRIPTION_PAY_" + savedSubscription.getId() + "_" + System.currentTimeMillis();
+        String uniquePaymentId = generatePaymentId(savedSubscription.getId());
         PortOneBillingPaymentResponse paymentResult = portOneClient.payWithBillingKey(
                 billingKey,
                 plan.getAmount(),
@@ -131,6 +130,11 @@ public class SubscriptionService {
 
         return new CreateSubscriptionResponse(String.valueOf(savedSubscription.getId()));
     }
+
+    private String generatePaymentId(Long subscriptionId) {
+        return "SUBS_PAY_" + subscriptionId + "_" + System.currentTimeMillis();
+    }
+
 
     // Q) 'paymentId' 를 포트원이 결제를 성공시키고 나서 발급해 주면 안되나? 왜 우리가 발급하지?
     // A)
