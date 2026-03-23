@@ -45,6 +45,10 @@ public class Order extends BaseEntity {
     @Column(name = "used_points", nullable = false, precision = 12, scale = 2)
     private BigDecimal usedPoints;
 
+    // 적립 포인트
+    @Column(name = "earned_points", nullable = false, precision = 12, scale = 2)
+    private BigDecimal earnedPoints;
+
     @OneToMany(mappedBy = "order", cascade = CascadeType.ALL, orphanRemoval = true)
     private final List<OrderItem> orderItems = new ArrayList<>();
 
@@ -55,6 +59,7 @@ public class Order extends BaseEntity {
         this.totalAmount = totalAmount;
         this.status = OrderStatus.PENDING;
         this.usedPoints = BigDecimal.ZERO;
+        this.earnedPoints = BigDecimal.ZERO;
     }
 
     public void addOrderItem(OrderItem orderItem) {
@@ -84,5 +89,10 @@ public class Order extends BaseEntity {
     // 주문 상태 update
     public void updateStatus(OrderStatus status) {
         this.status = status;
+    }
+
+    // 적립 포인트 update
+    public void updateEarnedPoints(BigDecimal earnedPoints) {
+        this.earnedPoints = earnedPoints;
     }
 }

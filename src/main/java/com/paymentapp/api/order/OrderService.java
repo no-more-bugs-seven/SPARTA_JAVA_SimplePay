@@ -93,20 +93,21 @@ public class OrderService {
         Member member = memberRepository.findById(loginUser.id())
                 .orElseThrow(() -> new IllegalArgumentException("회원을 찾을 수 없습니다."));
 
-        return orderRepository.findByMemberOrderByCreatedAtDesc(member)
+        List<OrderListResponse> list = orderRepository.findByMemberOrderByCreatedAtDesc(member)
                 .stream()
                 .map(order -> OrderListResponse.builder()
                         .orderId(order.getId().toString())
                         .orderNumber(order.getOrderNumber())
                         .totalAmount(order.getTotalAmount())
                         .usedPoints(order.getUsedPoints())
-                        .finalAmount(order.getTotalAmount())
-                        .earnedPoints(order.getUsedPoints())
+                        .finalAmount(order.getTotalAmount().subtract(order.getUsedPoints()))
+                        .earnedPoints(order.getEarnedPoints())
                         .currency("")
                         .status(order.getStatus().name())
                         .createdAt(order.getCreatedAt().toString())
                         .build())
                 .toList();
+        return list;
     }
 
     // 주문 단건 조회

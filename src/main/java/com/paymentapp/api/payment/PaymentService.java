@@ -210,6 +210,7 @@ public class PaymentService {
             // 9. 포인트 적립
             BigDecimal pointRate = membershipService.getPointRate(order.getMember());
             pointService.earnPoints(order.getMember(), order, payment.getAmount().multiply(pointRate));
+            order.updateEarnedPoints(payment.getAmount().multiply(pointRate));
 
             // 10. 멤버십 등급 갱신
             membershipService.updateMembershipTier(order.getMember(), membershipService.calculateTotalSpentAmount(order.getMember()));
