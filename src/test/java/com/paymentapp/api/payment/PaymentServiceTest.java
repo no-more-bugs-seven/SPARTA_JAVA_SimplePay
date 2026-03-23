@@ -233,21 +233,19 @@ class PaymentServiceTest {
 
         given(productRepository.findAllByIdsWithLock(anyList())).willReturn(List.of(outOfStockProduct));
 
-        // 4. When & Then: 실행 및 예외 검증
+        // When & Then
         assertThatThrownBy(() -> paymentService.confirmPayment(paymentId))
                 .isInstanceOf(ProductException.class);
 
-        // 5. Then: 보상 트랜잭션(handleCompensation) 핵심 로직 검증
+        // Then
+        // 보상 트랜잭션(handleCompensation) 핵심 로직 검증
         // - 외부 결제 취소 API가 호출되었는가?
         then(portOneClient).should().cancelPayment(eq(paymentId), contains("재고 부족"));
-
         // - 결제 생성 시 차감되었던 포인트가 복구되었는가?
         then(pointService).should().recoverPoints(eq(mockMember), eq(mockOrder));
-
         // - 결제와 주문 상태가 REFUNDED로 최종 변경되었는가?
         assertThat(mockPayment.getStatus()).isEqualTo(PaymentStatus.REFUNDED);
         assertThat(mockOrder.getStatus()).isEqualTo(OrderStatus.REFUNDED);
-
         // - 환불 이력이 COMPLETED 상태로 저장되었는가?
         then(refundRepository).should(atLeastOnce()).save(argThat(refund ->
                 refund.getStatus() == RefundStatus.COMPLETED &&
