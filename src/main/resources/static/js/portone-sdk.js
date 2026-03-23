@@ -148,7 +148,7 @@ async function openPortOnePaymentWithPoints(paymentData) {
         const createPaymentResult = await makeApiRequest('create-payment', {
             body: {
                 orderId: paymentData.orderId,
-                totalAmount: finalAmount,  // ← 2000으로 전송
+                totalAmount: finalAmount
             }
         });
 

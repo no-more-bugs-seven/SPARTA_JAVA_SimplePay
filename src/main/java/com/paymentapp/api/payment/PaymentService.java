@@ -80,11 +80,11 @@ public class PaymentService {
             );
         }
 
-        // 1-1. 주문 기준 결제 금액 검증 (포인트 차감된 최종 결제 금액)
-        BigDecimal finalAmount = order.getTotalAmount();
-        if (request.totalAmount() == null || request.totalAmount().compareTo(finalAmount) != 0) {
+        // 1-1. 요청 금액 검증
+        if (request.totalAmount() == null || request.totalAmount().compareTo(BigDecimal.ZERO) <= 0) {
             throw new PaymentException(PaymentErrorCode.PAYMENT_AMOUNT_MISMATCH);
         }
+        BigDecimal finalAmount = request.totalAmount();
 
         // 2. 포인트 사용 처리
         if (order.getUsedPoints().compareTo(BigDecimal.ZERO) > 0) {
@@ -97,7 +97,7 @@ public class PaymentService {
         Payment payment = Payment.builder()
                 .order(order)
                 .paymentKey(paymentKey)
-                .amount(finalAmount)
+                .amount(request.totalAmount())
                 .status(PaymentStatus.PENDING)
                 .build();
 
