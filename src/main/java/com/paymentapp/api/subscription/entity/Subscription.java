@@ -55,6 +55,8 @@ public class Subscription extends BaseEntity {
 
     private LocalDateTime cancelledAt;
 
+    private LocalDateTime nextPaymentAt; // 스케줄러가 결제 시점을 판단할 기준!
+
     @Builder
     public Subscription(
             Member member,
@@ -63,7 +65,8 @@ public class Subscription extends BaseEntity {
             BigDecimal amount,
             SubscriptionStatus status,
             LocalDateTime currentPeriodStart,
-            LocalDateTime currentPeriodEnd
+            LocalDateTime currentPeriodEnd,
+            LocalDateTime nextPaymentAt
     ) {
         this.member = member;
         this.plan = plan;
@@ -72,6 +75,7 @@ public class Subscription extends BaseEntity {
         this.status = status != null ? status : SubscriptionStatus.ACTIVE; // 기본값 셋팅
         this.currentPeriodStart = currentPeriodStart;
         this.currentPeriodEnd = currentPeriodEnd;
+        this.nextPaymentAt = nextPaymentAt;
     }
 
     public void failPayment() {
@@ -101,5 +105,17 @@ public class Subscription extends BaseEntity {
 
     public boolean isActive() {
         return this.status == SubscriptionStatus.ACTIVE;
+    }
+
+    /**
+     * [추가] 정기 결제 성공 시 구독 정보 갱신
+     */
+    public void renew(LocalDateTime start, LocalDateTime end, Plan confirmedPlan) {
+        this.currentPeriodStart = start;
+        this.currentPeriodEnd = end;
+        this.nextPaymentAt = end; // 다음 결제일은 이번 주기가 끝나는 시점!
+        this.plan = confirmedPlan; // 예약된 플랜이 있었다면 여기서 교체
+        this.nextPlan = null;      // 예약 초기화
+        this.status = SubscriptionStatus.ACTIVE;
     }
 }
