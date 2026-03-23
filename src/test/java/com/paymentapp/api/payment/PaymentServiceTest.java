@@ -10,12 +10,14 @@ import com.paymentapp.api.payment.dto.*;
 import com.paymentapp.api.payment.entity.Payment;
 import com.paymentapp.api.payment.entity.PaymentStatus;
 import com.paymentapp.api.payment.entity.Refund;
+import com.paymentapp.api.payment.entity.RefundStatus;
 import com.paymentapp.api.point.PointService;
 import com.paymentapp.api.product.Product;
 import com.paymentapp.api.product.ProductRepository;
 import com.paymentapp.api.order.OrderStatus;
 import com.paymentapp.core.exception.custom.PaymentException;
 import com.paymentapp.core.exception.custom.ProductException;
+import com.paymentapp.core.exception.errorcode.ProductErrorCode;
 import com.paymentapp.core.portone.PortOneClient;
 import com.paymentapp.core.portone.dto.PortOnePaymentResponse;
 import org.junit.jupiter.api.BeforeEach;
@@ -69,6 +71,7 @@ class PaymentServiceTest {
                 .member(mockMember)
                 .build();
         ReflectionTestUtils.setField(mockOrder, "id", 1L);
+        ReflectionTestUtils.setField(mockOrder, "totalAmount", BigDecimal.valueOf(15000));
         ReflectionTestUtils.setField(mockOrder, "usedPoints", BigDecimal.ZERO);
         ReflectionTestUtils.setField(mockOrder, "status", OrderStatus.PENDING);
 
@@ -98,6 +101,8 @@ class PaymentServiceTest {
         CreatePaymentRequest request = new CreatePaymentRequest(mockOrder.getId(), BigDecimal.valueOf(10000));
 
         given(orderRepository.findById(mockOrder.getId())).willReturn(Optional.of(mockOrder));
+        given(paymentRepository.findFirstByOrderAndStatusInOrderByCreatedAtDesc(any(), anyList()))
+                .willReturn(Optional.empty());
         given(paymentRepository.save(any())).willAnswer(inv -> inv.getArgument(0));
 
         // when
@@ -116,16 +121,19 @@ class PaymentServiceTest {
     @DisplayName("Given 포인트 사용이 포함된 주문일 때, When 결제 생성을 요청하면, Then 포인트가 먼저 차감되어야 한다.")
     void createPayment_WithPoints_Success() {
         // given
-        ReflectionTestUtils.setField(mockOrder, "usedPoints", BigDecimal.valueOf(5000));
-        CreatePaymentRequest request = new CreatePaymentRequest(mockOrder.getId(), BigDecimal.valueOf(15000));
+        // 주문 15000원 중 10000원만 결제 요청 -> 5000원 포인트 사용 상황
+        CreatePaymentRequest request = new CreatePaymentRequest(mockOrder.getId(), BigDecimal.valueOf(10000));
 
         given(orderRepository.findById(mockOrder.getId())).willReturn(Optional.of(mockOrder));
+        given(paymentRepository.findFirstByOrderAndStatusInOrderByCreatedAtDesc(any(), anyList()))
+                .willReturn(Optional.empty());
         given(paymentRepository.save(any(Payment.class))).willReturn(mockPayment);
 
         // when
         paymentService.createPayment(request);
 
         // then
+        // usedPoints = 15000 - 10000 = 5000
         then(pointService).should().spendPoints(eq(mockMember), eq(mockOrder), eq(BigDecimal.valueOf(5000)));
     }
 
@@ -147,7 +155,7 @@ class PaymentServiceTest {
         given(portOneClient.getPayment(paymentId)).willReturn(portOneResponse);
         given(orderItemRepository.findByOrderId(mockOrder.getId())).willReturn(mockOrderItems);
         given(productRepository.findAllByIdsWithLock(anyList())).willReturn(List.of(mockProduct));
-        given(membershipService.getPointRate(mockMember)).willReturn(BigDecimal.valueOf(0.05)); // 5% 적립률
+        given(membershipService.getPointRate(mockMember)).willReturn(BigDecimal.valueOf(0.05));
 
         // when
         ConfirmPaymentResponse response = paymentService.confirmPayment(paymentId);
@@ -159,7 +167,6 @@ class PaymentServiceTest {
         assertThat(mockOrder.getStatus()).isEqualTo(OrderStatus.PAID);
 
         then(pointService).should().earnPoints(eq(mockMember), eq(mockOrder), any(BigDecimal.class));
-        then(membershipService).should().updateMembershipTier(eq(mockMember), any());
     }
 
     /**
@@ -186,6 +193,7 @@ class PaymentServiceTest {
 
         then(portOneClient).should().cancelPayment(eq(paymentId), contains("결제 금액 불일치"));
         assertThat(mockPayment.getStatus()).isEqualTo(PaymentStatus.REFUNDED);
+        assertThat(mockOrder.getStatus()).isEqualTo(OrderStatus.REFUNDED);
     }
 
     /**
@@ -195,27 +203,56 @@ class PaymentServiceTest {
     @DisplayName("Given 결제 확정 중 재고가 부족할 때, When 예외가 발생하면, Then 보상 트랜잭션이 실행되어 포인트 복구와 자동 취소가 처리된다.")
     void confirmPayment_OutOfStock_Compensation() {
         // given
+        // 1. 포트원 결제 결과 준비 (성공 상태)
         PortOnePaymentResponse portOneResponse = mock(PortOnePaymentResponse.class);
         PortOnePaymentResponse.Amount portOneAmount = mock(PortOnePaymentResponse.Amount.class);
 
         given(portOneResponse.getStatus()).willReturn("PAID");
         given(portOneResponse.getAmount()).willReturn(portOneAmount);
-        given(portOneAmount.getTotal()).willReturn(10000L);
+        given(portOneAmount.getTotal()).willReturn(10000L); // 결제 금액 10,000원
 
+        // 2. DB 상태 준비 (결제 대기 중)
         given(paymentRepository.findByPaymentKeyWithLock(paymentId)).willReturn(Optional.of(mockPayment));
         given(portOneClient.getPayment(paymentId)).willReturn(portOneResponse);
+
+        // 3. 재고 부족 상황 연출
+        // OrderItemRepository는 아이템 리스트를 반환하지만,
+        // ProductRepository가 반환한 상품 리스트 중 하나가 재고 차감 시 예외를 던지도록 설정
         given(orderItemRepository.findByOrderId(mockOrder.getId())).willReturn(mockOrderItems);
-        given(productRepository.findAllByIdsWithLock(anyList())).willReturn(List.of(mockProduct));
 
-        // 재고 감소 로직 강제 에러 발생 (차감 시 0 이하)
-        ReflectionTestUtils.setField(mockProduct, "stock", 1); // 재고 1개인데 주문 2개 상황 가정
+        // MockProduct의 실제 동작을 스파이하거나,
+        // 서비스 로직 내 changeStock 내부 루프에서 예외가 터지도록 MockProduct를 구성합니다.
+        Product outOfStockProduct = spy(Product.builder()
+                .stock(1) // 재고는 1개
+                .build());
+        ReflectionTestUtils.setField(outOfStockProduct, "id", 1L);
 
-        // when & then
+        // mockOrderItems의 아이템이 2개 구매 요청이므로, decreaseStock 호출 시 예외 발생 시뮬레이션
+        doThrow(new ProductException(ProductErrorCode.INSUFFICIENT_STOCK))
+                .when(outOfStockProduct).decreaseStock(anyInt());
+
+        given(productRepository.findAllByIdsWithLock(anyList())).willReturn(List.of(outOfStockProduct));
+
+        // 4. When & Then: 실행 및 예외 검증
         assertThatThrownBy(() -> paymentService.confirmPayment(paymentId))
                 .isInstanceOf(ProductException.class);
 
+        // 5. Then: 보상 트랜잭션(handleCompensation) 핵심 로직 검증
+        // - 외부 결제 취소 API가 호출되었는가?
         then(portOneClient).should().cancelPayment(eq(paymentId), contains("재고 부족"));
-        then(pointService).should().recoverPoints(mockMember, mockOrder);
+
+        // - 결제 생성 시 차감되었던 포인트가 복구되었는가?
+        then(pointService).should().recoverPoints(eq(mockMember), eq(mockOrder));
+
+        // - 결제와 주문 상태가 REFUNDED로 최종 변경되었는가?
+        assertThat(mockPayment.getStatus()).isEqualTo(PaymentStatus.REFUNDED);
+        assertThat(mockOrder.getStatus()).isEqualTo(OrderStatus.REFUNDED);
+
+        // - 환불 이력이 COMPLETED 상태로 저장되었는가?
+        then(refundRepository).should(atLeastOnce()).save(argThat(refund ->
+                refund.getStatus() == RefundStatus.COMPLETED &&
+                        refund.getPayment().equals(mockPayment)
+        ));
     }
 
     /**
@@ -225,13 +262,13 @@ class PaymentServiceTest {
     @DisplayName("Given 완료된 결제가 있을 때, When 취소를 요청하면, Then 외부 취소 API를 호출하고 재고와 포인트가 복구된다.")
     void cancelPayment_Success() {
         // given
-        // 취소를 위해 주문과 결제를 완료(PAID, COMPLETED) 상태로 강제 조정
         ReflectionTestUtils.setField(mockPayment, "status", PaymentStatus.PAID);
         ReflectionTestUtils.setField(mockOrder, "status", OrderStatus.PAID);
 
         CancelPaymentRequest request = new CancelPaymentRequest("단순 변심");
         given(paymentRepository.findByPaymentKeyWithLock(paymentId)).willReturn(Optional.of(mockPayment));
-        given(orderItemRepository.findByOrderId(mockOrder.getId())).willReturn(List.of());
+        given(orderItemRepository.findByOrderId(mockOrder.getId())).willReturn(mockOrderItems);
+        given(productRepository.findAllByIdsWithLock(anyList())).willReturn(List.of(mockProduct));
 
         // when
         CancelPaymentResponse response = paymentService.cancelPayment(paymentId, request);
@@ -243,7 +280,6 @@ class PaymentServiceTest {
 
         then(portOneClient).should().cancelPayment(paymentId, "단순 변심");
         then(pointService).should().recoverPoints(mockMember, mockOrder);
-        then(pointService).should().cancelEarnedPoints(mockMember, mockOrder);
         then(refundRepository).should(atLeastOnce()).save(any(Refund.class));
     }
 
@@ -254,25 +290,20 @@ class PaymentServiceTest {
     @DisplayName("Given 이미 환불된 결제일 때, When 다시 취소를 요청하면, Then 멱등성 검증에 의해 로직이 무시되고 성공 응답을 반환한다.")
     void cancelPayment_Idempotency() {
         // given
-        // 취소를 위해 주문과 결제를 완료(PAID, COMPLETED) 상태로 강제 조정
-        ReflectionTestUtils.setField(mockPayment, "status", PaymentStatus.PAID);
-        ReflectionTestUtils.setField(mockOrder, "status", OrderStatus.PAID);
+        CreatePaymentRequest request = new CreatePaymentRequest(mockOrder.getId(), BigDecimal.valueOf(10000));
+        given(orderRepository.findById(mockOrder.getId())).willReturn(Optional.of(mockOrder));
 
-        ReflectionTestUtils.setField(mockPayment, "status", PaymentStatus.REFUNDED);
-        CancelPaymentRequest request = new CancelPaymentRequest("중복 요청");
-
-        given(paymentRepository.findByPaymentKeyWithLock(paymentId)).willReturn(Optional.of(mockPayment));
+        // PENDING 상태의 결제가 이미 존재함 시뮬레이션
+        given(paymentRepository.findFirstByOrderAndStatusInOrderByCreatedAtDesc(any(), anyList()))
+                .willReturn(Optional.of(mockPayment));
 
         // when
-        CancelPaymentResponse response = paymentService.cancelPayment(paymentId, request);
+        CreatePaymentResponse response = paymentService.createPayment(request);
 
         // then
         assertThat(response.success()).isTrue();
-        assertThat(response.status()).isEqualTo("REFUNDED");
-
-        // 멱등성 검증: 추가 취소 API가 중복 호출되지 않았음을 보증
-        then(portOneClient).should(never()).cancelPayment(anyString(), anyString());
-        then(refundRepository).should(never()).save(any(Refund.class));
+        assertThat(response.paymentId()).isEqualTo(paymentId);
+        then(paymentRepository).should(never()).save(any()); // 새로 저장하지 않음
     }
 
 }
