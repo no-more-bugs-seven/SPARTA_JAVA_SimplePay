@@ -51,7 +51,7 @@ public class PointService {
                         .expiredAt(null)
                         .build()
         );
-        member.addPointBalance(points);
+        member.subtractPointBalance(points);
     }
 
     @Transactional
