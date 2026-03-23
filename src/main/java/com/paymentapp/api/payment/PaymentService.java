@@ -14,7 +14,7 @@ import com.paymentapp.api.payment.entity.RefundStatus;
 import com.paymentapp.api.point.PointService;
 import com.paymentapp.api.product.Product;
 import com.paymentapp.api.product.ProductRepository;
-import com.paymentapp.core.constant.OrderStatus;
+import com.paymentapp.api.order.OrderStatus;
 import com.paymentapp.core.exception.custom.OrderException;
 import com.paymentapp.core.exception.custom.PaymentException;
 import com.paymentapp.core.exception.custom.ProductException;
@@ -102,7 +102,7 @@ public class PaymentService {
             return ConfirmPaymentResponse.of(
                     true,
                     payment.getOrder().getId().toString(),
-                    "COMPLETED"
+                    "PAID"
             );
         }
 
@@ -174,7 +174,7 @@ public class PaymentService {
 
             // 8. 결제/주문 상태 변경
             payment.complete();
-            order.updateStatus(OrderStatus.COMPLETED);
+            order.updateStatus(OrderStatus.PAID);
 
             // 9. 포인트 적립
             BigDecimal pointRate = membershipService.getPointRate(order.getMember());
@@ -197,7 +197,7 @@ public class PaymentService {
         return ConfirmPaymentResponse.of(
                 true,
                 payment.getOrder().getId().toString(),
-                "COMPLETED"
+                "PAID"
         );
     }
 
@@ -337,7 +337,7 @@ public class PaymentService {
         if (payment.getStatus() != PaymentStatus.PAID) {
             throw new PaymentException(PaymentErrorCode.INVALID_REFUND_STATE);
         }
-        if (payment.getOrder().getStatus() != OrderStatus.COMPLETED) {
+        if (payment.getOrder().getStatus() != OrderStatus.PAID) {
             throw new OrderException(OrderErrorCode.INVALID_REFUND_STATE);
         }
     }

@@ -17,11 +17,11 @@ public class WebhookService {
     private final WebhookRepository webhookRepository;
 
     @Transactional
-    public void processWebhook(String webhookId, String paymentKey, String eventStatus) {
+    public ConfirmPaymentResponse processWebhook(String webhookId, String paymentKey, String eventStatus) {
         // 1. 웹훅 중복 수신 체크 (Unique ID)
         if (webhookRepository.existsByWebhookId(webhookId)) {
             log.info("Duplicate Webhook ignored: {}", webhookId);
-            return;
+            return null;
         }
 
         // 2. 웹훅 수신 기록 생성 (RECEIVED)
@@ -41,9 +41,9 @@ public class WebhookService {
                     ConfirmPaymentResponse response = paymentService.confirmPayment(paymentKey);
                     String result = response.status();
 
-                    if ("COMPLETED".equals(result) || "CANCELLED".equals(result) || "REFUNDED".equals(result)) event.markAsProcessed();
+                    if ("PAID".equals(result) || "CANCELLED".equals(result) || "REFUNDED".equals(result)) event.markAsProcessed();
                     else log.info("Payment not finished yet. paymentId={}", paymentKey);
-                    break;
+                    return response;
                 default:
                     log.info("Ignored event type: {}", eventStatus);
             }
@@ -53,5 +53,6 @@ public class WebhookService {
             event.markAsFailed();
             throw e;
         }
+        return null;
     }
 }

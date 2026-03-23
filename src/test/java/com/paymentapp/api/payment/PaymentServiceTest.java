@@ -6,8 +6,7 @@ import com.paymentapp.api.order.OrderRepository;
 import com.paymentapp.api.payment.dto.*;
 import com.paymentapp.api.payment.entity.Payment;
 import com.paymentapp.api.payment.entity.PaymentStatus;
-import com.paymentapp.api.product.ProductRepository;
-import com.paymentapp.core.constant.OrderStatus;
+import com.paymentapp.api.order.OrderStatus;
 import com.paymentapp.core.exception.custom.PaymentException;
 import com.paymentapp.core.portone.PortOneClient;
 import com.paymentapp.core.portone.dto.PortOnePaymentResponse;
@@ -104,7 +103,7 @@ class PaymentServiceTest {
         // then
         assertThat(result.success()).isTrue();
         assertThat(payment.getStatus()).isEqualTo(PaymentStatus.PAID);
-        assertThat(order.getStatus()).isEqualTo(OrderStatus.COMPLETED);
+        assertThat(order.getStatus()).isEqualTo(OrderStatus.PAID);
     }
 
     /**
@@ -209,7 +208,7 @@ class PaymentServiceTest {
 
         Order order = Order.builder().build();
         ReflectionTestUtils.setField(order, "id", 1L);
-        ReflectionTestUtils.setField(order, "status", OrderStatus.COMPLETED);
+        ReflectionTestUtils.setField(order, "status", OrderStatus.PAID);
 
         Payment payment = Payment.builder()
                 .paymentKey(paymentKey)
