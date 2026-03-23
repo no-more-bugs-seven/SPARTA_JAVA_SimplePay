@@ -87,8 +87,10 @@ public class PaymentService {
         BigDecimal finalAmount = request.totalAmount();
 
         // 2. 포인트 사용 처리
-        if (order.getUsedPoints().compareTo(BigDecimal.ZERO) > 0) {
-            pointService.spendPoints(order.getMember(), order, order.getUsedPoints());
+        BigDecimal usedPoints = order.getTotalAmount().subtract(request.totalAmount());
+        if (usedPoints.compareTo(BigDecimal.ZERO) > 0) {
+            order.applyUsedPoints(usedPoints);
+            pointService.spendPoints(order.getMember(), order, usedPoints);
         }
 
         // 3. 결제 시도 생성
