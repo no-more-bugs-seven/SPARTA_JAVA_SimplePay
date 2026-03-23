@@ -154,7 +154,7 @@ class PaymentServiceTest {
 
         // then
         assertThat(response.success()).isTrue();
-        assertThat(response.status()).isEqualTo("COMPLETED");
+        assertThat(response.status()).isEqualTo("PAID");
         assertThat(mockPayment.getStatus()).isEqualTo(PaymentStatus.PAID);
         assertThat(mockOrder.getStatus()).isEqualTo(OrderStatus.PAID);
 
