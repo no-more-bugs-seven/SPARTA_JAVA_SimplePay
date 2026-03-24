@@ -2,12 +2,14 @@ package com.paymentapp.core.security.oauth2;
 
 import com.paymentapp.api.member.Member;
 import com.paymentapp.api.member.MemberRepository;
+import com.paymentapp.api.membership.MembershipService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.oauth2.client.userinfo.DefaultOAuth2UserService;
 import org.springframework.security.oauth2.client.userinfo.OAuth2UserRequest;
 import org.springframework.security.oauth2.core.user.OAuth2User;
 import org.springframework.stereotype.Service;
 
+import java.math.BigDecimal;
 import java.util.Map;
 
 @Service
@@ -15,6 +17,7 @@ import java.util.Map;
 public class CustomOAuth2UserService extends DefaultOAuth2UserService {
 
     private final MemberRepository memberRepository;
+    private final MembershipService membershipService;
 
     @Override
     public OAuth2User loadUser(OAuth2UserRequest userRequest) {
@@ -41,6 +44,8 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
         Member member = Member.builder()
                 .email(email)
                 .name(name)
+                .pointBalance(BigDecimal.ZERO)
+                .membershipTier(membershipService.getNormalTier())
                 .build();
 
         return memberRepository.save(member);

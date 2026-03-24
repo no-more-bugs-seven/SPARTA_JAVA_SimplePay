@@ -6,11 +6,13 @@ import com.paymentapp.api.member.MemberService;
 import com.paymentapp.core.exception.errorcode.MemberErrorCode;
 import com.paymentapp.core.exception.custom.MemberException;
 import com.paymentapp.core.security.jwt.JwtTokenProvider;
+import com.paymentapp.core.util.RedisUtil;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.StringUtils;
 
 @Slf4j
 @Service
@@ -20,10 +22,9 @@ public class AuthService {
 
     // MemberRepository 직접 의존 제거 → MemberService API를 통해서만 접근
     private final MemberService memberService;
-
-    private final RefreshTokenRepository refreshTokenRepository;
     private final PasswordEncoder passwordEncoder;
     private final JwtTokenProvider jwtTokenProvider;
+    private final RedisUtil redisUtil;
 
     /**
      * 회원가입 오케스트레이션
@@ -54,17 +55,7 @@ public class AuthService {
         AuthTokens tokens = generateTokens(member);
 
         // RefreshToken DB 저장/갱신 (auth 도메인의 책임)
-        refreshTokenRepository.findByMemberId(member.getId())
-                .ifPresentOrElse(
-                        rt -> rt.updateToken(tokens.refreshToken()),
-                        () -> refreshTokenRepository.save(
-                                RefreshToken.builder()
-                                        .memberId(member.getId())
-                                        .token(tokens.refreshToken())
-                                        .build()
-                        )
-                );
-
+        redisUtil.save(RedisUtil.RT, tokens.refreshToken(), member.getId().toString(), jwtTokenProvider.getRefreshTokenValidityInSeconds());
         return new UserInfoDto(tokens, new LoginResponse(true, member.getEmail()));
     }
 
@@ -77,14 +68,14 @@ public class AuthService {
             throw new MemberException(MemberErrorCode.UNAUTHORIZED_ACCESS);
         }
 
-        RefreshToken tokenEntity = refreshTokenRepository.findByToken(refreshToken)
-                .orElseThrow(() -> new MemberException(MemberErrorCode.UNAUTHORIZED_ACCESS));
+        String memberId = redisUtil.get(RedisUtil.RT, refreshToken);
+        if(!StringUtils.hasText(memberId)) throw new MemberException(MemberErrorCode.UNAUTHORIZED_ACCESS);
 
         // MemberRepository 직접 사용 → MemberService 위임
-        Member member = memberService.findById(tokenEntity.getMemberId());
+        Member member = memberService.findById(Long.parseLong(memberId));
 
         AuthTokens newTokens = generateTokens(member);
-        tokenEntity.updateToken(newTokens.refreshToken());
+        redisUtil.save(RedisUtil.RT, newTokens.refreshToken(), member.getId().toString(), jwtTokenProvider.getRefreshTokenValidityInSeconds());
 
         return newTokens;
     }
@@ -93,10 +84,13 @@ public class AuthService {
      * 로그아웃 - RefreshToken DB에서 삭제
      */
     @Transactional
-    public void logout(String refreshToken) {
+    public void logout(String accessToken, String refreshToken) {
         if (refreshToken != null) {
-            refreshTokenRepository.findByToken(refreshToken)
-                    .ifPresent(refreshTokenRepository::delete);
+            redisUtil.save(RedisUtil.BL,
+                    accessToken,
+                    jwtTokenProvider.getMemberId(accessToken).toString(),
+                    jwtTokenProvider.getRemainingTimeInSeconds(accessToken));
+            redisUtil.delete(RedisUtil.RT, refreshToken);
         }
     }
 

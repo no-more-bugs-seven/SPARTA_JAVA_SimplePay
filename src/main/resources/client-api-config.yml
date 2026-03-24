@@ -86,6 +86,16 @@ api:
               type: string
               required: false
               description: 에러 메시지 (실패 시)
+    logout:
+      url: /api/auth/logout
+      method: POST
+      description: 사용자 로그아웃
+      request:
+        fields:
+      response:
+        headers:
+        body:
+          fields:
 
     get-current-user:
       url: /api/auth/me
@@ -122,16 +132,6 @@ api:
       url: /api/auth/reissue
       method: POST
       description: 토큰 재발급
-      request:
-        fields:
-          - name: email
-            type: string
-            required: true
-            example: admin@test.com
-          - name: password
-            type: string
-            required: true
-            example: admin
       response:
         headers:
           - name: Authorization
@@ -139,14 +139,14 @@ api:
             description: "JWT 토큰 (Bearer {token} 형식)"
         body:
           fields:
-            - name: success
-              type: boolean
-              required: true
-              description: 로그인 성공 여부
-            - name: email
+            - name: accessToken
               type: string
-              required: false
-              description: 로그인한 사용자 이메일
+              required: true
+              description: 엑세스 토큰
+            - name: refreshToken
+              type: string
+              required: true
+              description: 리프레쉬 토큰
 
     # ========================================
     # 상품 & 주문 (Product & Order)
@@ -411,7 +411,7 @@ api:
     # 구독 & 빌링키 (Subscription & Billing Key)
     # ========================================
     list-plans:
-      url: /api/subscriptions/plans
+      url: /api/plans
       method: GET
       description: 구독 플랜 목록 조회
       response:
@@ -503,22 +503,12 @@ api:
               description: "현재 이용 기간 종료일 (ISO 8601 형식, 예: 2026-03-01T23:59:59)"
 
     update-subscription:
-      url: /api/subscriptions/{subscriptionID}
-      method: PATCH
+      url: /api/subscriptions/{subscriptionId}/cancel
+      method: POST
       description: 구독 상태 업데이트 (구독 해지)
       pathParams:
-        - name:
+        - name: subscriptionId
           description: 구독 ID
-      request:
-        fields:
-          - name: action
-            type: string
-            required: true
-            description: "액션 타입: 'cancel' (구독 해지) 등"
-          - name: reason
-            type: string
-            required: false
-            description: 해지 사유
       response:
         body:
           fields:
@@ -533,13 +523,44 @@ api:
               type: string
               required: false
               description: 변경된 구독 상태
+    change-subscription-plan:
+      url: /api/subscriptions/{subscriptionId}/plan
+      method: PATCH
+      description: 구독 플랜 변경 예약 (다음 결제부터 반영)
+      pathParams:
+        - name: subscriptionId
+          description: 구독 ID
+      request:
+        fields:
+          - name: planId
+            type: string
+            required: true
+            description: 변경할 플랜 ID
+      response:
+        body:
+          fields:
+            - name: success
+              type: boolean
+              required: true
+            - name: subscriptionId
+              type: string
+              required: true
+            - name: currentPlanId
+              type: string
+              required: true
+            - name: nextPlanId
+              type: string
+              required: true
+            - name: status
+              type: string
+              required: true
 
     create-billing:
-      url:
-      method:
+      url: /api/subscriptions/{subscriptionId}/billings
+      method: POST
       description: 즉시 결제 (현재 주기 청구 실행)
       pathParams:
-        - name:
+        - name: subscriptionId
           description: 구독 ID
       request:
         fields:
@@ -575,11 +596,11 @@ api:
               description: "청구 상태 (COMPLETED: 결제 완료, FAILED: 실패)"
 
     list-billing-history:
-      url:
-      method:
+      url: /api/subscriptions/{subscriptionId}/billings
+      method: GET
       description: 청구 내역 조회
       pathParams:
-        - name:
+        - name: subscriptionId
           description: 구독 ID
       response:
         body:

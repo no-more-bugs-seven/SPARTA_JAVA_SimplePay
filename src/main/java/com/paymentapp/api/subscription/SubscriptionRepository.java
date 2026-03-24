@@ -10,11 +10,10 @@ import java.util.Optional;
 
 public interface SubscriptionRepository extends JpaRepository<Subscription, Long> {
 
-    Optional<Subscription> findByIdAndUserId(Long subscriptionId, Long userId);
+    Optional<Subscription> findByIdAndMemberId(Long subscriptionId, Long memberId);
 
-    Optional<Subscription> findFirstByUserIdAndStatusInAndCurrentPeriodEndAfterOrderByIdDesc(
-            Long userId,
-            List<SubscriptionStatus> statuses,
-            LocalDateTime now
-    );
+    boolean existsByMemberIdAndStatus(Long memberId, SubscriptionStatus status);
+
+    List<Subscription> findAllByStatusAndNextPaymentAtBefore(SubscriptionStatus subscriptionStatus, LocalDateTime now);
+
 }

@@ -32,12 +32,10 @@ public class PointService {
                         .order(order)
                         .points(points)
                         .transactionType(PointTransactionType.EARNED)
-                        .expiryAt(LocalDateTime.now().plusDays(PointConstants.POINT_EXPIRY_DAYS))
+                        .expiredAt(LocalDateTime.now().plusDays(PointConstants.POINT_EXPIRY_DAYS))
                         .build()
         );
-
-        // TODO: Member에 메서드 추가되면 아래 주석 해제, 검증 로직 추가
-        // member.addPoints(points);
+        member.addPointBalance(points);
     }
 
 
@@ -48,31 +46,34 @@ public class PointService {
                 PointTransaction.builder()
                         .member(member)
                         .order(order)
-                        .points(points) // 양수 저장, SPENT 타입이 차감 의미
+                        .points(points)
                         .transactionType(PointTransactionType.SPENT)
-                        .expiryAt(null)
+                        .expiredAt(null)
                         .build()
         );
-
-        // member.subtractPoints(points);
+        member.subtractPointBalance(points);
     }
 
     @Transactional
     public void recoverPoints(Member member, Order order) {
         List<PointTransaction> spentList = pointTransactionRepository
                 .findByMemberAndOrderAndTransactionType(member, order, PointTransactionType.SPENT);
-
+        BigDecimal totalRecovered = BigDecimal.ZERO;
         for (PointTransaction spent : spentList) {
             pointTransactionRepository.save(
                     PointTransaction.builder()
                             .member(member)
                             .order(order)
-                            .points(spent.getPoints()) // 양수 그대로
+                            .points(spent.getPoints())
                             .transactionType(PointTransactionType.RECOVERED)
-                            .expiryAt(null)
+                            .expiredAt(null)
                             .build()
             );
-            // member.addPoints(recoveredAmount);
+            totalRecovered = totalRecovered.add(spent.getPoints());
+        }
+        // 스냅샷 갱신: 복구된 총 포인트만큼 pointBalance 증가
+        if (totalRecovered.compareTo(BigDecimal.ZERO) > 0) {
+            member.addPointBalance(totalRecovered);
         }
     }
 
@@ -80,26 +81,29 @@ public class PointService {
     public void cancelEarnedPoints(Member member, Order order) {
         List<PointTransaction> earnedList = pointTransactionRepository
                 .findByMemberAndOrderAndTransactionType(member, order, PointTransactionType.EARNED);
-
+        BigDecimal totalCanceled = BigDecimal.ZERO;
         for (PointTransaction earned : earnedList) {
             pointTransactionRepository.save(
                     PointTransaction.builder()
                             .member(member)
                             .order(order)
-                            .points(earned.getPoints()) // 양수 그대로
+                            .points(earned.getPoints())
                             .transactionType(PointTransactionType.CANCELED)
-                            .expiryAt(null)
+                            .expiredAt(null)
                             .build()
             );
-            // member.subtractPoints(earned.getPoints());
+            totalCanceled = totalCanceled.add(earned.getPoints());
+        }
+        // 스냅샷 갱신: 취소된 총 포인트만큼 pointBalance 차감
+        if (totalCanceled.compareTo(BigDecimal.ZERO) > 0) {
+            member.subtractPointBalance(totalCanceled);
         }
     }
 
     @Transactional
     public void expirePoints() {
         List<PointTransaction> expiredList = pointTransactionRepository
-                .findByTransactionTypeAndExpiryAtBefore(
-                        PointTransactionType.EARNED, LocalDateTime.now());
+                .findUnexpiredEarnedTransactions(LocalDateTime.now());
 
         for (PointTransaction earned : expiredList) {
             pointTransactionRepository.save(
@@ -108,10 +112,11 @@ public class PointService {
                             .order(null)
                             .points(earned.getPoints())
                             .transactionType(PointTransactionType.EXPIRED)
-                            .expiryAt(null)
+                            .expiredAt(null)
                             .build()
             );
-            // member.subtractPoints(earned.getPoints());
+            // 스냅샷 갱신: 소멸 포인트만큼 개별 member의 pointBalance 차감
+            earned.getMember().subtractPointBalance(earned.getPoints());
         }
     }
 

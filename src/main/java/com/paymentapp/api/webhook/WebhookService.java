@@ -1,6 +1,7 @@
 package com.paymentapp.api.webhook;
 
 import com.paymentapp.api.payment.PaymentService;
+import com.paymentapp.api.payment.dto.ConfirmPaymentResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -16,11 +17,11 @@ public class WebhookService {
     private final WebhookRepository webhookRepository;
 
     @Transactional
-    public void processWebhook(String webhookId, String signature, String paymentKey, String eventStatus) {
+    public ConfirmPaymentResponse processWebhook(String webhookId, String paymentKey, String eventStatus) {
         // 1. 웹훅 중복 수신 체크 (Unique ID)
         if (webhookRepository.existsByWebhookId(webhookId)) {
             log.info("Duplicate Webhook ignored: {}", webhookId);
-            return;
+            return null;
         }
 
         // 2. 웹훅 수신 기록 생성 (RECEIVED)
@@ -31,18 +32,27 @@ public class WebhookService {
                 .build();
         webhookRepository.save(event);
 
-        if (eventStatus.equals("Transaction.Paid")) {
-            try {
-                // 3. 기존 결제 확정 로직 호출
-                paymentService.confirmPayment(paymentKey);
+        try {
+            // 3. 이벤트 상태별 결제 확정 처리 + 웹훅 상태 변경
+            switch (eventStatus) {
+                case "Transaction.Paid":
+                case "Transaction.Failed":
+                case "Transaction.Cancelled":
+                    ConfirmPaymentResponse response = paymentService.confirmPayment(paymentKey);
+                    String result = response.status();
 
-                // 4. 성공 시 상태 변경
-                event.markAsProcessed();
-            } catch (Exception e) {
-                // 5. 실패 시 상태 변경 및 예외 전파
-                event.markAsFailed();
-                throw e;
+                    if ("PAID".equals(result) || "CANCELLED".equals(result) || "REFUNDED".equals(result)) event.markAsProcessed();
+                    else log.info("Payment not finished yet. paymentId={}", paymentKey);
+                    return response;
+                default:
+                    log.info("Ignored event type: {}", eventStatus);
             }
+
+        } catch (Exception e) {
+            log.error("Webhook processing failed. webhookId={}, paymentId={}", webhookId, paymentKey, e);
+            event.markAsFailed();
+            throw e;
         }
+        return null;
     }
 }

@@ -139,13 +139,16 @@ async function openPortOnePaymentWithPoints(paymentData) {
             throw new Error('포인트는 0 이상이어야 합니다.');
         }
 
+        // 포인트 차감 후 최종 금액 계산 (create-payment 전에 먼저 계산)
+        const finalAmount = Math.max(0, paymentData.totalAmount - pointsToUse);
+        console.log(`포인트 차감: ${paymentData.totalAmount}원 - ${pointsToUse}P = ${finalAmount}원`);
+
         // 1단계: 서버에 결제 시작 요청 (PENDING 상태로 DB 저장, 포인트 포함)
         console.log('1단계: 서버에 결제 시작 요청 (포인트 포함)...');
         const createPaymentResult = await makeApiRequest('create-payment', {
             body: {
                 orderId: paymentData.orderId,
-                totalAmount: paymentData.totalAmount,
-                pointsToUse: pointsToUse
+                totalAmount: finalAmount
             }
         });
 
@@ -161,10 +164,6 @@ async function openPortOnePaymentWithPoints(paymentData) {
         // 서버에서 생성한 paymentId 사용
         const serverPaymentId = createPaymentResult.paymentId;
         console.log('서버에서 생성한 결제 ID:', serverPaymentId);
-
-        // 포인트 차감 후 최종 금액 계산
-        const finalAmount = Math.max(0, paymentData.totalAmount - pointsToUse);
-        console.log(`포인트 차감: ${paymentData.totalAmount}원 - ${pointsToUse}P = ${finalAmount}원`);
 
         // 2단계: PortOne 결제창 열기
         console.log('2단계: PortOne 결제창 열기...');

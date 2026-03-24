@@ -1,11 +1,6 @@
 package com.paymentapp.api.subscription;
 
-import com.paymentapp.api.subscription.dto.ChangeSubscriptionPlanRequest;
-import com.paymentapp.api.subscription.dto.CreateSubscriptionRequest;
-import com.paymentapp.api.subscription.dto.CreateSubscriptionResponse;
-import com.paymentapp.api.subscription.dto.SubscriptionResponse;
-import com.paymentapp.api.subscription.dto.UpdateSubscriptionRequest;
-import com.paymentapp.api.subscription.dto.UpdateSubscriptionResponse;
+import com.paymentapp.api.subscription.dto.*;
 import com.paymentapp.core.annotation.LoginUser;
 import com.paymentapp.core.dto.LoginUserInfoDto;
 import jakarta.validation.Valid;
@@ -21,12 +16,16 @@ public class SubscriptionController {
 
     private final SubscriptionService subscriptionService;
 
+
+    /**
+     * 구독 생성
+     */
     @PostMapping
     public ResponseEntity<CreateSubscriptionResponse> createSubscription(
             @LoginUser LoginUserInfoDto loginUser,
             @Valid @RequestBody CreateSubscriptionRequest request
     ) {
-        CreateSubscriptionResponse response = subscriptionService.create(
+        CreateSubscriptionResponse response = subscriptionService.createSubscription(
                 loginUser.id(),
                 request.customerUid(),
                 request.planId(),
@@ -36,33 +35,38 @@ public class SubscriptionController {
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 
+
+    /**
+     * 내 구독 단건 조회
+     */
     @GetMapping("/{subscriptionId}")
-    public ResponseEntity<SubscriptionResponse> getSubscription(
+    public ResponseEntity<SubscriptionResponse> getMySubscription(
             @LoginUser LoginUserInfoDto loginUser,
-            @PathVariable String subscriptionId
+            @PathVariable Long subscriptionId
     ) {
-        return ResponseEntity.ok(
-                subscriptionService.getSubscription(loginUser.id(), subscriptionId)
-        );
+        SubscriptionResponse response = subscriptionService.getMySubscription(loginUser.id(), subscriptionId);
+        return ResponseEntity.ok(response);
     }
 
-    @PatchMapping("/{subscriptionId}")
-    public ResponseEntity<UpdateSubscriptionResponse> updateSubscription(
-            @LoginUser LoginUserInfoDto loginUser,
-            @PathVariable String subscriptionId,
-            @RequestBody UpdateSubscriptionRequest request
-    ) {
-        if ("cancel".equalsIgnoreCase(request.action())) {
-            return ResponseEntity.ok(
-                    subscriptionService.cancel(loginUser.id(), subscriptionId)
-            );
-        }
 
-        throw new IllegalArgumentException("지원하지 않는 action 입니다.");
+    /**
+     * 구독 해지
+     */
+    @PostMapping("/{subscriptionId}/cancel")
+    public ResponseEntity<UpdateSubscriptionResponse> cancelSubscription(
+            @LoginUser LoginUserInfoDto loginUser,
+            @PathVariable Long subscriptionId
+    ) {
+        UpdateSubscriptionResponse response = subscriptionService.cancelSubscription(loginUser.id(), subscriptionId);
+        return ResponseEntity.ok(response);
     }
 
+
+    /**
+     * 구독 플랜 변경
+     */
     @PatchMapping("/{subscriptionId}/plan")
-    public ResponseEntity<SubscriptionResponse> changeSubscriptionPlan(
+    public ResponseEntity<ChangeSubscriptionPlanResponse> changeSubscriptionPlan(
             @LoginUser LoginUserInfoDto loginUser,
             @PathVariable String subscriptionId,
             @Valid @RequestBody ChangeSubscriptionPlanRequest request
@@ -71,4 +75,36 @@ public class SubscriptionController {
                 subscriptionService.changePlan(loginUser.id(), subscriptionId, request.planId())
         );
     }
+
+
+    /**
+     * 정기 구독
+     */
+    @PostMapping("/{subscriptionId}/billings")
+    public ResponseEntity<CreateBillingResponse> createBilling(
+            @PathVariable Long subscriptionId,
+            @Valid @RequestBody CreateBillingRequest request
+    ) {
+        CreateBillingResponse response = subscriptionService.renewSubscription(
+                subscriptionId,
+                request.periodStart(),
+                request.periodEnd()
+        );
+
+        return ResponseEntity.status(HttpStatus.CREATED).body(response);
+    }
+
+
+    /**
+     * 구독 청구 내역 조회
+     */
+    @GetMapping("/{subscriptionId}/billings")
+    public ResponseEntity<BillingHistoryListResponse> getBillingHistories(
+            @LoginUser LoginUserInfoDto loginUser,
+            @PathVariable Long subscriptionId
+    ) {
+        BillingHistoryListResponse response = subscriptionService.getBillingHistories(loginUser.id(), subscriptionId);
+        return ResponseEntity.ok(response);
+    }
+
 }

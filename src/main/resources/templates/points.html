@@ -18,9 +18,9 @@
 <body>
     <nav class="navbar">
         <div class="navbar-container">
-            <a href="/" class="navbar-brand">🏪 CommerceHub</a>
+            <a href="/" class="navbar-brand">7전8기의 암시장</a>
             <ul class="navbar-nav">
-                <li><a href="/" class="nav-link">홈</a></li>
+                <!--<li><a href="/" class="nav-link">홈</a></li>-->
                 <li><a href="/pages/shop" class="nav-link">상점</a></li>
                 <li><a href="/pages/orders" class="nav-link">주문</a></li>
                 <li><a href="/pages/points" class="nav-link active">포인트</a></li>
@@ -30,7 +30,7 @@
             </ul>
             <div class="navbar-actions">
                 <div class="config-badge-container"></div>
-                <button id="theme-toggle" class="theme-toggle" onclick="toggleTheme()">🌙</button>
+                <!--<button id="theme-toggle" class="theme-toggle" onclick="toggleTheme()">🌙</button>-->
             </div>
         </div>
     </nav>
@@ -40,7 +40,7 @@
             <h1 style="font-size: 2rem; margin-bottom: 2rem;">💰 포인트 포함 결제</h1>
 
             <!-- API 구현 상태 안내 -->
-            <div class="alert alert-info" style="margin-bottom: 1.5rem;">
+            <!--<div class="alert alert-info" style="margin-bottom: 1.5rem;">
                 <h4 style="margin: 0 0 0.5rem 0; font-size: 1rem;">ℹ️ 포인트 포함 결제 테스트</h4>
                 <p style="margin: 0; font-size: 0.875rem; line-height: 1.6;">
                     이 페이지에서는 포인트를 포함한 결제를 테스트할 수 있습니다.
@@ -51,19 +51,19 @@
                 </ul>
             </div>
 
-            <!-- API 구현 상태 안내 -->
+            &lt;!&ndash; API 구현 상태 안내 &ndash;&gt;
             <div class="alert alert-warning" style="margin-bottom: 1.5rem;">
                 <h4 style="margin: 0 0 0.5rem 0; font-size: 1rem;">⚠️ 백엔드 API 구현 필요</h4>
                 <p style="margin: 0; font-size: 0.875rem; line-height: 1.6;">
                     이 페이지는 다음 API들이 구현되어야 정상 작동합니다:
                 </p>
                 <ul id="api-list-points" style="margin: 0.5rem 0 0 1.5rem; font-size: 0.875rem; line-height: 1.8;">
-                    <!-- API 목록이 동적으로 생성됩니다 -->
+                    &lt;!&ndash; API 목록이 동적으로 생성됩니다 &ndash;&gt;
                 </ul>
-                <p style="margin: 0.5rem 0 0 0; font-size: 0.75rem; color: var(--text-secondary);">
+                <p style="margin: 0.5rem 0 0 0; font-size: 0.75rem; color: var(&#45;&#45;text-secondary);">
                     💡 API가 구현되지 않으면 오류 메시지가 표시되며, 우측 API 패널에서 자세한 정보를 확인할 수 있습니다.
                 </p>
-            </div>
+            </div>-->
 
             <!-- 결제 과정 표시 -->
             <div id="payment-process-card" class="card" style="display: none; margin-bottom: 1.5rem;">
@@ -87,7 +87,7 @@
             </div>
         </div>
 
-        <div class="api-panel">
+        <!--<div class="api-panel">
             <div class="panel-section">
                 <h3 class="panel-title">📡 현재 엔드포인트</h3>
                 <div id="current-endpoint" class="endpoint-badge">아직 요청 없음</div>
@@ -100,7 +100,7 @@
                 <h3 class="panel-title">📥 응답</h3>
                 <pre id="response-output" class="response-box">요청 대기 중...</pre>
             </div>
-        </div>
+        </div>-->
     </div>
 
     <!-- 포인트 입력 모달 -->
@@ -271,7 +271,7 @@
                                     ${new Date(order.createdAt || Date.now()).toLocaleString()}
                                 </div>
                             </div>
-                            <span class="badge badge-${statusClass}">${order.status}</span>
+                            <span class="badge badge-${statusClass}">${getStatusText(order.status)}</span>
                         </div>
                         <div style="display: flex; justify-content: space-between; align-items: center; padding-top: 0.75rem; border-top: 1px solid var(--border);">
                             <div>
@@ -504,6 +504,19 @@
                 closePointsModal();
             }
         });
+
+        // 상태 텍스트 반환
+        function getStatusText(status) {
+            const texts = {
+                'PENDING': '결제 대기',
+                'PAID': '결제 완료',
+                'REFUNDED': '환불 완료',
+                'CANCELLED': '취소됨',
+                'SHIPPED': '배송중',
+                'DELIVERED': '배송 완료'
+            };
+            return texts[status] || status;
+        }
     </script>
 </body>
 </html>

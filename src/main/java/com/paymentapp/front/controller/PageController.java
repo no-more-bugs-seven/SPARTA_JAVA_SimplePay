@@ -38,6 +38,12 @@ public class PageController {
         return "subscriptions";
     }
 
+    // 구독 플랜 변경 페이지
+    @GetMapping("/subscription-change")
+    public String subscriptionChange() {
+        return "subscription-change";
+    }
+
     @GetMapping("/login")
     public String login() {
         return "login";
@@ -46,5 +52,10 @@ public class PageController {
     @GetMapping("/register")
     public String register() {
         return "register";
+    }
+
+    @GetMapping("/")
+    public String start() {
+        return "start";
     }
 }

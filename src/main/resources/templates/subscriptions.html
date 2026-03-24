@@ -18,9 +18,9 @@
 <body>
     <nav class="navbar">
         <div class="navbar-container">
-            <a href="/" class="navbar-brand">🏪 CommerceHub</a>
+            <a href="/" class="navbar-brand">7전8기의 암시장</a>
             <ul class="navbar-nav">
-                <li><a href="/" class="nav-link">홈</a></li>
+                <!--<li><a href="/" class="nav-link">홈</a></li>-->
                 <li><a href="/pages/shop" class="nav-link">상점</a></li>
                 <li><a href="/pages/orders" class="nav-link">주문</a></li>
                 <li><a href="/pages/points" class="nav-link">포인트</a></li>
@@ -30,7 +30,7 @@
             </ul>
             <div class="navbar-actions">
                 <div class="config-badge-container"></div>
-                <button id="theme-toggle" class="theme-toggle" onclick="toggleTheme()">🌙</button>
+                <!--<button id="theme-toggle" class="theme-toggle" onclick="toggleTheme()">🌙</button>-->
             </div>
         </div>
     </nav>
@@ -103,6 +103,9 @@
                 <div class="card-header">⚙️ 구독 관리</div>
                 <div class="card-body">
                     <div class="btn-group">
+                        <button class="btn btn-secondary" onclick="goToPlanChangePage()">
+                            🔄 구독 플랜 변경
+                        </button>
                         <button class="btn btn-danger" onclick="cancelSubscription()">
                             ❌ 구독 해지
                         </button>
@@ -110,11 +113,11 @@
                 </div>
             </div>
 
-            <div class="card" style="margin-top: 1.5rem;">
+            <!--<div class="card" style="margin-top: 1.5rem;">
                 <div class="card-header">📋 사용 안내</div>
                 <div class="card-body">
                     <ol style="margin-left: 1.5rem; line-height: 2;">
-                        <li><a href="/pages/subscribe" style="color: var(--primary);">/subscribe</a> 페이지에서 구독 생성 </li>
+                        <li><a href="/pages/subscribe" style="color: var(&#45;&#45;primary);">/subscribe</a> 페이지에서 구독 생성 </li>
                         <li>받은 구독 ID 입력</li>
                         <li>"구독 정보 불러오기"를 클릭하여 상세 정보 가져오기</li>
                         <li>"현재 주기 청구 실행"을 사용하여 정기 결제 테스트</li>
@@ -122,7 +125,7 @@
                         <li>"구독 해지"를 사용하여 구독 종료</li>
                     </ol>
                 </div>
-            </div>
+            </div>-->
 
             <div id="billing-history-container" style="margin-top: 1.5rem; display: none;">
                 <div class="card">
@@ -134,7 +137,7 @@
             </div>
         </div>
 
-        <div class="api-panel">
+        <!--<div class="api-panel">
             <div class="panel-section">
                 <h3 class="panel-title">📡 현재 엔드포인트</h3>
                 <div id="current-endpoint" class="endpoint-badge">아직 요청 없음</div>
@@ -147,7 +150,7 @@
                 <h3 class="panel-title">📥 응답</h3>
                 <pre id="response-output" class="response-box">요청 대기 중...</pre>
             </div>
-        </div>
+        </div>-->
     </div>
 
     <script>
@@ -340,6 +343,17 @@
                     showNotification(`구독 해지 실패: ${error.message}`, 'error');
                 }
             }
+        }
+
+        function goToPlanChangePage() {
+            const subscriptionId = document.getElementById('subscription-id').value.trim();
+
+            if (!subscriptionId) {
+                showNotification('⚠️ 구독 ID를 입력해주세요', 'warning');
+                return;
+            }
+
+            window.location.href = `/pages/subscription-change?subscriptionId=${subscriptionId}`;
         }
     </script>
 </body>

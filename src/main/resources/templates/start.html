@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" type="image/x-icon" th:href="@{/favicon.ico}">
+    <title>암시장 입장 - CommerceHub</title>
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700;800;900&display=swap" rel="stylesheet">
+    <script th:src="@{/js/theme.js}"></script>
+</head>
+<body class="dark-bg start-page" style="font-family: 'Noto Sans KR', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;">
+<div class="overlay"></div>
+
+<div class="start-wrapper">
+    <div class="center-box start-box" id="startBox">
+        <p class="start-kicker">BLACK MARKET</p>
+
+        <div class="start-title-wrap">
+            <h1 class="start-title">
+                7전8기의<br>
+                암시장
+            </h1>
+        </div>
+
+        <button class="start-enter-btn" onclick="enterMarket()">
+            ENTER
+        </button>
+
+        <p class="start-team">
+            7조 · 김소현 · 고은지 · 박영수 · 성기찬 · 이지민
+        </p>
+    </div>
+</div>
+
+<script>
+    function enterMarket() {
+        const box = document.getElementById('startBox');
+        box.classList.add('start-box-exit');
+
+        setTimeout(() => {
+            window.location.href = '/pages/login';
+        }, 700);
+    }
+</script>
+</body>
+</html>

@@ -2,6 +2,8 @@ package com.paymentapp.core.security.jwt;
 
 import com.paymentapp.core.constant.AuthConstants;
 import com.paymentapp.core.dto.LoginUserInfoDto;
+import com.paymentapp.core.exception.custom.MemberException;
+import com.paymentapp.core.exception.errorcode.MemberErrorCode;
 import io.jsonwebtoken.ExpiredJwtException;
 import io.jsonwebtoken.MalformedJwtException;
 import io.jsonwebtoken.UnsupportedJwtException;
@@ -50,6 +52,8 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         String token = resolveToken(request);
 
         try {
+            if(jwtTokenProvider.isBlack(token)) throw new MemberException(MemberErrorCode.EXPIRED_TOKEN);
+
             // 2. 가로챈 토큰이 존재하고(null이 아니고), 위변조 및 만료되지 않은 "유효한" 토큰인지 검사
             if (StringUtils.hasText(token) && jwtTokenProvider.validateToken(token)) {
 

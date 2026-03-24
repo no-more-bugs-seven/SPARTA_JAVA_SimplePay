@@ -41,7 +41,7 @@ function displayUserInfo() {
         userInfo.style.cssText = 'display: flex; align-items: center; gap: 1rem; margin-right: 1rem;';
         userInfo.innerHTML = `
             <span style="color: var(--text-secondary); font-size: 0.9rem;">
-                👤 ${email}
+                반갑습니다, ${email}님! 👤
             </span>
             <button onclick="handleLogout()" class="btn btn-outline" style="padding: 0.4rem 1rem; font-size: 0.875rem;">
                 로그아웃
@@ -56,12 +56,19 @@ function displayUserInfo() {
 /**
  * 로그아웃 처리
  */
-function handleLogout() {
-    // 쿠키에서 토큰 제거
-    if (typeof removeToken === 'function') removeToken();
+async function handleLogout() {
+    try {
+        const result = await makeApiRequest('logout', {
+        });
 
-    // 로그인 페이지로 이동
-    window.location.href = '/pages/login';
+        // 쿠키에서 토큰 제거
+        if (typeof removeToken === 'function') removeToken();
+
+        // 로그인 페이지로 이동
+        window.location.href = '/pages/login';
+    } catch (error) {
+        throw error;
+    }
 }
 
 // 페이지 로드 시 인증 체크
