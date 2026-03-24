@@ -90,6 +90,15 @@
                 <pre id="response-output" class="response-box">요청 대기 중...</pre>
             </div>
         </div>-->
+
+        <!-- 상품 상세 모달 -->
+        <div id="product-modal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.5); z-index:1000;">
+            <div style="max-width:500px; margin:10% auto; position:relative; max-height:80vh; overflow-y:auto;">
+                <button onclick="closeModal()()" style="color: white;position:absolute; top:1rem; right:1rem; background:none; border:none; font-size:1.5rem; cursor:pointer;">✕</button>
+                <div id="modal-content"></div>
+            </div>
+        </div>
+
     </div>
 
     <script>
@@ -188,6 +197,13 @@
                                 value="0" min="0" max="${product.stock}" readonly>
                             <button class="quantity-btn" onclick="updateQuantity('${product.id}', 1)"
                                 ${product.stock === 0 ? 'disabled' : ''}>+</button>
+                        </div>
+                        <div>
+                            <button class="btn btn-outline"
+                                onclick="showProductDetail('${product.id}')"
+                                style="width:100%; margin-bottom: 0.5rem; font-size: 0.875rem;">
+                                🔍 상세보기
+                            </button>
                         </div>
                     </div>
                 `;
@@ -343,6 +359,67 @@
         }
 
         initShop();
+
+        async function showProductDetail(productId) {
+            try {
+                const result = await makeApiRequest('get-product', {
+                    pathParams: { id: productId }
+                });
+
+                const p = result; // result.data 가 아니라 result 직접 사용!
+
+                document.getElementById('modal-content').innerHTML = `
+                    <div style="font-family: 'Pretendard', -apple-system, sans-serif; color: #d1d1d1; max-width: 500px; background: var(--bg-primary); border-radius: 16px; box-shadow: 0 20px 50px rgba(0,0,0,0.6); overflow: hidden; border: 1px solid #333;">
+                        <div style="padding: 28px 24px 20px 24px; background: var(--bg-primary); border-bottom: 1px dashed #444;">
+                            <h2 style="margin: 0 0 8px 0; font-size: 1.4rem; font-weight: 700; color: #ffffff; text-shadow: 0 0 10px rgba(255,255,255,0.1);">${p.name}</h2>
+                            <div style="display: flex; align-items: center; gap: 8px;">
+                                <span style="font-size: 0.85rem; color: #888;">카테고리: ${p.category || '-'}</span>
+                                <span style="color: var(--primary); padding: 2px 8px; border-radius: 4px; font-size: 0.75rem; font-weight: 600; border: 1px solid var(--primary);">
+                                    ${p.status}
+                                </span>
+                            </div>
+                        </div>
+
+                        <div style="padding: 24px;">
+                            <div style="display: flex; flex-direction: column; gap: 16px;">
+
+                                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+                                    <div style="background: var(--bg-secondary); padding: 12px; border-radius: 8px; border: 1px solid #333;">
+                                        <div style="font-size: 0.75rem; color: #666; margin-bottom: 4px; text-transform: uppercase;">가격</div>
+                                        <div style="font-size: 1.1rem; font-weight: 700; color: #fff;">₩${p.price.toLocaleString()}</div>
+                                    </div>
+                                    <div style="background: var(--bg-secondary); padding: 12px; border-radius: 8px; border: 1px solid #333;">
+                                        <div style="font-size: 0.75rem; color: #666; margin-bottom: 4px; text-transform: uppercase;">수량</div>
+                                        <div style="font-size: 1.1rem; font-weight: 700; color: #4dabff;">${p.stock}개</div>
+                                    </div>
+                                </div>
+
+                                <div style="padding: 16px; background: var(--bg-secondary); border-left: 3px solid var(--primary); border-radius: 4px;">
+                                    <div style="font-size: 0.75rem; color: #666; margin-bottom: 8px; font-weight: 600;">설명</div>
+                                    <div style="font-size: 0.95rem; line-height: 1.6; color: #bbb;">
+                                        ${p.description || '기록된 설명이 없습니다.'}
+                                    </div>
+                                </div>
+
+                            </div>
+                        </div>
+
+                        <div style="padding: 16px 24px; background: var(--bg-primary); border-top: 1px solid #2d2d2e; text-align: right;">
+                            <div style="font-size: 0.7rem; font-family: monospace; letter-spacing: 1px;">
+                                SECURED DATABASE ACCESS
+                            </div>
+                        </div>
+                    </div>
+                `;
+                document.getElementById('product-modal').style.display = 'block';
+            } catch (error) {
+                console.error('상품 상세 조회 실패:', error);
+            }
+        }
+
+        function closeModal() {
+            document.getElementById('product-modal').style.display = 'none';
+        }
     </script>
 </body>
 </html>
