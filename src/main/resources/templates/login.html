@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="icon" type="image/x-icon" th:href="@{/favicon.ico}">
-    <title>로그인 - CommerceHub</title>
+    <title>로그인 - BLACK MARKET</title>
     <link rel="stylesheet" th:href="@{/css/style.css}">
     <script th:src="@{/js/theme.js}"></script>
     <script th:src="@{/js/cookie-util.js}"></script>
@@ -17,8 +17,9 @@
 
 <div class="login-wrapper">
     <div style="width: 100%; max-width: 420px; padding: 2rem; position: relative; z-index: 1;">
-        <div style="text-align: center; margin: 5px 0 2rem 0; color: white;">            <h1 class="market-login-title">🕶️ CommerceHub</h1>
-            <p class="market-subtitle">BLACK MARKET ACCESS</p>
+        <div style="text-align: center; margin: 5px 0 2rem 0; color: white;">
+            <h1 class="market-login-title">BLACK MARKET</h1>
+            <!--<p class="market-subtitle">BLACK MARKET ACCESS</p>-->
         </div>
 
         <div class="card" style="
@@ -78,12 +79,18 @@
                     </button>
                 </form>
 
-                <div style="margin-top: 1rem; text-align: center;">
-                    <a href="/oauth2/authorization/google" style="color: white; text-decoration: none; display: inline-flex; align-items: center; gap: 0.5rem;">
-                        <img src="https://developers.google.com/identity/images/g-logo.png"
-                             style="width:20px; vertical-align:middle;">
-                        Google 로그인
-                    </a>
+                <div style="text-align: center;">
+                    <button
+                            type="submit"
+                            class="btn btn-primary"
+                            style="width: 100%; background: linear-gradient(135deg, #6d28d9, #7c3aed, #db2777); border: none;"
+                    >
+                        <a href="/oauth2/authorization/google" style="color: white; text-decoration: none; display: inline-flex; align-items: center; gap: 0.5rem;">
+                            <img src="https://developers.google.com/identity/images/g-logo.png"
+                                 style="width:20px; vertical-align:middle;">
+                            Google 로그인
+                        </a>
+                    </button>
                 </div>
 
                 <div style="margin-top: 1.5rem; text-align: center;">
@@ -101,20 +108,20 @@
                     </a>
                 </div>
 
-                <div style="margin-top: 2rem; padding-top: 1.5rem; border-top: 1px solid rgba(255,255,255,0.08);">
+                <!--<div style="margin-top: 2rem; padding-top: 1.5rem; border-top: 1px solid rgba(255,255,255,0.08);">
                     <p style="color: rgba(255,255,255,0.7); font-size: 0.875rem; margin-bottom: 0.5rem;">
                         <strong>테스트 계정</strong>
                     </p>
                     <ul style="color: rgba(255,255,255,0.65); font-size: 0.875rem; list-style: none; padding: 0;">
                         <li>📧 admin@test.com / admin</li>
                     </ul>
-                </div>
+                </div>-->
             </div>
         </div>
 
-        <div style="text-align: center; margin-top: 2rem; position: relative; z-index: 1;">
+        <!--<div style="text-align: center; margin-top: 2rem; position: relative; z-index: 1;">
             <button id="theme-toggle" class="theme-toggle" onclick="toggleTheme()">🌙</button>
-        </div>
+        </div>-->
     </div>
 </div>
 

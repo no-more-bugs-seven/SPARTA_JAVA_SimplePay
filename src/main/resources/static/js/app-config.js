@@ -73,12 +73,12 @@ function updateConfigDisplay(config) {
         const channelKeys = config.portone.channelKeys || {};
         const firstChannelKey = Object.values(channelKeys)[0] || 'N/A';
 
-        configBadges.forEach(container => {
+        /*configBadges.forEach(container => {
             container.innerHTML = `
                 <span class="config-badge">Store ID: ${config.portone.storeId.substring(0, 20)}...</span>
                 <span class="config-badge">Channel: ${firstChannelKey.substring(0, 20)}...</span>
             `;
-        });
+        });*/
     }
 }
 
