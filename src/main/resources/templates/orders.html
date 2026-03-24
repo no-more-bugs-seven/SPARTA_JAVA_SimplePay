@@ -18,9 +18,9 @@
 <body>
     <nav class="navbar">
         <div class="navbar-container">
-            <a href="/" class="navbar-brand">🏪 CommerceHub</a>
+            <a href="/" class="navbar-brand">7전8기의 암시장</a>
             <ul class="navbar-nav">
-                <li><a href="/" class="nav-link">홈</a></li>
+                <!--<li><a href="/" class="nav-link">홈</a></li>-->
                 <li><a href="/pages/shop" class="nav-link">상점</a></li>
                 <li><a href="/pages/orders" class="nav-link active">주문</a></li>
                 <li><a href="/pages/points" class="nav-link">포인트</a></li>
@@ -30,7 +30,7 @@
             </ul>
             <div class="navbar-actions">
                 <div class="config-badge-container"></div>
-                <button id="theme-toggle" class="theme-toggle" onclick="toggleTheme()">🌙</button>
+                <!--<button id="theme-toggle" class="theme-toggle" onclick="toggleTheme()">🌙</button>-->
             </div>
         </div>
     </nav>
@@ -40,18 +40,18 @@
             <h1 style="font-size: 2rem; margin-bottom: 2rem;">📦 주문 관리</h1>
 
             <!-- API 구현 상태 안내 -->
-            <div class="alert alert-warning" style="margin-bottom: 1.5rem;">
+            <!--<div class="alert alert-warning" style="margin-bottom: 1.5rem;">
                 <h4 style="margin: 0 0 0.5rem 0; font-size: 1rem;">⚠️ 백엔드 API 구현 필요</h4>
                 <p style="margin: 0; font-size: 0.875rem; line-height: 1.6;">
                     이 페이지는 다음 API들이 구현되어야 정상 작동합니다:
                 </p>
                 <ul id="api-list-orders" style="margin: 0.5rem 0 0 1.5rem; font-size: 0.875rem; line-height: 1.8;">
-                    <!-- API 목록이 동적으로 생성됩니다 -->
+                    &lt;!&ndash; API 목록이 동적으로 생성됩니다 &ndash;&gt;
                 </ul>
-                <p style="margin: 0.5rem 0 0 0; font-size: 0.75rem; color: var(--text-secondary);">
+                <p style="margin: 0.5rem 0 0 0; font-size: 0.75rem; color: var(&#45;&#45;text-secondary);">
                     💡 API가 구현되지 않으면 오류 메시지가 표시되며, 우측 API 패널에서 자세한 정보를 확인할 수 있습니다.
                 </p>
-            </div>
+            </div>-->
 
             <!-- 주문 목록 -->
             <div class="card">
@@ -84,7 +84,7 @@
             </div>
 
             <!-- 모드 A: PortOne SDK -->
-            <div class="card" style="margin-top: 1.5rem;">
+            <!--<div class="card" style="margin-top: 1.5rem;">
                 <div class="card-header">🔵 모드 A (PortOne SDK)</div>
                 <div class="card-subtitle">클라이언트에서 직접 PortOne 결제창 열기</div>
                 <div class="card-body">
@@ -97,16 +97,16 @@
                         </ol>
                     </div>
                 </div>
-            </div>
+            </div>-->
 
             <!-- 모드 B: API 수동 테스트 -->
             <div class="card" style="margin-top: 1.5rem;">
-                <div class="card-header">🟢 모드 B (API 수동 테스트)</div>
-                <div class="card-subtitle">백엔드 API 엔드포인트 직접 호출</div>
+                <div class="card-header">🟢 결제 취소</div>
+                <!--<div class="card-subtitle">백엔드 API 엔드포인트 직접 호출</div>-->
                 <div class="card-body">
-                    <div class="alert alert-info">
+                    <!--<div class="alert alert-info">
                         결제 확정/취소 API를 직접 테스트하려면 결제 ID를 입력하세요.
-                    </div>
+                    </div>-->
 
                     <div class="form-group">
                         <label class="form-label">결제 ID</label>
@@ -114,9 +114,9 @@
                     </div>
 
                     <div class="btn-group" style="margin-top: 1rem;">
-                        <button class="btn btn-success" onclick="manualConfirmPayment()">
+                        <!--<button class="btn btn-success" onclick="manualConfirmPayment()">
                             ✅ 결제 확정
-                        </button>
+                        </button>-->
                         <button class="btn btn-danger" onclick="manualCancelPayment()">
                             ❌ 결제 취소/환불
                         </button>
@@ -125,12 +125,12 @@
             </div>
 
             <!-- 사용 안내 -->
-            <div class="card" style="margin-top: 1.5rem;">
+            <!--<div class="card" style="margin-top: 1.5rem;">
                 <div class="card-header">📋 사용 안내</div>
                 <div class="card-body">
                     <h4 style="margin-bottom: 0.5rem;">일반 사용자 흐름:</h4>
                     <ol style="margin-left: 1.5rem; line-height: 2;">
-                        <li><a href="/pages/shop" style="color: var(--primary);">상점</a>에서 주문 생성</li>
+                        <li><a href="/pages/shop" style="color: var(&#45;&#45;primary);">상점</a>에서 주문 생성</li>
                         <li>위 주문 목록에서 "결제하기" 버튼 클릭</li>
                         <li>PortOne 결제창에서 결제 진행</li>
                     </ol>
@@ -141,10 +141,10 @@
                         <li>"결제 확정" 또는 "결제 취소/환불" 버튼으로 API 테스트</li>
                     </ol>
                 </div>
-            </div>
+            </div>-->
         </div>
 
-        <div class="api-panel">
+        <!--<div class="api-panel">
             <div class="panel-section">
                 <h3 class="panel-title">📡 현재 엔드포인트</h3>
                 <div id="current-endpoint" class="endpoint-badge">아직 요청 없음</div>
@@ -157,7 +157,7 @@
                 <h3 class="panel-title">📥 응답</h3>
                 <pre id="response-output" class="response-box">요청 대기 중...</pre>
             </div>
-        </div>
+        </div>-->
     </div>
 
     <script>
