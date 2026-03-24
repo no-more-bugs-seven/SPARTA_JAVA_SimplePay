@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="icon" type="image/x-icon" th:href="@{/favicon.ico}">
-    <title>구독 관리 - Commerce Demo</title>
+    <title>구독 관리 - BLACK MARKET</title>
     <link rel="stylesheet" th:href="@{/css/style.css}">
     <script src="https://cdn.portone.io/v2/browser-sdk.js"></script>
     <script th:src="@{/js/cookie-util.js}"></script>
@@ -201,7 +201,7 @@
                 } else if (error.message.includes('500') || error.message.includes('501')) {
                     showNotification('⚠️ 서버 오류가 발생했습니다. API 구현을 확인해주세요.', 'error');
                 } else {
-                    showNotification(`구독 정보 조회 실패: ${error.message}`, 'error');
+                    showNotification(`구독 정보 조회 실패`, 'error');
                 }
             }
         }
@@ -240,7 +240,7 @@
                 } else if (error.message.includes('500') || error.message.includes('501')) {
                     showNotification('⚠️ 서버 오류가 발생했습니다. API 구현을 확인해주세요.', 'error');
                 } else {
-                    showNotification(`청구 실행 실패: ${error.message}`, 'error');
+                    showNotification(`청구 실행 실패`, 'error');
                 }
             }
         }
@@ -306,7 +306,7 @@
                 } else if (error.message.includes('500') || error.message.includes('501')) {
                     showNotification('⚠️ 서버 오류가 발생했습니다. API 구현을 확인해주세요.', 'error');
                 } else {
-                    showNotification(`청구 내역 조회 실패: ${error.message}`, 'error');
+                    showNotification(`청구 내역 조회 실패`, 'error');
                 }
             }
         }
@@ -340,7 +340,7 @@
                 } else if (error.message.includes('500') || error.message.includes('501')) {
                     showNotification('⚠️ 서버 오류가 발생했습니다. API 구현을 확인해주세요.', 'error');
                 } else {
-                    showNotification(`구독 해지 실패: ${error.message}`, 'error');
+                    showNotification(`구독 해지 실패`, 'error');
                 }
             }
         }

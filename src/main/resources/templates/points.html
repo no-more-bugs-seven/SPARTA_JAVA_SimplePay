@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="icon" type="image/x-icon" th:href="@{/favicon.ico}">
-    <title>포인트 결제 - Commerce Demo</title>
+    <title>포인트 - BLACK MARKET</title>
     <link rel="stylesheet" th:href="@{/css/style.css}">
     <script src="https://cdn.portone.io/v2/browser-sdk.js"></script>
     <script th:src="@{/js/cookie-util.js}"></script>
@@ -494,7 +494,7 @@
                 } else if (step2) {
                     updatePaymentStep(step2, 'error', `오류: ${error.message}`);
                 }
-                showNotification(`결제 오류: ${error.message}`, 'error');
+                showNotification(`결제 오류`, 'error');
             }
         }
 
