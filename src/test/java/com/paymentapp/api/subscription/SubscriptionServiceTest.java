@@ -275,7 +275,6 @@ class SubscriptionServiceTest {
         String subscriptionId = "10";
 
         Plan currentPlan = org.mockito.Mockito.mock(Plan.class);
-        given(currentPlan.getPlanId()).willReturn("NOOB");
 
         Subscription subscription = Subscription.builder()
                 .member(org.mockito.Mockito.mock(Member.class))
