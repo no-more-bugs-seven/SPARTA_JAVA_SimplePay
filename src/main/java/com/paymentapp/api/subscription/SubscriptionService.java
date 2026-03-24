@@ -6,6 +6,10 @@ import com.paymentapp.api.plan.PlanService;
 import com.paymentapp.api.plan.entity.Plan;
 import com.paymentapp.api.subscription.dto.*;
 import com.paymentapp.api.subscription.entity.*;
+import com.paymentapp.api.subscription.enums.BillingStatus;
+import com.paymentapp.api.subscription.enums.PaymentMethodStatus;
+import com.paymentapp.api.subscription.enums.PgProvider;
+import com.paymentapp.api.subscription.enums.SubscriptionStatus;
 import com.paymentapp.core.exception.custom.PlanException;
 import com.paymentapp.core.exception.custom.SubscriptionException;
 import com.paymentapp.core.exception.errorcode.PlanErrorCode;
@@ -219,6 +223,11 @@ public class SubscriptionService {
     public CreateBillingResponse renewSubscription(Long subscriptionId, LocalDateTime nextStart, LocalDateTime nextEnd) {
         Subscription subscription = subscriptionRepository.findById(subscriptionId)
                 .orElseThrow(() -> new SubscriptionException(SubscriptionErrorCode.ACTIVE_SUBSCRIPTION_NOT_FOUND));
+
+        if (LocalDateTime.now().isBefore(subscription.getCurrentPeriodEnd())) {
+            log.warn("아직 구독 이용 기간이 남아있습니다. 마감일 이후에 결제 가능합니다.");
+            throw new SubscriptionException(SubscriptionErrorCode.ALREADY_BILLED_PERIOD);
+        }
 
         String paymentId = generatePaymentId(subscriptionId);
         PortOneBillingPaymentResponse result = portOneClient.payWithBillingKey(

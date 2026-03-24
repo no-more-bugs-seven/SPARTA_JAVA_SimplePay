@@ -3,7 +3,7 @@ package com.paymentapp.api.subscription.scheduler;
 import com.paymentapp.api.subscription.SubscriptionRepository;
 import com.paymentapp.api.subscription.SubscriptionService;
 import com.paymentapp.api.subscription.entity.Subscription;
-import com.paymentapp.api.subscription.entity.SubscriptionStatus;
+import com.paymentapp.api.subscription.enums.SubscriptionStatus;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;

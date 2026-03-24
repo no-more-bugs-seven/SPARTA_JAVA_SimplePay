@@ -1,6 +1,8 @@
 package com.paymentapp.api.subscription.entity;
 
 import com.paymentapp.api.member.Member;
+import com.paymentapp.api.subscription.enums.PaymentMethodStatus;
+import com.paymentapp.api.subscription.enums.PgProvider;
 import com.paymentapp.core.entity.BaseEntity;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
