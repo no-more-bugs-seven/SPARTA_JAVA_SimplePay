@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="icon" type="image/x-icon" th:href="@{/favicon.ico}">
-    <title>플랜 변경 - Commerce Demo</title>
+    <title>플랜 변경 - BLACK MARKET</title>
     <link rel="stylesheet" th:href="@{/css/style.css}">
     <script th:src="@{/js/cookie-util.js}"></script>
     <script th:src="@{/js/app-config.js}"></script>
@@ -133,7 +133,7 @@
             renderPlans();
         } catch (error) {
             console.error('페이지 데이터 로드 실패:', error);
-            showNotification(`페이지 로드 실패: ${error.message}`, 'error');
+            showNotification(`페이지 로드 실패`, 'error');
 
             document.getElementById('current-subscription-info').innerHTML = `
                 <div class="alert alert-danger">
@@ -322,7 +322,7 @@
             if (error.message.includes('404') || error.message.includes('Not Found')) {
                 showNotification('⚠️ 구독 플랜 변경 API가 구현되지 않았습니다. PATCH /api/subscriptions/{subscriptionId}/plan 엔드포인트를 확인해주세요.', 'error');
             } else {
-                showNotification(`플랜 변경 실패: ${error.message}`, 'error');
+                showNotification(`플랜 변경 실패`, 'error');
             }
         }
     }
