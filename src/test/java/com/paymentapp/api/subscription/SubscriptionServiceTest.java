@@ -268,7 +268,7 @@ class SubscriptionServiceTest {
     }
 
     @Test
-    @DisplayName("TC_SUB_009_FAIL - ACTIVE 아닌 상태에서는 플랜 변경 실패")
+    @DisplayName("TC_SUB_011_FAIL - ACTIVE 아닌 상태에서는 플랜 변경 실패")
     void changePlan_fail_whenNotActive() {
         // given
         Long memberId = 1L;
