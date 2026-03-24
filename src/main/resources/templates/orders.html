@@ -355,7 +355,7 @@
 
                     // 주문 목록 새로고침
                     await loadOrders();
-                    const es = new EventSource("http://localhost:8080/api/webhooks/sse?paymentId="+result.paymentId);
+                    const es = new EventSource("https://if7down8up.click/api/webhooks/sse?paymentId="+result.paymentId);
                     es.addEventListener("payment", (event) => {
                         // const data = JSON.parse(event.data);
                         // const status = document.getElementById('order-status'+data.orderId);

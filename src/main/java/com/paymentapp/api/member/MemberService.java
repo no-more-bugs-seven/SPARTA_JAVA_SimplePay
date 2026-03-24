@@ -95,7 +95,6 @@ public class MemberService {
 
     /**
      * DB I/O 없이 연관관계 설정용 Proxy 객체만 필요할 때 (post 도메인에서 위임)
-     * ex) Post 생성 시 writer FK 설정
      */
     public Member getReferenceById(Long memberId) {
         return memberRepository.getReferenceById(memberId);

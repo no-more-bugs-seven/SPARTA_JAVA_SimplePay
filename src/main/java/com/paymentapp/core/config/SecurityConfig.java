@@ -53,31 +53,28 @@ public class SecurityConfig {
 
                         // Step 3: "우리 서비스의 API 출입 통제소 (authorizeHttpRequests)"
                         // Q. 왜 permitAll()을 쓰나요?
-                        // A. 인스타그램은 로그인하지 않아도 회원가입과 로그인은 할 수 있어야 합니다.
-                        //    이메일 중복 검사 등 인증이 필요 없는 최소한의 API만 문을 열어둡니다.
+                        // A. 로그인하지 않아도 회원가입과 로그인은 할 수 있어야 합니다.
+                        //    인증이 필요 없는 최소한의 API만 문을 열어둡니다.
                         .requestMatchers(HttpMethod.POST,
                                 "/api/auth/login",
                                 "/api/auth/signup",
                                 "/api/auth/reissue"          // Refresh Token 재발급
                         ).permitAll()
-                        .requestMatchers(HttpMethod.GET,
-                                "/api/auth/check-duplicate"
-                        ).permitAll()
+//                        .requestMatchers(HttpMethod.GET,
+//                                "/api/auth/check-duplicate"
+//                        ).permitAll()
 
-                        // 1) 정적 리소스
+                        // 정적 리소스
                         .requestMatchers(PathRequest.toStaticResources().atCommonLocations()).permitAll()
 
-                        // 2) 템플릿 페이지 렌더링
+                        // 템플릿 페이지 렌더링
                         .requestMatchers(HttpMethod.GET, "/").permitAll()
                         .requestMatchers(HttpMethod.GET, "/pages/**").permitAll()
 
-                        // 3) 공개 API
+                        // 공개 API
                         .requestMatchers(HttpMethod.GET, "/api/public/**").permitAll()
 
-                        // 4) 인증 API
-                        .requestMatchers(HttpMethod.POST, "/api/auth/login", "/api/auth/register").permitAll()
-
-                        // 5) 그 외 API는 인증 필요
+                        // 그 외 API는 인증 필요
                         .requestMatchers("/api/**").authenticated()
 
                         // [실무 꿀팁] 와일드카드("/api/auth/**") 주의보!
