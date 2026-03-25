@@ -2,6 +2,7 @@ package com.paymentapp.api.product;
 
 import com.paymentapp.api.product.dto.ProductDetailResponse;
 import com.paymentapp.api.product.dto.ProductListResponse;
+import com.paymentapp.api.product.enums.ProductStatus;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;

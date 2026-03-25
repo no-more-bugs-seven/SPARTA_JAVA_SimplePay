@@ -1,8 +1,9 @@
 package com.paymentapp.api.product;
 
+import com.paymentapp.api.product.enums.ProductStatus;
 import com.paymentapp.core.entity.BaseEntity;
-import com.paymentapp.core.exception.errorcode.ProductErrorCode;
-import com.paymentapp.core.exception.custom.ProductException;
+import com.paymentapp.api.product.exception.ProductErrorCode;
+import com.paymentapp.api.product.exception.ProductException;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.Builder;

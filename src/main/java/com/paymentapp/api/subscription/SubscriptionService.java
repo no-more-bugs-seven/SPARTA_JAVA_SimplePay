@@ -4,12 +4,18 @@ import com.paymentapp.api.member.Member;
 import com.paymentapp.api.member.MemberService;
 import com.paymentapp.api.plan.PlanService;
 import com.paymentapp.api.plan.entity.Plan;
+import com.paymentapp.api.plan.exception.PlanErrorCode;
+import com.paymentapp.api.plan.exception.PlanException;
 import com.paymentapp.api.subscription.dto.*;
-import com.paymentapp.api.subscription.entity.*;
-import com.paymentapp.core.exception.custom.PlanException;
-import com.paymentapp.core.exception.custom.SubscriptionException;
-import com.paymentapp.core.exception.errorcode.PlanErrorCode;
-import com.paymentapp.core.exception.errorcode.SubscriptionErrorCode;
+import com.paymentapp.api.subscription.entity.Subscription;
+import com.paymentapp.api.subscription.entity.SubscriptionBilling;
+import com.paymentapp.api.subscription.entity.SubscriptionPaymentMethod;
+import com.paymentapp.api.subscription.enums.BillingStatus;
+import com.paymentapp.api.subscription.enums.PaymentMethodStatus;
+import com.paymentapp.api.subscription.enums.PgProvider;
+import com.paymentapp.api.subscription.enums.SubscriptionStatus;
+import com.paymentapp.api.subscription.exception.SubscriptionErrorCode;
+import com.paymentapp.api.subscription.exception.SubscriptionException;
 import com.paymentapp.core.portone.PortOneClient;
 import com.paymentapp.core.portone.dto.PortOneBillingPaymentResponse;
 import lombok.RequiredArgsConstructor;
@@ -35,6 +41,8 @@ public class SubscriptionService {
     private final MemberService memberService;
 
     private final PortOneClient portOneClient;
+
+    public static final long NEXT_PAYMENT_PERIOD = 1L;
 
     /**
      * 구독 생성
@@ -79,7 +87,7 @@ public class SubscriptionService {
         SubscriptionPaymentMethod savedPaymentMethod = paymentMethodRepository.save(paymentMethod);
 
         LocalDateTime now = LocalDateTime.now();
-        LocalDateTime nextMonth = now.plusMonths(1);
+        LocalDateTime nextMonth = now.plusMinutes(NEXT_PAYMENT_PERIOD);
         Subscription subscription = Subscription.builder()
                 .member(member)
                 .plan(plan)
@@ -152,6 +160,16 @@ public class SubscriptionService {
     }
 
     /**
+     * 내 구독 정보를  memberId 만으로 조회
+     */
+    public SubscriptionResponse getMySubscriptionByMemberId(Long memberId) {
+        Subscription subscription = subscriptionRepository.findTopByMemberIdOrderByCreatedAtDesc(memberId)
+                .orElseThrow(() -> new SubscriptionException(SubscriptionErrorCode.ACTIVE_SUBSCRIPTION_NOT_FOUND));
+
+        return SubscriptionResponse.from(subscription);
+    }
+
+    /**
      * 구독 해지
      */
     @Transactional
@@ -188,18 +206,15 @@ public class SubscriptionService {
             throw new SubscriptionException(SubscriptionErrorCode.SAME_PLAN_NOT_ALLOWED);
         }
 
-        if (subscription.getNextPlan() != null
-                && subscription.getNextPlan().getPlanId().equals(newPlanId)) {
-            throw new IllegalStateException("이미 동일한 플랜 변경이 예약되어 있습니다.");
-        }
+        String beforePlanId = subscription.getPlan().getPlanId();
 
-        subscription.reservePlanChange(newPlan);
+        subscription.changePlanImmediately(newPlan);
 
         return new ChangeSubscriptionPlanResponse(
                 true,
                 String.valueOf(subscription.getId()),
+                beforePlanId,
                 subscription.getPlan().getPlanId(),
-                subscription.getNextPlan().getPlanId(),
                 subscription.getStatus().name()
         );
     }
@@ -219,6 +234,11 @@ public class SubscriptionService {
     public CreateBillingResponse renewSubscription(Long subscriptionId, LocalDateTime nextStart, LocalDateTime nextEnd) {
         Subscription subscription = subscriptionRepository.findById(subscriptionId)
                 .orElseThrow(() -> new SubscriptionException(SubscriptionErrorCode.ACTIVE_SUBSCRIPTION_NOT_FOUND));
+
+        if (LocalDateTime.now().isBefore(subscription.getCurrentPeriodEnd())) {
+            log.warn("아직 구독 이용 기간이 남아있습니다. 마감일 이후에 결제 가능합니다.");
+            throw new SubscriptionException(SubscriptionErrorCode.ALREADY_BILLED_PERIOD);
+        }
 
         String paymentId = generatePaymentId(subscriptionId);
         PortOneBillingPaymentResponse result = portOneClient.payWithBillingKey(

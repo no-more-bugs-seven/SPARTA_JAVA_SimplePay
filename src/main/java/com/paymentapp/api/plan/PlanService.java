@@ -2,10 +2,8 @@ package com.paymentapp.api.plan;
 
 import com.paymentapp.api.plan.dto.PlanResponse;
 import com.paymentapp.api.plan.entity.Plan;
-import com.paymentapp.core.exception.custom.MemberException;
-import com.paymentapp.core.exception.custom.PlanException;
-import com.paymentapp.core.exception.errorcode.MemberErrorCode;
-import com.paymentapp.core.exception.errorcode.PlanErrorCode;
+import com.paymentapp.api.plan.exception.PlanException;
+import com.paymentapp.api.plan.exception.PlanErrorCode;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
