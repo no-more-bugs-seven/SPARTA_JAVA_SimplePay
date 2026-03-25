@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>마이페이지 - BLACK MARKET</title>
+    <link rel="stylesheet" href="/css/style.css">
+
+    <script src="/js/cookie-util.js"></script>
+    <script src="/js/app-config.js"></script>
+    <script src="/js/api-handler.js"></script>
+    <script src="/js/api-validator.js"></script>
+    <script src="/js/theme.js"></script>
+    <script src="/js/auth-check.js"></script>
+</head>
+<body onload="initPage()">
+
+<nav class="navbar">
+    <div class="navbar-container">
+        <a href="/" class="navbar-brand">7전8기의 암시장</a>
+        <ul class="navbar-nav">
+            <!--<li><a href="/" class="nav-link">홈</a></li>-->
+            <li><a href="/pages/shop" class="nav-link">상점</a></li>
+            <li><a href="/pages/orders" class="nav-link">주문</a></li>
+            <li><a href="/pages/points" class="nav-link">포인트</a></li>
+            <li><a href="/pages/plans" class="nav-link">플랜</a></li>
+            <li><a href="/pages/subscribe" class="nav-link">구독 신청</a></li>
+            <li><a href="/pages/subscriptions" class="nav-link">구독 관리</a></li>
+        </ul>
+        <div class="navbar-actions">
+            <div class="config-badge-container"></div>
+            <!--<button id="theme-toggle" class="theme-toggle" onclick="toggleTheme()">🌙</button>-->
+        </div>
+    </div>
+</nav>
+
+<div class="main-container">
+    <div class="content-area">
+
+        <h1>👤 마이페이지</h1>
+
+        <!-- 유저 정보 -->
+        <div class="card">
+            <div class="card-header">기본 정보</div>
+            <div class="card-body" id="user-info">
+                로딩 중...
+            </div>
+        </div>
+
+        <!-- 포인트 -->
+        <div class="card" style="margin-top:1rem;">
+            <div class="card-header">💰 포인트</div>
+            <div class="card-body" id="point-info">
+                로딩 중...
+            </div>
+        </div>
+
+        <!-- 구독 -->
+        <div class="card" style="margin-top:1rem;">
+            <div class="card-header">📦 구독 정보</div>
+            <div class="card-body" id="subscription-info">
+                로딩 중...
+            </div>
+        </div>
+
+        <!-- 주문 이력 -->
+        <div class="card" style="margin-top:1rem;">
+            <div class="card-header">📦 주문 이력</div>
+            <div class="card-body">
+                <table style="width:100%;">
+                    <thead>
+                    <tr>
+                        <th style="text-align:left;">주문번호</th>
+                        <th style="text-align:left;">금액</th>
+                        <th style="text-align:left;">상태</th>
+                    </tr>
+                    </thead>
+                    <tbody id="order-list"></tbody>
+                </table>
+            </div>
+        </div>
+
+    </div>
+</div>
+
+<script>
+    async function initPage() {
+        const user = await makeApiRequest('get-current-user');
+
+        renderUser(user);
+        await loadSubscription();
+        await loadOrders();
+    }
+
+    function renderUser(user) {
+        // 유저 정보
+        document.getElementById('user-info').innerHTML = `
+        이메일: ${user.email}<br>
+        이름: ${user.name}
+    `;
+
+        // 포인트 여기서 같이 처리
+        document.getElementById('point-info').innerHTML = `
+        현재 포인트: <strong>${user.pointBalance}</strong>
+    `;
+    }
+
+    // 구독
+    async function loadSubscription() {
+        try {
+            const res = await makeApiRequest('get-my-subscription');
+            document.getElementById('subscription-info').innerHTML = `
+            플랜: ${res.planId}<br>
+            상태: ${res.status}
+        `;
+        } catch (e) {
+            document.getElementById('subscription-info').innerText = '구독 없음';
+        }
+    }
+
+    // 주문
+    async function loadOrders() {
+        try {
+            const res = await makeApiRequest('list-orders');
+
+            const list = res || [];
+            const tbody = document.getElementById('order-list');
+
+            tbody.innerHTML = list.map(o => `
+            <tr>
+                <td style="text-align:left;">${o.orderNumber}</td>
+                <td style="text-align:left;">${o.totalAmount}</td>
+                <td style="text-align:left;">${o.status}</td>
+            </tr>
+        `).join('');
+
+        } catch (e) {
+            document.getElementById('order-list').innerHTML =
+                `<tr><td colspan="3">불러오기 실패</td></tr>`;
+        }
+    }
+</script>
+
+</body>
+</html>

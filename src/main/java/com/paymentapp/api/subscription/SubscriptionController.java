@@ -48,6 +48,17 @@ public class SubscriptionController {
         return ResponseEntity.ok(response);
     }
 
+    /**
+     * 내 구독 memberId 만으로 단건 조회
+     */
+    @GetMapping("/me")
+    public ResponseEntity<SubscriptionResponse> getMySubscriptionByMemberId(
+            @LoginUser LoginUserInfoDto loginUser
+    ) {
+        SubscriptionResponse response = subscriptionService.getMySubscriptionByMemberId(loginUser.id());
+        return ResponseEntity.ok(response);
+    }
+
 
     /**
      * 구독 해지

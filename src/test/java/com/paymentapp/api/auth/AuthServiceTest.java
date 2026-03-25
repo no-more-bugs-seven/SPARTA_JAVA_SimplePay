@@ -6,8 +6,8 @@ import com.paymentapp.api.auth.dto.LoginRequest;
 import com.paymentapp.api.auth.dto.UserInfoDto;
 import com.paymentapp.api.member.Member;
 import com.paymentapp.api.member.MemberService;
-import com.paymentapp.core.exception.custom.MemberException;
-import com.paymentapp.core.exception.errorcode.MemberErrorCode;
+import com.paymentapp.api.member.exception.MemberException;
+import com.paymentapp.api.member.exception.MemberErrorCode;
 import com.paymentapp.core.security.jwt.JwtTokenProvider;
 import com.paymentapp.core.util.RedisUtil;
 import org.junit.jupiter.api.DisplayName;
@@ -129,7 +129,8 @@ class AuthServiceTest {
             assertThat(response.response().email()).isEqualTo("test_user@test.com");
             long ttl = jwtTokenProvider.getRefreshTokenValidityInSeconds();
             // 행동 검증: 새 RefreshToken이 DB에 저장되었는지
-            then(redisUtil).should().save(eq(RedisUtil.RT), anyString(), anyString(), eq(ttl));
+            then(redisUtil).should().save(eq(RedisUtil.RT), anyString(), eq("1"), eq(ttl));
+            then(redisUtil).should().save(eq(RedisUtil.RT), eq("1"), anyString(), eq(ttl));
         }
 
         @Test

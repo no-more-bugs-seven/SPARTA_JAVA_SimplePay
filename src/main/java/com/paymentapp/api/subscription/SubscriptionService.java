@@ -6,10 +6,14 @@ import com.paymentapp.api.plan.PlanService;
 import com.paymentapp.api.plan.entity.Plan;
 import com.paymentapp.api.subscription.dto.*;
 import com.paymentapp.api.subscription.entity.*;
-import com.paymentapp.core.exception.custom.PlanException;
-import com.paymentapp.core.exception.custom.SubscriptionException;
-import com.paymentapp.core.exception.errorcode.PlanErrorCode;
-import com.paymentapp.core.exception.errorcode.SubscriptionErrorCode;
+import com.paymentapp.api.plan.exception.PlanException;
+import com.paymentapp.api.subscription.enums.BillingStatus;
+import com.paymentapp.api.subscription.enums.PaymentMethodStatus;
+import com.paymentapp.api.subscription.enums.PgProvider;
+import com.paymentapp.api.subscription.enums.SubscriptionStatus;
+import com.paymentapp.api.subscription.exception.SubscriptionException;
+import com.paymentapp.api.plan.exception.PlanErrorCode;
+import com.paymentapp.api.subscription.exception.SubscriptionErrorCode;
 import com.paymentapp.core.portone.PortOneClient;
 import com.paymentapp.core.portone.dto.PortOneBillingPaymentResponse;
 import lombok.RequiredArgsConstructor;
@@ -146,6 +150,16 @@ public class SubscriptionService {
      */
     public SubscriptionResponse getMySubscription(Long memberId, Long subscriptionId) {
         Subscription subscription = subscriptionRepository.findByIdAndMemberId(subscriptionId, memberId)
+                .orElseThrow(() -> new SubscriptionException(SubscriptionErrorCode.ACTIVE_SUBSCRIPTION_NOT_FOUND));
+
+        return SubscriptionResponse.from(subscription);
+    }
+
+    /**
+     * 내 구독 정보를  memberId 만으로 조회
+     */
+    public SubscriptionResponse getMySubscriptionByMemberId(Long memberId) {
+        Subscription subscription = subscriptionRepository.findTopByMemberIdOrderByCreatedAtDesc(memberId)
                 .orElseThrow(() -> new SubscriptionException(SubscriptionErrorCode.ACTIVE_SUBSCRIPTION_NOT_FOUND));
 
         return SubscriptionResponse.from(subscription);

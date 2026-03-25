@@ -2,8 +2,8 @@ package com.paymentapp.core.security.jwt;
 
 import com.paymentapp.core.constant.AuthConstants;
 import com.paymentapp.core.dto.LoginUserInfoDto;
-import com.paymentapp.core.exception.custom.MemberException;
-import com.paymentapp.core.exception.errorcode.MemberErrorCode;
+import com.paymentapp.api.member.exception.MemberException;
+import com.paymentapp.api.member.exception.MemberErrorCode;
 import io.jsonwebtoken.ExpiredJwtException;
 import io.jsonwebtoken.MalformedJwtException;
 import io.jsonwebtoken.UnsupportedJwtException;
