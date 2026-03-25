@@ -2,8 +2,8 @@ package com.paymentapp.api.member;
 
 import com.paymentapp.api.membership.MembershipTier;
 import com.paymentapp.core.entity.BaseEntity;
-import com.paymentapp.core.exception.custom.PointException;
-import com.paymentapp.core.exception.errorcode.PointErrorCode;
+import com.paymentapp.api.point.exception.PointException;
+import com.paymentapp.api.point.exception.PointErrorCode;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.Builder;

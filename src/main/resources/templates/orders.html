@@ -35,6 +35,14 @@
         </div>
     </nav>
 
+    <!-- 주문 상세 모달 -->
+    <div id="order-modal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.5); z-index:1000;">
+        <div style="max-width:500px; margin:5% auto; position:relative; max-height:80vh; overflow-y:auto;">
+            <button onclick="closeOrderModal()" style="color: white;position:absolute; top:1rem; right:1rem; background:none; border:none; font-size:1.5rem; cursor:pointer;">✕</button>
+            <div id="order-modal-content"></div>
+        </div>
+    </div>
+
     <div class="main-container">
         <div class="content-area">
             <h1 style="font-size: 2rem; margin-bottom: 2rem;">📦 주문 관리</h1>
@@ -288,7 +296,26 @@
                 }
 
                 tr.innerHTML = `
-                    <td style="padding: 0.75rem; font-weight: 600;">${order.orderNumber}</td>
+                    <td style="padding: 0.75rem; font-weight: 600;">
+                        <a href="#" onclick="showOrderDetail('${order.orderId}')"
+                           style="
+                            display: inline-block;
+                            padding: 4px 10px;
+                            background: rgba(77, 171, 255, 0.05); /* 은은한 푸른빛 배경 */
+                            color: #4dabff; /* 네온 블루 */
+                            text-decoration: none;
+                            border: 1px solid rgba(77, 171, 255, 0.2);
+                            border-radius: 4px;
+                            transition: all 0.2s ease;
+                            letter-spacing: 0.5px;
+                            box-shadow: 0 0 5px rgba(77, 171, 255, 0.1);
+                           "
+                           onmouseover="this.style.background='rgba(77, 171, 255, 0.15)'; this.style.boxShadow='0 0 12px rgba(77, 171, 255, 0.4)'; this.style.color='#fff';"
+                           onmouseout="this.style.background='rgba(77, 171, 255, 0.05)'; this.style.boxShadow='0 0 5px rgba(77, 171, 255, 0.1)'; this.style.color='#4dabff';"
+                        >
+                            ${order.orderNumber}
+                        </a>
+                    </td>
                     <td style="padding: 0.75rem; font-family: monospace; font-size: 0.875rem; color: var(--text-secondary);">${order.orderId}</td>
                     <td style="padding: 0.75rem;">
                         <div style="font-weight: 600;">${order.totalAmount.toLocaleString()}원</div>
@@ -450,6 +477,104 @@
                 'DELIVERED': '배송 완료'
             };
             return texts[status] || status;
+        }
+
+        async function showOrderDetail(orderId) {
+            try {
+                const result = await makeApiRequest('get-order-detail', {
+                    pathParams: { orderId: orderId }
+                });
+
+                const o = result;
+
+                // 주문 상품 목록
+                const itemRows = o.items ? o.items.map(item => `
+            <tr style="border-bottom: 1px solid var(--border);">
+                <td style="padding: 0.5rem;">${item.productName}</td>
+                <td style="padding: 0.5rem;">${item.quantity}개</td>
+                <td style="padding: 0.5rem;">${item.productPrice.toLocaleString()}원</td>
+            </tr>
+        `).join('') : '';
+
+                document.getElementById('order-modal-content').innerHTML = `
+            <div style="font-family: 'Pretendard', sans-serif; color: #d1d1d1; max-width: 500px;
+                /* 상단(연함) -> 중앙(진함) -> 하단(연함) 확실한 대비 */
+                background: linear-gradient(180deg,
+                    var(--bg-secondary) 0%,
+                    var(--bg-primary) 25%,
+                    var(--bg-primary) 55%,
+                    var(--bg-secondary) 100%);
+                border-radius: 16px; box-shadow: 0 20px 50px rgba(0,0,0,0.6); overflow: hidden; border: 1px solid rgba(255,255,255,0.05);">
+
+                <div style="padding: 24px; border-bottom: 1px dashed rgba(255,255,255,0.08);">
+                    <h2 style="margin: 0 0 8px 0; font-size: 1.25rem; font-weight: 700; color: #ffffff; text-shadow: 0 0 10px rgba(255,255,255,0.1);">주문 상세 정보</h2>
+                    <div style="display: flex; align-items: center; gap: 8px;">
+                        <span style="font-size: 0.85rem; color: #888;">번호: ${o.orderNumber}</span>
+                        <span style="background: rgba(var(--primary-rgb, 0, 123, 255), 0.1); color: var(--primary); padding: 2px 8px; border-radius: 4px; font-size: 0.75rem; font-weight: 600; border: 1px solid var(--primary);">
+                            ${getStatusText(o.status)}
+                        </span>
+                    </div>
+                </div>
+
+                <div style="padding: 24px;">
+                    <h3 style="margin: 0 0 16px 0; font-size: 1rem; font-weight: 600; display: flex; align-items: center; gap: 6px; color: #eee; opacity: 0.9;">
+                        <span>📦</span> 주문 상품
+                    </h3>
+
+                    <div style="display: flex; flex-direction: column; gap: 12px;">
+                        ${o.items.map(item => `
+                            <div style="display: flex; justify-content: space-between; align-items: center; padding-bottom: 12px; border-bottom: 1px solid rgba(255,255,255,0.03);">
+                                <div style="flex: 1;">
+                                    <div style="font-weight: 500; font-size: 0.95rem; margin-bottom: 4px; color: #efefef;">${item.productName}</div>
+                                    <div style="font-size: 0.85rem; color: #777;">${item.quantity}개</div>
+                                </div>
+                                <div style="font-weight: 600; font-size: 0.95rem; color: #fff;">${item.productPrice.toLocaleString()}원</div>
+                            </div>
+                        `).join('')}
+                    </div>
+                </div>
+
+                <div style="padding: 24px 24px 16px 24px; border-top: 1px solid rgba(255,255,255,0.05);">
+                    <div style="display: flex; flex-direction: column; gap: 10px;">
+                        <div style="display: flex; justify-content: space-between; font-size: 0.9rem; color: #888;">
+                            <span>주문 총액</span>
+                            <span style="color: #bbb;">${o.totalAmount.toLocaleString()}원</span>
+                        </div>
+                        <div style="display: flex; justify-content: space-between; font-size: 0.9rem; color: #888;">
+                            <span>사용 포인트</span>
+                            <span style="color: #ff6b6b; font-weight: 500;">- ${o.usedPoints ? o.usedPoints.toLocaleString() : 0}P</span>
+                        </div>
+                        <div style="display: flex; justify-content: space-between; font-size: 0.9rem; color: #888;">
+                            <span>적립 포인트</span>
+                            <span style="color: var(--success); font-weight: 500;">+ ${o.earnedPoints ? o.earnedPoints.toLocaleString() : 0}P</span>
+                        </div>
+
+                        <hr style="border: none; border-top: 1px solid rgba(255,255,255,0.05); margin: 8px 0;">
+
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                            <span style="font-weight: 700; font-size: 1rem; color: #fff;">최종 결제 금액</span>
+                            <span style="font-weight: 800; font-size: 1.35rem; color: var(--secondary);">
+                                ${o.finalAmount ? o.finalAmount.toLocaleString() : o.totalAmount.toLocaleString()}원
+                            </span>
+                        </div>
+                    </div>
+
+                    <div style="padding-top: 16px; border-top: 1px solid rgba(255,255,255,0.03); text-align: center;">
+                        <div style="font-size: 0.75rem; color: #555; font-family: monospace; letter-spacing: 0.5px;">
+                            주문일시: ${o.createdAt}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `;
+                document.getElementById('order-modal').style.display = 'block';
+            } catch (error) {
+                console.error('주문 상세 조회 실패:', error);
+            }
+        }
+
+        function closeOrderModal() {
+            document.getElementById('order-modal').style.display = 'none';
         }
     </script>
 </body>

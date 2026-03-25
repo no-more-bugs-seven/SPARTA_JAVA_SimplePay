@@ -8,15 +8,19 @@ import com.paymentapp.api.subscription.dto.ChangeSubscriptionPlanResponse;
 import com.paymentapp.api.subscription.dto.CreateSubscriptionResponse;
 import com.paymentapp.api.subscription.dto.SubscriptionResponse;
 import com.paymentapp.api.subscription.dto.UpdateSubscriptionResponse;
-import com.paymentapp.api.subscription.entity.*;
-import com.paymentapp.core.exception.custom.PlanException;
-import com.paymentapp.core.exception.custom.SubscriptionException;
+
+import com.paymentapp.api.subscription.entity.Subscription;
+import com.paymentapp.api.subscription.entity.SubscriptionBilling;
+import com.paymentapp.api.subscription.entity.SubscriptionPaymentMethod;
+import com.paymentapp.api.subscription.enums.SubscriptionStatus;
+import com.paymentapp.api.subscription.exception.SubscriptionException;
+
 import com.paymentapp.core.portone.PortOneClient;
 import com.paymentapp.core.portone.dto.PortOneBillingPaymentResponse;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.ArgumentCaptor;
+
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -26,7 +30,10 @@ import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.Optional;
 
-import static org.assertj.core.api.Assertions.*;
+
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
+
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.verify;
@@ -197,11 +204,17 @@ class SubscriptionServiceTest {
                 .willReturn(Optional.of(subscription));
 
         // when
-        UpdateSubscriptionResponse response = subscriptionService.cancelSubscription(memberId, subscriptionId);
+        UpdateSubscriptionResponse response =
+                subscriptionService.cancelSubscription(memberId, subscriptionId);
+
 
         // then
         assertThat(response).isNotNull();
         assertThat(subscription.getStatus()).isEqualTo(SubscriptionStatus.CANCELLED);
+
+        assertThat(subscription.getCurrentPeriodEnd())
+                .isBeforeOrEqualTo(LocalDateTime.now());
+
     }
 
     @Test
@@ -244,6 +257,9 @@ class SubscriptionServiceTest {
         given(newPlan.getPlanId()).willReturn("BROKER");
         given(newPlan.isActive()).willReturn(true);
 
+        given(newPlan.getAmount()).willReturn(new BigDecimal("19900"));
+
+
         Subscription subscription = Subscription.builder()
                 .member(org.mockito.Mockito.mock(Member.class))
                 .plan(currentPlan)
@@ -260,11 +276,13 @@ class SubscriptionServiceTest {
         given(planService.findByPlanId("BROKER")).willReturn(newPlan);
 
         // when
-        ChangeSubscriptionPlanResponse response = subscriptionService.changePlan(memberId, subscriptionId, "BROKER");
+        ChangeSubscriptionPlanResponse response =
+                subscriptionService.changePlan(memberId, subscriptionId, "BROKER");
 
         // then
         assertThat(response).isNotNull();
-        assertThat(subscription.getNextPlan()).isEqualTo(newPlan);
+        assertThat(subscription.getPlan()).isEqualTo(newPlan);
+
     }
 
     @Test

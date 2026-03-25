@@ -121,7 +121,7 @@ api:
               usage: PortOne payment window customer.fullName
             - name: phone
               type: string
-              required: true
+              required: false
               description: 사용자 전화번호 (KG 이니시스 필수)
               usage: PortOne payment window customer.phoneNumber
             - name: pointBalance
@@ -175,7 +175,7 @@ api:
               type: number
               required: true
               description: 재고 수량
-    get-product:
+    get-products:
       url: /api/products/{productId}
       method: GET
       description: 상품 단건 조회
@@ -282,6 +282,7 @@ api:
               type: string
               required: false
               description: 주문 생성 시간
+
     get-order:
       url: /api/orders/{orderId}
       method: GET
@@ -502,6 +503,42 @@ api:
               required: true
               description: "현재 이용 기간 종료일 (ISO 8601 형식, 예: 2026-03-01T23:59:59)"
 
+    get-my-subscription:
+      url: /api/subscriptions/me
+      method: GET
+      description: 구독 조회
+      pathParams:
+        - name:
+          description: 구독 ID
+      response:
+        body:
+          fields:
+            - name: subscriptionId
+              type: string
+              required: true
+            - name: customerUid
+              type: string
+              required: true
+              description: PortOne 고객 고유 식별자
+            - name: planId
+              type: string
+              required: true
+            - name: paymentMethodId
+              type: string
+              required: false
+              description: 결제 수단 ID (결제수단 테이블 참조)
+            - name: status
+              type: string
+              required: true
+              description: "구독 상태 (ACTIVE: 활성, CANCELLED: 해지, SUSPENDED: 미납, EXPIRED: 기간 종료)"
+            - name: amount
+              type: number
+              required: true
+            - name: currentPeriodEnd
+              type: string
+              required: true
+              description: "현재 이용 기간 종료일 (ISO 8601 형식, 예: 2026-03-01T23:59:59)"
+
     update-subscription:
       url: /api/subscriptions/{subscriptionId}/cancel
       method: POST
@@ -609,3 +646,23 @@ api:
               type: array
               required: true
               description: "청구 내역 배열. 각 요소는 { billingId: string (필수), periodStart: string (필수, ISO 8601), periodEnd: string (필수, ISO 8601), amount: number (필수), status: string (필수, COMPLETED/FAILED/PENDING), paymentId: string (선택), attemptDate: string (선택, ISO 8601), failureMessage: string (선택) } 형태"
+
+    # ========================================
+    # 상품 & 주문 (Product & Order) 상세 조회
+    # ========================================
+
+    get-product:
+      url: /api/products/{id}
+      method: GET
+      description: 상품 단건 조회
+      pathParams:
+        - name: id
+          description: 상품 ID
+
+    get-order-detail:
+      url: /api/orders/{orderId}
+      method: GET
+      description: 주문 상세 조회
+      pathParams:
+        - name: orderId
+          description: 주문 ID

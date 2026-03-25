@@ -1,5 +1,6 @@
 package com.paymentapp.api.webhook;
 
+import com.paymentapp.api.webhook.enums.WebhookStatus;
 import com.paymentapp.core.entity.BaseEntity;
 import jakarta.persistence.*;
 import lombok.AccessLevel;

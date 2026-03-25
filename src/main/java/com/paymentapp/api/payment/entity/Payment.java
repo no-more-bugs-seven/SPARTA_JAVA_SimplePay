@@ -1,6 +1,7 @@
 package com.paymentapp.api.payment.entity;
 
 import com.paymentapp.api.order.Order;
+import com.paymentapp.api.payment.enums.PaymentStatus;
 import com.paymentapp.core.entity.BaseEntity;
 import jakarta.persistence.*;
 import lombok.AccessLevel;

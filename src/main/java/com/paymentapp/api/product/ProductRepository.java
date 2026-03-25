@@ -1,5 +1,6 @@
 package com.paymentapp.api.product;
 
+import com.paymentapp.api.product.enums.ProductStatus;
 import jakarta.persistence.LockModeType;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Lock;
