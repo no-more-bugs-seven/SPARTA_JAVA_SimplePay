@@ -24,7 +24,7 @@ public class SubscriptionPaymentMethod extends BaseEntity {
     @JoinColumn(name = "user_id", nullable = false)
     private Member member;
 
-    @Column(nullable = false, unique = true)
+    @Column(nullable = false)
     private String customerUid;
 
     @Column(nullable = false)
