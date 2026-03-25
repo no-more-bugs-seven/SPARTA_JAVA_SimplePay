@@ -3,7 +3,7 @@ package com.paymentapp.api.payment;
 import com.paymentapp.api.member.Member;
 import com.paymentapp.api.order.Order;
 import com.paymentapp.api.payment.entity.Payment;
-import com.paymentapp.api.payment.entity.PaymentStatus;
+import com.paymentapp.api.payment.enums.PaymentStatus;
 import jakarta.persistence.LockModeType;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Lock;

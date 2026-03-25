@@ -1,6 +1,7 @@
-package com.paymentapp.core.exception.custom;
+package com.paymentapp.api.member.exception;
 
 import com.paymentapp.core.exception.ErrorCode;
+import com.paymentapp.core.exception.custom.BusinessException;
 import lombok.Getter;
 
 /**

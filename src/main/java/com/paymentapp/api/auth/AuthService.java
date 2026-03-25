@@ -3,8 +3,8 @@ package com.paymentapp.api.auth;
 import com.paymentapp.api.auth.dto.*;
 import com.paymentapp.api.member.Member;
 import com.paymentapp.api.member.MemberService;
-import com.paymentapp.core.exception.errorcode.MemberErrorCode;
-import com.paymentapp.core.exception.custom.MemberException;
+import com.paymentapp.api.member.exception.MemberErrorCode;
+import com.paymentapp.api.member.exception.MemberException;
 import com.paymentapp.core.security.jwt.JwtTokenProvider;
 import com.paymentapp.core.util.RedisUtil;
 import lombok.RequiredArgsConstructor;
@@ -56,6 +56,7 @@ public class AuthService {
 
         // RefreshToken DB 저장/갱신 (auth 도메인의 책임)
         redisUtil.save(RedisUtil.RT, tokens.refreshToken(), member.getId().toString(), jwtTokenProvider.getRefreshTokenValidityInSeconds());
+        redisUtil.save(RedisUtil.RT, member.getId().toString(), tokens.refreshToken(), jwtTokenProvider.getRefreshTokenValidityInSeconds());
         return new UserInfoDto(tokens, new LoginResponse(true, member.getEmail()));
     }
 
@@ -69,13 +70,14 @@ public class AuthService {
         }
 
         String memberId = redisUtil.get(RedisUtil.RT, refreshToken);
-        if(!StringUtils.hasText(memberId)) throw new MemberException(MemberErrorCode.UNAUTHORIZED_ACCESS);
+        if (!StringUtils.hasText(memberId)) throw new MemberException(MemberErrorCode.UNAUTHORIZED_ACCESS);
 
         // MemberRepository 직접 사용 → MemberService 위임
         Member member = memberService.findById(Long.parseLong(memberId));
 
         AuthTokens newTokens = generateTokens(member);
         redisUtil.save(RedisUtil.RT, newTokens.refreshToken(), member.getId().toString(), jwtTokenProvider.getRefreshTokenValidityInSeconds());
+        redisUtil.save(RedisUtil.RT, member.getId().toString(), newTokens.refreshToken(), jwtTokenProvider.getRefreshTokenValidityInSeconds());
 
         return newTokens;
     }
@@ -97,7 +99,7 @@ public class AuthService {
     // --- private ---
 
     private AuthTokens generateTokens(Member member) {
-        String accessToken  = jwtTokenProvider.createAccessToken(member.getId(), member.getEmail(), null);
+        String accessToken = jwtTokenProvider.createAccessToken(member.getId(), member.getEmail(), null);
         String refreshToken = jwtTokenProvider.createRefreshToken(member.getId());
         return new AuthTokens(accessToken, refreshToken);
     }

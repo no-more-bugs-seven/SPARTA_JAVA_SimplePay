@@ -4,8 +4,8 @@ import com.paymentapp.api.member.Member;
 import com.paymentapp.api.plan.entity.Plan;
 import com.paymentapp.api.subscription.enums.SubscriptionStatus;
 import com.paymentapp.core.entity.BaseEntity;
-import com.paymentapp.core.exception.custom.SubscriptionException;
-import com.paymentapp.core.exception.errorcode.SubscriptionErrorCode;
+import com.paymentapp.api.subscription.exception.SubscriptionException;
+import com.paymentapp.api.subscription.exception.SubscriptionErrorCode;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.Builder;
@@ -100,8 +100,17 @@ public class Subscription extends BaseEntity {
             throw new SubscriptionException(SubscriptionErrorCode.SUBSCRIPTION_ALREADY_ENDED);
         }
 
+        LocalDateTime now = LocalDateTime.now();
+
         this.status = SubscriptionStatus.CANCELLED;
-        this.cancelledAt = LocalDateTime.now();
+        this.cancelledAt = now;
+        this.currentPeriodEnd = now;
+    }
+
+    public void changePlanImmediately(Plan newPlan) {
+        this.plan = newPlan;
+        this.nextPlan = null;
+        this.amount = newPlan.getAmount();
     }
 
     public boolean isActive() {

@@ -1,4 +1,4 @@
-package com.paymentapp.api.product;
+package com.paymentapp.api.product.enums;
 
 public enum ProductStatus {
     ON_SALE,

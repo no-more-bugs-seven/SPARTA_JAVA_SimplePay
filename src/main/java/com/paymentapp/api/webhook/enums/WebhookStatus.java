@@ -1,4 +1,4 @@
-package com.paymentapp.api.webhook;
+package com.paymentapp.api.webhook.enums;
 
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;

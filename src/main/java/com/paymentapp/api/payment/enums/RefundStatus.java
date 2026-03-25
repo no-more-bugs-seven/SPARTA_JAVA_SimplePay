@@ -1,4 +1,4 @@
-package com.paymentapp.api.payment.entity;
+package com.paymentapp.api.payment.enums;
 
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;

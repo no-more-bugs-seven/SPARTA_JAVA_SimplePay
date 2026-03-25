@@ -1,4 +1,4 @@
-package com.paymentapp.api.order;
+package com.paymentapp.api.order.enums;
 
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;

@@ -1,5 +1,6 @@
 package com.paymentapp.api.plan.entity;
 
+import com.paymentapp.api.plan.enums.BillingCycle;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.Getter;

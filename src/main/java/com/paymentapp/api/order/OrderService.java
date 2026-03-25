@@ -12,8 +12,8 @@ import com.paymentapp.api.order.dto.OrderCreateResponse;
 import com.paymentapp.api.order.dto.OrderDetailResponse;
 import com.paymentapp.api.order.dto.OrderListResponse;
 import com.paymentapp.core.dto.LoginUserInfoDto;
-import com.paymentapp.core.exception.custom.PointException;
-import com.paymentapp.core.exception.errorcode.PointErrorCode;
+import com.paymentapp.api.point.exception.PointException;
+import com.paymentapp.api.point.exception.PointErrorCode;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -137,13 +137,17 @@ public class OrderService {
                 .map(PointTransactionResponse::from)
                 .toList();
 
+        BigDecimal finalAmount = order.getTotalAmount().subtract(order.getUsedPoints());
+
         return OrderDetailResponse.builder()
                 .orderId(order.getId())
                 .orderNumber(order.getOrderNumber())
-                .totalAmount(order.getTotalAmount().add(order.getUsedPoints())) // 원가 합계
+                .totalAmount(order.getTotalAmount())
+                .earnedPoints(order.getEarnedPoints())
                 .usedPoints(order.getUsedPoints())
-                .finalAmount(order.getTotalAmount()) // 실결제 금액
+                .finalAmount(finalAmount) // 실결제 금액
                 .createdAt(order.getCreatedAt())
+                .status(order.getStatus().name())
                 .items(order.getOrderItems().stream()
                         .map(item -> OrderDetailResponse.OrderItemDto.builder()
                                 .productName(item.getProductName())

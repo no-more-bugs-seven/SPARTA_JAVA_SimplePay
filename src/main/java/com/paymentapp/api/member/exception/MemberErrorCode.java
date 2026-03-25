@@ -1,4 +1,4 @@
-package com.paymentapp.core.exception.errorcode;
+package com.paymentapp.api.member.exception;
 
 import com.paymentapp.core.exception.ErrorCode;
 import lombok.Getter;

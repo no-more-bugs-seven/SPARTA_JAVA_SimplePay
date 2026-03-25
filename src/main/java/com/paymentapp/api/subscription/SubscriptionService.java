@@ -6,6 +6,14 @@ import com.paymentapp.api.plan.PlanService;
 import com.paymentapp.api.plan.entity.Plan;
 import com.paymentapp.api.subscription.dto.*;
 import com.paymentapp.api.subscription.entity.*;
+import com.paymentapp.api.plan.exception.PlanException;
+import com.paymentapp.api.subscription.enums.BillingStatus;
+import com.paymentapp.api.subscription.enums.PaymentMethodStatus;
+import com.paymentapp.api.subscription.enums.PgProvider;
+import com.paymentapp.api.subscription.enums.SubscriptionStatus;
+import com.paymentapp.api.subscription.exception.SubscriptionException;
+import com.paymentapp.api.plan.exception.PlanErrorCode;
+import com.paymentapp.api.subscription.exception.SubscriptionErrorCode;
 import com.paymentapp.api.subscription.enums.BillingStatus;
 import com.paymentapp.api.subscription.enums.PaymentMethodStatus;
 import com.paymentapp.api.subscription.enums.PgProvider;
@@ -158,6 +166,16 @@ public class SubscriptionService {
     }
 
     /**
+     * 내 구독 정보를  memberId 만으로 조회
+     */
+    public SubscriptionResponse getMySubscriptionByMemberId(Long memberId) {
+        Subscription subscription = subscriptionRepository.findTopByMemberIdOrderByCreatedAtDesc(memberId)
+                .orElseThrow(() -> new SubscriptionException(SubscriptionErrorCode.ACTIVE_SUBSCRIPTION_NOT_FOUND));
+
+        return SubscriptionResponse.from(subscription);
+    }
+
+    /**
      * 구독 해지
      */
     @Transactional
@@ -194,18 +212,15 @@ public class SubscriptionService {
             throw new SubscriptionException(SubscriptionErrorCode.SAME_PLAN_NOT_ALLOWED);
         }
 
-        if (subscription.getNextPlan() != null
-                && subscription.getNextPlan().getPlanId().equals(newPlanId)) {
-            throw new IllegalStateException("이미 동일한 플랜 변경이 예약되어 있습니다.");
-        }
+        String beforePlanId = subscription.getPlan().getPlanId();
 
-        subscription.reservePlanChange(newPlan);
+        subscription.changePlanImmediately(newPlan);
 
         return new ChangeSubscriptionPlanResponse(
                 true,
                 String.valueOf(subscription.getId()),
+                beforePlanId,
                 subscription.getPlan().getPlanId(),
-                subscription.getNextPlan().getPlanId(),
                 subscription.getStatus().name()
         );
     }
