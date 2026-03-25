@@ -1,5 +1,6 @@
 package com.paymentapp.api.subscription.entity;
 
+import com.paymentapp.api.subscription.enums.BillingIntervalStatus;
 import com.paymentapp.core.entity.BaseEntity;
 import jakarta.persistence.*;
 import lombok.AccessLevel;

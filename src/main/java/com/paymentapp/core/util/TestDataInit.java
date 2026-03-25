@@ -1,7 +1,7 @@
 package com.paymentapp.core.util;
 
 
-import com.paymentapp.api.plan.entity.BillingCycle;
+import com.paymentapp.api.plan.enums.BillingCycle;
 import lombok.RequiredArgsConstructor;
 import org.springframework.boot.ApplicationArguments;
 import org.springframework.boot.ApplicationRunner;

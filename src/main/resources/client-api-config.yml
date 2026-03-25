@@ -121,7 +121,7 @@ api:
               usage: PortOne payment window customer.fullName
             - name: phone
               type: string
-              required: true
+              required: false
               description: 사용자 전화번호 (KG 이니시스 필수)
               usage: PortOne payment window customer.phoneNumber
             - name: pointBalance
@@ -282,6 +282,7 @@ api:
               type: string
               required: false
               description: 주문 생성 시간
+
     get-order:
       url: /api/orders/{orderId}
       method: GET
@@ -468,6 +469,42 @@ api:
 
     get-subscription:
       url: /api/subscriptions/{subscriptionID}
+      method: GET
+      description: 구독 조회
+      pathParams:
+        - name:
+          description: 구독 ID
+      response:
+        body:
+          fields:
+            - name: subscriptionId
+              type: string
+              required: true
+            - name: customerUid
+              type: string
+              required: true
+              description: PortOne 고객 고유 식별자
+            - name: planId
+              type: string
+              required: true
+            - name: paymentMethodId
+              type: string
+              required: false
+              description: 결제 수단 ID (결제수단 테이블 참조)
+            - name: status
+              type: string
+              required: true
+              description: "구독 상태 (ACTIVE: 활성, CANCELLED: 해지, SUSPENDED: 미납, EXPIRED: 기간 종료)"
+            - name: amount
+              type: number
+              required: true
+            - name: currentPeriodEnd
+              type: string
+              required: true
+              description: "현재 이용 기간 종료일 (ISO 8601 형식, 예: 2026-03-01T23:59:59)"
+
+    get-my-subscription:
+      url: /api/subscriptions/me
       method: GET
       description: 구독 조회
       pathParams:
