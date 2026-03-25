@@ -40,6 +40,8 @@ public class SubscriptionService {
 
     private final PortOneClient portOneClient;
 
+    public static final long NEXT_PAYMENT_PERIOD = 1L;
+
     /**
      * 구독 생성
      */
@@ -83,7 +85,7 @@ public class SubscriptionService {
         SubscriptionPaymentMethod savedPaymentMethod = paymentMethodRepository.save(paymentMethod);
 
         LocalDateTime now = LocalDateTime.now();
-        LocalDateTime nextMonth = now.plusMonths(1);
+        LocalDateTime nextMonth = now.plusMinutes(NEXT_PAYMENT_PERIOD);
         Subscription subscription = Subscription.builder()
                 .member(member)
                 .plan(plan)

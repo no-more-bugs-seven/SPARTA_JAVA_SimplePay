@@ -22,14 +22,11 @@ public class SubscriptionScheduler {
     private final SubscriptionRepository subscriptionRepository;
     private final SubscriptionService subscriptionService;
 
-    /**
-     * 매일 자정(00:00)에  결제를 실행
-     */
-    @Scheduled(cron = "0 0 0 * * *")
+    @Scheduled(cron = "0 * * * * *") // 매분 0초에 실행되도록
     @SchedulerLock(
-            name = "subscription_auto_billing_lock", // 락의 고유 이름 (테이블의 PK가 됨)
-            lockAtMostFor = "PT15M",  // 작업이 길어져도 최대 15분 후엔 락 해제
-            lockAtLeastFor = "PT1M"   // 작업이 1초 만에 끝나도 최소 1분은 다른 서버가 못하게 막음
+            name = "subscription_auto_billing_lock", // 락의 고유명
+            lockAtMostFor = "PT50S",  // 락 최대시간
+            lockAtLeastFor = "PT10S"   // 락 최소시간
     )
     @Transactional
     public void runAutoBilling() {
@@ -45,7 +42,7 @@ public class SubscriptionScheduler {
                 subscriptionService.renewSubscription(
                         subscription.getId(),
                         subscription.getNextPaymentAt(),
-                        subscription.getNextPaymentAt().plusMonths(1)
+                        subscription.getNextPaymentAt().plusMinutes(SubscriptionService.NEXT_PAYMENT_PERIOD)
                 );
                 log.info("구독 결제 성공: subscriptionId={}", subscription.getId());
             } catch (Exception e) {
