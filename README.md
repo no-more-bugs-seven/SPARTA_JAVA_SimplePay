@@ -63,8 +63,6 @@
 
 ### [📎프로젝트 노션 바로가기](https://www.notion.so/teamsparta/7-8-31e2dc3ef51480398ef6eff4980e2f2e)
 
-<br>
-
 ---
 
 ## ⏲️ 개발기간
@@ -183,7 +181,7 @@
 ## 🖼 API 명세서
 
 <p align="center">
-  <img src="docs/images/API_명세서.png" width="100%">
+  <img src="docs/images/API_명세서.png" width="80%">
 </p>
 
 보다 자세한 API 명세서는
@@ -194,7 +192,7 @@
 ## 🗄 ERD Diagram
 
 <p align="center">
-  <img src="docs/images/erd.png" width="100%">
+  <img src="docs/images/erd.png" width="80%">
 </p>
 
 ---
@@ -202,7 +200,7 @@
 ## 🧪 TestCase
 
 <p align="center">
-  <img src="docs/images/testcase.png" width="100%">
+  <img src="docs/images/testcase.png" width="80%">
 </p>
 
 ---
