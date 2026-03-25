@@ -610,14 +610,14 @@
                         </div>
                         <div style="display: flex; justify-content: space-between; font-size: 0.9rem; color: #888;">
                             <span>적립 포인트</span>
-                            <span style="color: var(--primary); font-weight: 500;">+ ${o.earnedPoints ? o.earnedPoints.toLocaleString() : 0}P</span>
+                            <span style="color: var(--success); font-weight: 500;">+ ${o.earnedPoints ? o.earnedPoints.toLocaleString() : 0}P</span>
                         </div>
 
                         <hr style="border: none; border-top: 1px solid rgba(255,255,255,0.05); margin: 8px 0;">
 
                         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
                             <span style="font-weight: 700; font-size: 1rem; color: #fff;">최종 결제 금액</span>
-                            <span style="font-weight: 800; font-size: 1.35rem; color: #ff4d4d; text-shadow: 0 0 15px rgba(255, 77, 77, 0.3);">
+                            <span style="font-weight: 800; font-size: 1.35rem; color: var(--secondary);">
                                 ${o.finalAmount ? o.finalAmount.toLocaleString() : o.totalAmount.toLocaleString()}원
                             </span>
                         </div>
