@@ -1,5 +1,4 @@
 <div align="center">
-  <br />
   <h1 style="border-bottom: none; font-size: 3.5em; background: linear-gradient(to right, #b19cd9, #3b0a45, #b19cd9); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">
     7전8기의 암시장
   </h1>
