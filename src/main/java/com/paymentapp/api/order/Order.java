@@ -2,6 +2,7 @@ package com.paymentapp.api.order;
 
 import com.github.f4b6a3.tsid.TsidCreator;
 import com.paymentapp.api.member.Member;
+import com.paymentapp.api.order.enums.OrderStatus;
 import com.paymentapp.core.entity.BaseEntity;
 import jakarta.persistence.*;
 import lombok.AccessLevel;

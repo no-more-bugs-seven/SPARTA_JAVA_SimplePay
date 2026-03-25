@@ -2,9 +2,10 @@ package com.paymentapp.api.subscription.entity;
 
 import com.paymentapp.api.member.Member;
 import com.paymentapp.api.plan.entity.Plan;
+import com.paymentapp.api.subscription.enums.SubscriptionStatus;
 import com.paymentapp.core.entity.BaseEntity;
-import com.paymentapp.core.exception.custom.SubscriptionException;
-import com.paymentapp.core.exception.errorcode.SubscriptionErrorCode;
+import com.paymentapp.api.subscription.exception.SubscriptionException;
+import com.paymentapp.api.subscription.exception.SubscriptionErrorCode;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.Builder;
