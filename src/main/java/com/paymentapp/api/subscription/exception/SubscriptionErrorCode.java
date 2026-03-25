@@ -22,7 +22,7 @@ public enum SubscriptionErrorCode implements ErrorCode {
     // 포트원
     INVALID_BILLING_KEY(HttpStatus.BAD_REQUEST, "Sc101", "유효하지 않은 빌링키입니다. 결제 수단 등록에 실패했습니다."),
     FAILURE_PAYMENT(HttpStatus.BAD_REQUEST, "Sc102", "결제에 실패했습니다."),
-    ;
+    ALREADY_BILLED_PERIOD(HttpStatus.BAD_REQUEST, "Sc102", "이미 결제한 내역이 있습니다.");
 
     private final HttpStatus status;
     private final String code;
