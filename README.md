@@ -192,14 +192,22 @@
 </p>
 
 보다 자세한 API 명세서는
-[📎프로젝트 노션](https://www.notion.so/teamsparta/2-2ff2dc3ef514805aa074fd80c0ad353d) 에서 확인할 수 있습니다.
+[📎프로젝트 노션](https://www.notion.so/teamsparta/7-8-31e2dc3ef51480398ef6eff4980e2f2e) 에서 확인할 수 있습니다.
 
 ---
 
 ## 🗄 ERD Diagram
 
 <p align="center">
-  <img src="docs/images/ERD_diagram.png" width="80%">
+  <img src="docs/images/erd.png" width="100%">
+</p>
+
+---
+
+## 🧪 TestCase
+
+<p align="center">
+  <img src="docs/images/" width="100%">
 </p>
 
 ---
@@ -234,11 +242,6 @@ src/main/java/com/commerce/manageit/
 
 ## 🚨 Trouble Shooting
 
-👉 [Dashboard Query Optimization - 인덱스 설계를 통한 대시보드 성능 개선](docs/TroubleShooting/Dashboard_Query_Optimization.md) <br>
-👉 [Session_Security_Develop - 관리자 인증/인가 방식 진화(3단계)](docs/TroubleShooting/Session_Security_Develop.md) <br>
-👉 [Handling Null References in Soft Delete Relationships - Soft Delete 연관관계에서 발생한 Null 참조 처리](docs/TroubleShooting/Handling_Null_References_In_Soft_Delete_Relationships.md) <br>
-👉 [API Consistency - Custom AccessDeniedHandler를 통한 예외 응답 규격 통일](docs/TroubleShooting/Security_Exception.md) <br>
-👉 [rating 데이터 자료형 (int -> Integer)변경](docs/TroubleShooting/rating_int_Integer.md) <br>
-👉 [Customer Search API - QueryDSL & Paging 설계 학습 정리](docs/TroubleShooting/Customer_QueryDSL.md)<br>
+👉 [결제 시스템의 재고 정합성 문제와 비관적 락(Pessimistic Lock) 적용](docs/troubleshooting/Pessimistic-Lock-for-Inventory-Consistency.md) <br>
 
 ---
