@@ -188,18 +188,15 @@ public class SubscriptionService {
             throw new SubscriptionException(SubscriptionErrorCode.SAME_PLAN_NOT_ALLOWED);
         }
 
-        if (subscription.getNextPlan() != null
-                && subscription.getNextPlan().getPlanId().equals(newPlanId)) {
-            throw new IllegalStateException("이미 동일한 플랜 변경이 예약되어 있습니다.");
-        }
+        String beforePlanId = subscription.getPlan().getPlanId();
 
-        subscription.reservePlanChange(newPlan);
+        subscription.changePlanImmediately(newPlan);
 
         return new ChangeSubscriptionPlanResponse(
                 true,
                 String.valueOf(subscription.getId()),
+                beforePlanId,
                 subscription.getPlan().getPlanId(),
-                subscription.getNextPlan().getPlanId(),
                 subscription.getStatus().name()
         );
     }
