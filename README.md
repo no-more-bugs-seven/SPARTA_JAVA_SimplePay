@@ -201,7 +201,7 @@
 ## 🧪 TestCase
 
 <p align="center">
-  <img src="docs/images/" width="100%">
+  <img src="docs/images/testcase.png" width="100%">
 </p>
 
 ---
