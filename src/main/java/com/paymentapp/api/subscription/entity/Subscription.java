@@ -99,8 +99,17 @@ public class Subscription extends BaseEntity {
             throw new SubscriptionException(SubscriptionErrorCode.SUBSCRIPTION_ALREADY_ENDED);
         }
 
+        LocalDateTime now = LocalDateTime.now();
+
         this.status = SubscriptionStatus.CANCELLED;
-        this.cancelledAt = LocalDateTime.now();
+        this.cancelledAt = now;
+        this.currentPeriodEnd = now;
+    }
+
+    public void changePlanImmediately(Plan newPlan) {
+        this.plan = newPlan;
+        this.nextPlan = null;
+        this.amount = newPlan.getAmount();
     }
 
     public boolean isActive() {
