@@ -197,11 +197,14 @@ class SubscriptionServiceTest {
                 .willReturn(Optional.of(subscription));
 
         // when
-        UpdateSubscriptionResponse response = subscriptionService.cancelSubscription(memberId, subscriptionId);
+        UpdateSubscriptionResponse response =
+                subscriptionService.cancelSubscription(memberId, subscriptionId);
 
         // then
         assertThat(response).isNotNull();
         assertThat(subscription.getStatus()).isEqualTo(SubscriptionStatus.CANCELLED);
+        assertThat(subscription.getCurrentPeriodEnd())
+                .isBeforeOrEqualTo(LocalDateTime.now());
     }
 
     @Test
@@ -243,6 +246,7 @@ class SubscriptionServiceTest {
         Plan newPlan = org.mockito.Mockito.mock(Plan.class);
         given(newPlan.getPlanId()).willReturn("BROKER");
         given(newPlan.isActive()).willReturn(true);
+        given(newPlan.getAmount()).willReturn(new BigDecimal("19900"));
 
         Subscription subscription = Subscription.builder()
                 .member(org.mockito.Mockito.mock(Member.class))
@@ -260,11 +264,12 @@ class SubscriptionServiceTest {
         given(planService.findByPlanId("BROKER")).willReturn(newPlan);
 
         // when
-        ChangeSubscriptionPlanResponse response = subscriptionService.changePlan(memberId, subscriptionId, "BROKER");
+        ChangeSubscriptionPlanResponse response =
+                subscriptionService.changePlan(memberId, subscriptionId, "BROKER");
 
         // then
         assertThat(response).isNotNull();
-        assertThat(subscription.getNextPlan()).isEqualTo(newPlan);
+        assertThat(subscription.getPlan()).isEqualTo(newPlan);
     }
 
     @Test
