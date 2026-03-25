@@ -70,7 +70,7 @@
                     <span id="cart-total">₩0</span>
                 </div>
 
-                <button class="btn btn-primary" onclick="createOrder()" style="width: 100%; margin-top: 1rem;">
+                <button id="create-order" class="btn btn-primary" onclick="createOrder()" style="width: 100%; margin-top: 1rem;">
                     📦 주문 생성
                 </button>
             </div>
@@ -300,6 +300,8 @@
         });
 
         async function createOrder() {
+            const create_order = document.getElementById('create-order');
+            create_order.disabled = true;
             // 서버로 보낼 아이템 (productId와 quantity만)
             const items = [];
 
@@ -347,6 +349,7 @@
                 }
             } catch (error) {
                 console.error('Failed to create order:', error);
+                create_order.disabled = false;
             }
         }
 
