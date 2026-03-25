@@ -1,41 +1,52 @@
-<h1 align="center">💳 7전8기의 암시장</h1>
+<div align="center">
+  <br />
+  <h1 style="border-bottom: none; font-size: 3.5em; background: linear-gradient(to right, #b19cd9, #3b0a45, #b19cd9); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">
+    7전8기의 암시장
+  </h1>
+  <p style="color: #8b949e; font-size: 1.2em; letter-spacing: 2px;">
+    <b>THE RELENTLESS BLACK MARKET</b>
+  </p>
+  <hr style="background: linear-gradient(to right, transparent, #30363d, transparent); height: 1px; border: none;" />
+  <br />
+</div>
 
 <p align="center">
-  결제 및 구독 서비스<br>
-</p>
-
----
-
-<p align="center">
-
-<img src="https://img.shields.io/badge/Java-17-red">
-<img src="https://img.shields.io/badge/SpringBoot-4.x-green">
-<img src="https://img.shields.io/badge/JPA-Hibernate-orange">
-<img src="https://img.shields.io/badge/MySQL-8-blue">
-<img src="https://img.shields.io/badge/Gradle-8-02303A">
-<img src="https://img.shields.io/badge/GitHub-Repository-black">
-
+  <img src="https://img.shields.io/badge/Java%2017-007396?style=flat-square&logo=openjdk&logoColor=white">
+  <img src="https://img.shields.io/badge/Spring%20Boot%203.x-6DB33F?style=flat-square&logo=springboot&logoColor=white">
+  <img src="https://img.shields.io/badge/Spring%20Data%20JPA-6DB33F?style=flat-square&logo=spring&logoColor=white">
+  <br>
+  <img src="https://img.shields.io/badge/MySQL%208.0-4479A1?style=flat-square&logo=mysql&logoColor=white">
+  <img src="https://img.shields.io/badge/Redis-DC382D?style=flat-square&logo=redis&logoColor=white">
+  <img src="https://img.shields.io/badge/PortOne-Payment-orange?style=flat-square">
+  <br>
+  <img src="https://img.shields.io/badge/Gradle-02303A?style=flat-square&logo=gradle&logoColor=white">
+  <img src="https://img.shields.io/badge/JUnit5-25A162?style=flat-square&logo=junit5&logoColor=white">
+  <img src="https://img.shields.io/badge/GitHub-Actions-2088FF?style=flat-square&logo=githubactions&logoColor=white">
 </p>
 
 ---
 
 ## 📌 프로젝트 소개
 
-이 프로젝트는 PortOne(KG이니시스) 연동을 통한 일반·정기 결제와 사용자 맞춤형 멤버십 혜택을 제공하는 고도화된 이커머스 서비스입니다.
-사용자는 장바구니 주문부터 포인트 차감 결제까지 매끄러운 구매 여정을 경험하며, 
-서버는 결제 검증 및 멱등성 설계를 통해 데이터의 무결성과 신뢰성 있는 환불 프로세스를 보장합니다.
-또한, 누적 결제액 기반의 자동 등급 갱신 시스템을 통해 차등화된 포인트 적립률을 적용함으로써 고객 충성도를 높이는 비즈니스 로직을 구현했습니다.
+**7전8기 암시장**은 PortOne(KG이니시스)을 활용한 **일반·정기 결제 시스템**과 고객 충성도를 극대화하는 **멤버십 기반 이커머스 솔루션**입니다.  
+단순한 결제 처리를 넘어, **결제 검증 및 보상 트랜잭션**을 통해 금융 수준의 데이터 무결성을 지향합니다.
 
-요구사항
-- 사용자는 회원가입 및 로그인을 통해 인증된 상태에서 서비스를 이용할 수 있어야 한다.
-- 사용자는 결제가 가능한 상품 목록 및 상품 상세 정보를 조회할 수 있어야 한다.
-- 사용자는 여러 상품을 하나의 주문으로 생성하고 주문 내역 및 상세 정보를 조회할 수 있어야 한다.
-- PortOne + KG이니시스 PG를 통해 카드 결제를 진행할 수 있어야 한다.
-- 사용자는 포인트를 사용하여 결제 금액을 일부 또는 전부 차감할 수 있어야 한다.
-- 사용자의 총 결제 금액에 따라 멤버십 등급이 자동 갱신되며 등급별 포인트 적립률이 적용된다.
-- 결제 완료된 주문에 대해 전액 환불이 가능하며 사용 포인트 복구 및 적립 포인트 취소가 이루어져야 한다.
-- 서버는 PortOne 결제 조회 API를 통해 결제를 검증하며 중복 요청에도 동일한 결과를 보장해야 한다.
-- 사용자는 결제 수단을 등록하고 빌링키 기반 정기 결제를 이용할 수 있어야 한다.
+---
+
+### 💳 결제 및 구독 (Payment & Subscription)
+* **결제 통합:** PortOne + KG이니시스 PG 연동을 통한 신용카드 일반 결제 구현
+* **정기 결제:** 빌링키 기반의 자동 결제 수단 등록 및 구독 서비스 제공
+* **결제 검증:** 웹훅(Webhook) 및 PortOne API를 통한 결제 금액 위변조 방지 및 멱등성 보장
+
+### 💎 멤버십 및 포인트 (Loyalty Program)
+* **자동 등급 관리:** 누적 결제액에 따른 실시간 멤버십 등급 갱신 시스템
+* **스마트 포인트:** 등급별 차등 적립률 적용 및 결제 시 포인트 복합 사용 지원
+* **신뢰 기반 환불:** 주문 취소 시 실시간 결제 취소, 포인트 회수 및 복구의 원자성 보장
+
+### 🛡️ 시스템 안정성 (Reliability)
+* **재고 정합성:** 비관적 락(`Pessimistic Lock`)을 적용하여 고가용성 환경에서도 정확한 재고 관리
+* **보상 트랜잭션:** 외부 API 장애 및 재고 부족 시 자동 취소 및 데이터 롤백 처리
+* **인증 및 인가:** Spring Security 기반의 안전한 회원가입 및 주문 프로세스
 
 ---
 
@@ -70,59 +81,68 @@
 
 ---
 
-## 🔧 Technologies & Tools (BE)
+## 🔧 Technologies & Tools
 
-<img src="https://img.shields.io/badge/java-007396?style=for-the-badge&logo=java&logoColor=white"> <img src="https://img.shields.io/badge/SpringBoot-6DB33F?style=for-the-badge&logo=springboot&logoColor=white"/> <img src="https://img.shields.io/badge/Gradle-02303A?style=for-the-badge&logo=Gradle&logoColor=white"/>
+### 🖥️ Backend Stack
+<p align="left">
+  <img src="https://img.shields.io/badge/Java%2017-007396?style=for-the-badge&logo=openjdk&logoColor=white">
+  <img src="https://img.shields.io/badge/Spring%20Boot%203.x-6DB33F?style=for-the-badge&logo=springboot&logoColor=white">
+  <img src="https://img.shields.io/badge/Spring%20Security-6DB33F?style=for-the-badge&logo=springsecurity&logoColor=white">
+  <img src="https://img.shields.io/badge/JSON%20Web%20Tokens-000000?style=for-the-badge&logo=jsonwebtokens&logoColor=white">
+</p>
 
-<img src="https://img.shields.io/badge/SpringSecurity-6DB33F?style=for-the-badge&logo=SpringSecurity&logoColor=white"/> <img src="https://img.shields.io/badge/JSONWebToken-000000?style=for-the-badge&logo=JSONWebTokens&logoColor=white"/> 
+### 💾 Data & Infrastructure
+<p align="left">
+  <img src="https://img.shields.io/badge/MySQL%208.0-4479A1?style=for-the-badge&logo=mysql&logoColor=white">
+  <img src="https://img.shields.io/badge/Spring%20Data%20JPA-6DB33F?style=for-the-badge&logo=spring&logoColor=white">
+  <img src="https://img.shields.io/badge/Redis-DC382D?style=for-the-badge&logo=redis&logoColor=white">
+  <img src="https://img.shields.io/badge/AWS-232F3E?style=for-the-badge&logo=amazon-aws&logoColor=white">
+</p>
 
-<img src="https://img.shields.io/badge/SpringDataJPA-6DB33F?style=for-the-badge&logo=spring&logoColor=white"/> <img src="https://img.shields.io/badge/QueryDSL-0769AD?style=for-the-badge&logo=java&logoColor=white"/> <img src="https://img.shields.io/badge/MySQL-4479A1?style=for-the-badge&logo=MySQL&logoColor=white"/>
+### 🧪 Quality & DevOps
+<p align="left">
+  <img src="https://img.shields.io/badge/JUnit5-25A162?style=for-the-badge&logo=junit5&logoColor=white">
+  <img src="https://img.shields.io/badge/Mockito-000000?style=for-the-badge&logo=java&logoColor=white">
+  <img src="https://img.shields.io/badge/Gradle-02303A?style=for-the-badge&logo=gradle&logoColor=white">
+  <img src="https://img.shields.io/badge/GitHub%20Actions-2088FF?style=for-the-badge&logo=githubactions&logoColor=white">
+</p>
 
-<img src="https://img.shields.io/badge/git-F05032?style=for-the-badge&logo=git&logoColor=white"/> <img src="https://img.shields.io/badge/github-181717?style=for-the-badge&logo=github&logoColor=white"/>
-
-<img src="https://img.shields.io/badge/IntelliJIDEA-000000?style=for-the-badge&logo=IntelliJIDEA&logoColor=white"/> <img src="https://img.shields.io/badge/Postman-FF6C37?style=for-the-badge&logo=Postman&logoColor=white"/> <img src="https://img.shields.io/badge/Notion-000000?style=for-the-badge&logo=Notion&logoColor=white"/> <img src="https://img.shields.io/badge/Slack-4A154B?style=for-the-badge&logo=slack&logoColor=white"/>
+### 🤝 Collaboration & Management
+<p align="left">
+  <img src="https://img.shields.io/badge/Jira-0052CC?style=for-the-badge&logo=jira&logoColor=white">
+  <img src="https://img.shields.io/badge/Git-F05032?style=for-the-badge&logo=git&logoColor=white">
+  <img src="https://img.shields.io/badge/GitHub-181717?style=for-the-badge&logo=github&logoColor=white">
+  <img src="https://img.shields.io/badge/Notion-000000?style=for-the-badge&logo=notion&logoColor=white">
+  <img src="https://img.shields.io/badge/Slack-4A154B?style=for-the-badge&logo=slack&logoColor=white">
+</p>
 
 ---
 
-## 🧠 적용 기술
-#### ◻ Spring Security
-> 인가/인증 처리를 필터 체인 기반으로 구성하여 API 접근 권한을 통제하고, 인증되지 않은 요청을 차단하는 보안 구조를 적용했습니다.
+## 🧠 적용 기술 (Technical Decisions)
 
-#### ◻ JWT
-> 세션 대신 JWT 기반 인증 방식을 사용하여 구현했습니다.
+#### ◻ **비관적 락 (Pessimistic Lock)**
+> 재고 차감 시 발생할 수 있는 동시성 문제를 해결하기 위해 DB 수준의 배타적 잠금(`PESSIMISTIC_WRITE`)을 적용하여 데이터 정합성을 보장했습니다.
 
-#### ◻ Soft Delete
-> 데이터를 실제 삭제하지 않고 deleted 플래그를 활용해 논리 삭제 처리함으로써 데이터 복구 가능성과 이력 추적성을 확보했습니다.
+#### ◻ **보상 트랜잭션 (Compensatory Transaction)**
+> 결제 과정 중 재고 부족이나 외부 API 장애 발생 시, 이미 처리된 외부 결제 취소 및 포인트 복구를 수행하여 서비스의 원자성(Atomicity)을 확보했습니다.
 
-#### ◻ PasswordEncoder
-> 비밀번호를 단방향 해시 방식으로 암호화하여 DB에 평문이 저장되지 않도록 하고, 로그인 시 안전한 비교가 가능하도록 구현했습니다.
+#### ◻ **Redis**
+> 정기 결제 빌링키 관리나 빈번한 조회 데이터의 캐싱을 고려하여 In-memory 데이터 구조를 활용하고, 시스템의 응답 속도와 효율성을 높였습니다.
 
-#### ◻ 전역 예외 처리 (CommonError, CommonException, GlobalExceptionHandler)
-> 비즈니스 예외와 시스템 예외를 분리하고, 전역 예외 처리기를 통해 일관된 에러 응답 형식을 제공하여 클라이언트가 오류 상황을 명확히 인지할 수 있도록 했습니다.
+#### ◻ **JUnit5 & Mockito**
+> 단위 테스트와 통합 테스트를 통해 비즈니스 로직의 신뢰성을 검증하고, 특히 다중 스레드 환경에서의 동시성 제어 로직을 코드로 증명했습니다.
 
-#### ◻ JPA / JPQL
-> 객체 중심의 데이터 접근을 위해 JPA를 사용하고, 복잡한 조회는 JPQL을 활용하여 엔티티 기반 쿼리를 작성함으로써 유지보수성과 가독성을 높였습니다.
+#### ◻ **Spring Security & JWT**
+> 인증 및 인가 처리를 필터 체인 기반으로 구성하여 API 접근 권한을 통제하고, Stateless한 JWT 인증 방식을 통해 서버 확장이 용이한 보안 구조를 설계했습니다.
 
-#### ◻ QueryDSL
-> 정렬/검색 조건이 동적으로 변하는 조회 API에 QueryDSL을 적용하여 타입 안정성을 확보하고, 복잡한 조건 조합을 코드 기반으로 안전하게 구성했습니다.
+#### ◻ **AWS (EC2, RDS)**
+> 클라우드 인프라를 활용하여 안정적인 서버 운영 환경을 구축하고, 데이터베이스와 정적 리소스를 분리하여 관리 효율성을 극대화했습니다.
 
-#### ◻ Builder + record
-> DTO 생성 시 Builder 패턴을 사용해 가독성과 유지보수성을 높이고, 불변 데이터 전달 객체에는 record를 활용하여 코드량을 줄이고 안정성을 확보했습니다.
+#### ◻ **Jira & Agile Methodology**
+> Jira를 통해 백로그 관리 및 스프린트 단위의 태스크 배분을 수행하며, 프로젝트 진행 상황을 투명하게 관리하고 협업 효율을 높였습니다.
 
-#### ◻ Validation
-> 요청 데이터에 대해 길이 제한, 필수값 검증 등 입력 검증 로직을 적용하여 잘못된 요청을 사전에 차단하고 서비스 안정성을 높였습니다.
-
-#### ◻ 페이징 조회
-> 대량 데이터 조회 시 Page 기반 페이징 처리를 적용하여 응답 속도를 개선하고, 클라이언트가 필요한 데이터만 효율적으로 조회할 수 있도록 구현했습니다.
-
-#### ◻ BaseEntity
-> 엔티티 공통 필드(createdAt, modifiedAt 등)를 BaseEntity로 분리하여 중복 코드를 제거하고, 모든 도메인에서 동일한 감사(Auditing) 정책을 적용할 수 있도록 설계했습니다.
-
-#### ◻ 공통 응답 DTO (ApiResponse)
-> API 응답 구조를 ApiResponse<T> 형태로 통일하여 성공/실패 응답 형식을 일관되게 유지하고, 프론트엔드가 상태·메시지·데이터를 예측 가능하게 처리할 수 있도록 했습니다.
-
-#### ◻ Postman
-> API 테스트 도구로 Postman을 활용하여 엔드포인트 검증, 인증 흐름 테스트, 요청/응답 구조 확인 등을 수행했습니다.
+#### ◻ **Builder + Record**
+> 객체 생성 시 Builder 패턴으로 가독성을 높이고, 불변 데이터 전달 객체에는 자바 17의 `record`를 활용하여 보일러플레이트 코드를 줄이고 안정성을 강화했습니다.
 
 ---
 
