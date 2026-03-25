@@ -1,8 +1,8 @@
 package com.paymentapp.api.plan;
 
 import com.paymentapp.api.plan.dto.PlanResponse;
-import com.paymentapp.api.plan.enums.BillingCycle;
 import com.paymentapp.api.plan.entity.Plan;
+import com.paymentapp.api.plan.enums.BillingCycle;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
