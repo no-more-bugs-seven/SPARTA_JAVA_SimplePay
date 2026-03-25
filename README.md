@@ -64,8 +64,6 @@
 
 ### [📎프로젝트 노션 바로가기](https://www.notion.so/teamsparta/7-8-31e2dc3ef51480398ef6eff4980e2f2e)
 
-<br>
-
 ---
 
 ## ⏲️ 개발기간
@@ -148,47 +146,36 @@
 
 ## 🚀 주요 기능
 
-### Admin
-- 관리자 회원가입/로그인/로그아웃
-- 관리자 목록/상세 조회
-- 관리자 정보 수정
-- 관리자 역할/상태 변경
-- 관리자 삭제 (Soft Delete)
-- 관리자 승인/거부 처리
-- 내 프로필 조회/수정
-- 비밀번호 변경
+### 🔐 인증 및 보안
+- **다중 인증 체계:** Spring Security 기반의 일반 로그인 및 **Google OAuth 2.0** 소셜 로그인 연동
+- **권한 제어:** JWT(JSON Web Token)를 활용한 Stateless 인증 및 권한 인가 로직 구현
+- **계정 관리:** 비밀번호 단방향 해시 암호화 저장 및 마이페이지를 통한 개인정보 관리
 
-### Customer
-- 고객 목록/상세 조회
-- 고객 정보 수정
-- 고객 상태 변경
-- 고객 삭제 (Soft Delete)
+### 📦 상품 및 주문
+- **상품 카탈로그:** 전체 상품 목록 조회 및 상세 정보(재고, 가격 등) 제공
+- **재고 정합성 보장:** 상품 선택 및 주문 생성 시 **비관적 락(Pessimistic Lock)**을 적용하여 실시간 재고 동시성 제어
+- **주문 상세 프로세스:** 주문 생성부터 결제 대기, 완료, 취소에 이르는 단계별 상태 관리 및 상세 내역 조회
 
-### Dashboard
-- 관리자 / 고객 / 상품 / 주문 / 리뷰 카운트
-- 총 매출 / 상태별 주문 수 집계
-- 리뷰 평점 분포 차트
-- 고객 상태 분포
-- 카테고리 분포
-- 최근 주문 목록 조회
+### 💳 결제 및 환불
+- **통합 결제 연동:** PortOne(KG이니시스) API를 통한 실시간 카드 결제 및 결제 금액 위변조 검증
+- **결제 취소:** 사용자의 단순 변심 또는 시스템 오류 시 실시간 결제 취소 및 전액 환불 처리
+- **보상 트랜잭션:** 재고 부족이나 외부 API 장애 시 이미 처리된 로직을 되돌리는 **데이터 무결성** 확보
 
-### Order
-- 주문 생성
-- 주문 목록/상세 조회
-- 주문 상태 변경
-- 주문 취소
+### 💰 포인트 시스템
+- **포인트 복합 결제:** 현금 결제와 포인트를 조합한 부분 차감 및 포인트 전액 결제 지원
+- **등급별 차등 적립:** 결제 완료 시 멤버십 등급에 따른 포인트 자동 적립
+- **실시간 복구:** 주문 취소 시 사용된 포인트의 즉각적인 복구 및 적립 포인트 회수
 
-### Product
-- 상품 등록
-- 상품 목록/상세 조회
-- 상품 정보 수정
-- 상품 재고/상태 변경
-- 상품 삭제 (Soft Delete)
+### 🌑 멤버십 플랜
+- **티어링 시스템:** 사용자의 목적에 따른 3가지 등급 플랜 운영
+    - **입문자:** 일반 거래 및 기본 적립률 적용
+    - **중개인:** 전문 거래를 위한 우대 적립률 제공
+    - **검은손:** 암시장 최상위 권한 및 최대 적립 혜택 부여
 
-### Review
-- 리뷰 목록/상세 조회
-- 리뷰 삭제
-- 상품별 리뷰 조회
+### 🔄 구독 관리
+- **정기 결제:** 빌링키(Billing Key) 발급을 통한 주기적 자동 결제 시스템 구축
+- **라이프사이클 관리:** 구독 신청, 플랜 변경(업그레이드/다운그레이드), 구독 해지 프로세스 구현
+- **청구 내역 조회:** 구독 ID 기반의 월별 정기 결제 이력 및 다음 결제 예정일 확인
 
 ---
 
@@ -197,7 +184,7 @@
 | 항목 | 버전  |
 |---|-----|
 | Java | 17  |
-| Spring Boot | 4.x |
+| Spring Boot | 3.x |
 | Gradle | 8.x |
 | MySQL | 8.x |
 | JPA | Hibernate |
@@ -235,27 +222,31 @@
 ## 📈 프로젝트 파일 구조
 
 ```text
-src/main/java/com/commerce/manageit/
-├── domain/                    # 핵심 비즈니스 로직 (도메인별 분리)
-│   ├── admin/                 # 관리자(Admin) 관련 도메인
-│   │   ├── controller/        # API 엔드포인트
-│   │   ├── dto/               # Request / Response 객체
-│   │   ├── entity/            # JPA 엔티티 (Domain Model)
-│   │   ├── enums/             # 상태 코드 및 role enum
-│   │   ├── repository/        # DB 접근 계층
-│   │   └── service/           # 비즈니스 로직
+src/main/java/com/paymentapp
+├── 📂 api
+│   ├── 📂 auth          # 인증/인가 (일반 로그인, OAuth 2.0)
+│   ├── 📂 member        # 회원 정보 및 계정 관리
+│   ├── 📂 membership    # 멤버십 등급 및 혜택 로직
+│   ├── 📂 order         # 주문 생성 및 상세 정보 관리
+│   ├── 📂 payment       # 결제 핵심 로직 (PaymentService, Controller)
+│   │   ├── 📂 dto       # 결제 관련 데이터 전송 객체
+│   │   ├── 📂 entity    # Payment, Refund 엔티티
+│   │   ├── 📂 enums     # 결제 상태 및 환불 상태 정의
+│   │   ├── 📂 exception # 결제 도메인 전용 예외 처리
+│   │   ├── PaymentController    
+│   │   ├── PaymentRepository 
+│   │   ├── PaymentService
+│   │   └── RefundRepository
 │   │
-│   ├── customer/              # 고객(Customer) 관련 도메인
-│   ├── dashboard/             # 대시보드(Dashboard) 관련 도메인
-│   ├── order/                 # 주문(Order) 관련 도메인
-│   ├── product/               # 상품(Product) 관련 도메인
-│   └── review/                # 리뷰(Review) 관련 도메인
-│   
-├── global/                    # 프로젝트 전역 공통 설정
-│   ├── common/                # 공통 추상 클래스 (BaseEntity, ApiResponse)
-│   ├── error/                 # 예외 처리 (ExceptionHandler, ErrorCode)
-│   └── security/              # Framework 설정 (Security, JWT 등)
-└── ECommerceBackofficeApplication.java   # 프로젝트 메인 실행 클래스
+│   ├── 📂 plan          # 멤버십 플랜 (입문자, 중개인, 검은손)
+│   ├── 📂 point         # 포인트 적립 및 사용 시스템
+│   ├── 📂 product       # 상품 정보 및 재고 관리
+│   ├── 📂 subscription  # 정기 결제 및 구독 라이프사이클 관리
+│   └── 📂 webhook       # PortOne 결제 결과 수신 및 검증
+│ 
+├── 📂 core              # 외부 API (PortOneClient) 및 공통 보안 설정
+├── 📂 front             # 프론트엔드 연동 관련 리소스/컨트롤러
+└── 📄 PaymentAppApplication.java
 ```
 
 ---
