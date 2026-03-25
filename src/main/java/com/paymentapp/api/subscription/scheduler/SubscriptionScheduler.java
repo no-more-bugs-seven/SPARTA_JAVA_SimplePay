@@ -7,6 +7,7 @@ import com.paymentapp.api.subscription.enums.SubscriptionStatus;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import net.javacrumbs.shedlock.spring.annotation.SchedulerLock;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
@@ -21,10 +22,12 @@ public class SubscriptionScheduler {
     private final SubscriptionRepository subscriptionRepository;
     private final SubscriptionService subscriptionService;
 
-    /**
-     * 매일 자정(00:00)에  결제를 실행
-     */
-    @Scheduled(cron = "0 0 0 * * *")
+    @Scheduled(cron = "0 * * * * *") // 매분 0초에 실행되도록
+    @SchedulerLock(
+            name = "subscription_auto_billing_lock", // 락의 고유명
+            lockAtMostFor = "PT50S",  // 락 최대시간
+            lockAtLeastFor = "PT10S"   // 락 최소시간
+    )
     @Transactional
     public void runAutoBilling() {
         log.info("정기 결제 스케줄러 실행 시작");
@@ -39,7 +42,7 @@ public class SubscriptionScheduler {
                 subscriptionService.renewSubscription(
                         subscription.getId(),
                         subscription.getNextPaymentAt(),
-                        subscription.getNextPaymentAt().plusMonths(1)
+                        subscription.getNextPaymentAt().plusMinutes(SubscriptionService.NEXT_PAYMENT_PERIOD)
                 );
                 log.info("구독 결제 성공: subscriptionId={}", subscription.getId());
             } catch (Exception e) {
