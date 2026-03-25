@@ -175,7 +175,7 @@ api:
               type: number
               required: true
               description: 재고 수량
-    get-product:
+    get-products:
       url: /api/products/{productId}
       method: GET
       description: 상품 단건 조회
@@ -609,3 +609,23 @@ api:
               type: array
               required: true
               description: "청구 내역 배열. 각 요소는 { billingId: string (필수), periodStart: string (필수, ISO 8601), periodEnd: string (필수, ISO 8601), amount: number (필수), status: string (필수, COMPLETED/FAILED/PENDING), paymentId: string (선택), attemptDate: string (선택, ISO 8601), failureMessage: string (선택) } 형태"
+
+    # ========================================
+    # 상품 & 주문 (Product & Order) 상세 조회
+    # ========================================
+
+    get-product:
+      url: /api/products/{id}
+      method: GET
+      description: 상품 단건 조회
+      pathParams:
+        - name: id
+          description: 상품 ID
+
+    get-order-detail:
+      url: /api/orders/{orderId}
+      method: GET
+      description: 주문 상세 조회
+      pathParams:
+        - name: orderId
+          description: 주문 ID

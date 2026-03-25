@@ -20,6 +20,7 @@ public class OrderDetailResponse {
     private String orderNumber;
     private BigDecimal totalAmount;
     private BigDecimal usedPoints;
+    private BigDecimal earnedPoints;
     private BigDecimal finalAmount;
     private String status;
     private LocalDateTime createdAt;

@@ -137,13 +137,17 @@ public class OrderService {
                 .map(PointTransactionResponse::from)
                 .toList();
 
+        BigDecimal finalAmount = order.getTotalAmount().subtract(order.getUsedPoints());
+
         return OrderDetailResponse.builder()
                 .orderId(order.getId())
                 .orderNumber(order.getOrderNumber())
-                .totalAmount(order.getTotalAmount().add(order.getUsedPoints())) // 원가 합계
+                .totalAmount(order.getTotalAmount())
+                .earnedPoints(order.getEarnedPoints())
                 .usedPoints(order.getUsedPoints())
-                .finalAmount(order.getTotalAmount()) // 실결제 금액
+                .finalAmount(finalAmount) // 실결제 금액
                 .createdAt(order.getCreatedAt())
+                .status(order.getStatus().name())
                 .items(order.getOrderItems().stream()
                         .map(item -> OrderDetailResponse.OrderItemDto.builder()
                                 .productName(item.getProductName())
