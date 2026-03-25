@@ -195,7 +195,7 @@
 ## 🖼 API 명세서
 
 <p align="center">
-  <img src="docs/images/API_명세서.png" width="80%">
+  <img src="docs/images/API_명세서.png" width="100%">
 </p>
 
 보다 자세한 API 명세서는
