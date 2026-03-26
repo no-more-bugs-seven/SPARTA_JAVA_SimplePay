@@ -83,7 +83,7 @@ public class TestDataInit implements ApplicationRunner {
                     names.get(i),
                     usernames.get(i) + "@test.com",
                     "010-1234-567" + i,
-                    1000L,
+                    20000L,
                     normalTierId
             });
         }
