@@ -240,5 +240,6 @@ src/main/java/com/paymentapp
 ## 🚨 Trouble Shooting
 
 👉 [결제 시스템의 재고 정합성 문제와 비관적 락(Pessimistic Lock) 적용](docs/troubleshooting/Pessimistic-Lock-for-Inventory-Consistency.md) <br>
+👉 [다중 서버 환경의 스케줄러 동시성 제어](docs/troubleshooting/Implementing-Distributed-Locking-for-Scheduled-Tasks.md) <br>
 
 ---
