@@ -46,7 +46,7 @@ public class SecurityConfig {
                         // ==================== 개발용 허용 ====================
                         .requestMatchers(
                                 "/", "/assets/**", "/img/**", "/error", "/favicon.ico",
-                                "/h2-console/**", "/api/webhooks/**"
+                                "/h2-console/**", "/api/webhooks/**", "/login/**"
                         ).permitAll()
 
                         // ==================== 인증 없이 허용 ====================
