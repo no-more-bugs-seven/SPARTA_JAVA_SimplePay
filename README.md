@@ -70,10 +70,10 @@
 
 ---
 
-## 🧩 Architecture
+## 🧩 AWS Architecture
 
 <p align="center">
-  <img src="docs/images/Architecture_Diagram.png" width="80%">
+  <img src="docs/images/AWS.png" width="80%">
 </p>
 
 ---
