@@ -73,7 +73,7 @@
 ## 🧩 AWS Architecture
 
 <p align="center">
-  <img src="docs/images/AWS.png" width="80%">
+  <img src="docs/images/AWS.png" width="100%">
 </p>
 
 ---
@@ -181,7 +181,7 @@
 ## 🖼 API 명세서
 
 <p align="center">
-  <img src="docs/images/API_명세서.png" width="80%">
+  <img src="docs/images/API_명세서.png" width="100%">
 </p>
 
 보다 자세한 API 명세서는
@@ -192,7 +192,7 @@
 ## 🗄 ERD Diagram
 
 <p align="center">
-  <img src="docs/images/erd.png" width="80%">
+  <img src="docs/images/erd.png" width="100%">
 </p>
 
 ---
@@ -200,7 +200,7 @@
 ## 🧪 TestCase
 
 <p align="center">
-  <img src="docs/images/testcase.png" width="80%">
+  <img src="docs/images/testcase.png" width="100%">
 </p>
 
 ---
@@ -241,5 +241,6 @@ src/main/java/com/paymentapp
 
 👉 [결제 시스템의 재고 정합성 문제와 비관적 락(Pessimistic Lock) 적용](docs/troubleshooting/Pessimistic-Lock-for-Inventory-Consistency.md) <br>
 👉 [다중 서버 환경의 스케줄러 동시성 제어](docs/troubleshooting/Implementing-Distributed-Locking-for-Scheduled-Tasks.md) <br>
+👉 [OAuth2 배포 환경 리다이렉션 이슈 및 사용자 프로필 데이터 정합성 해결](docs/troubleshooting/OAuth2-Redirect-Protocol-Mismatch&User-Profile-Conflict.md) <br>
 
 ---
