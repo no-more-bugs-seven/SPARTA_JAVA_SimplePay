@@ -29,6 +29,7 @@ spring:
       password: ${REDIS_PASSWORD}
 server:
   port: 8080
+  forward-headers-strategy: native
 
 # PortOne Configuration
 portone:

@@ -50,7 +50,7 @@ public class MemberService {
                 .email(email)
                 .phone(phone)
                 .name(signUpRequest.name())
-                .pointBalance(BigDecimal.ZERO)
+                .pointBalance(BigDecimal.valueOf(20000L))
                 .membershipTier(membershipService.getNormalTier())
                 .build();
         Member saved = memberRepository.save(member);

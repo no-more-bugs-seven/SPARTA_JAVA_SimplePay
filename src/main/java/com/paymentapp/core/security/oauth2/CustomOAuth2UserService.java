@@ -44,7 +44,7 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
         Member member = Member.builder()
                 .email(email)
                 .name(name)
-                .pointBalance(BigDecimal.ZERO)
+                .pointBalance(BigDecimal.valueOf(20000L))
                 .membershipTier(membershipService.getNormalTier())
                 .phone("010-1234-1234")
                 .build();
