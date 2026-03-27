@@ -382,6 +382,7 @@ public class PaymentService {
 
         List<Long> productIds = items.stream()
                 .map(item -> item.getProduct().getId())
+                .sorted()
                 .toList();
 
         // 상품들에 대해 비관적 락 획득 (줄 세우기)
