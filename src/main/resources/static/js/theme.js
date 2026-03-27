@@ -4,7 +4,7 @@
 
 // localStorage에서 테마 로드 (기본값: light)
 const currentTheme = localStorage.getItem('theme') || 'light';
-document.documentElement.setAttribute('data-theme', currentTheme);
+document.documentElement.setAttribute('data-theme', 'dark');
 
 /**
  * 라이트/다크 테마 전환

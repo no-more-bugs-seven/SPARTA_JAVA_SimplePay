@@ -29,7 +29,7 @@ public class Member extends BaseEntity {
     @Column(unique = true, length = 100)
     private String email;
 
-    @Column(unique = true, length = 20)
+    @Column(length = 20)
     private String phone;
 
     @Column(nullable = false, length = 50)
